@@ -141,6 +141,35 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 0)
                     self.assertIn("Validation: fail", result.stdout)
 
+    def test_export_commands_report_wrapper_failure_codes_on_invalid_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            store.state_path.write_text("{invalid", encoding="utf-8")
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+
+            for command, failure_code in (
+                ("handoff-export", "handoff_export_failed"),
+                ("impact-export", "impact_export_failed"),
+                ("sources-export", "sources_export_failed"),
+                ("status-export", "status_export_failed"),
+                ("validation-export", "validation_export_failed"),
+                ("return-map-export", "return_map_export_failed"),
+            ):
+                with self.subTest(command=command):
+                    result = subprocess.run(
+                        [sys.executable, "-m", "cli.main", command],
+                        cwd=root,
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertIn(failure_code, result.stdout)
+
     def test_exports_report_session_file_presence_when_local_session_file_exists(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)

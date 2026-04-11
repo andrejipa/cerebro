@@ -2,6 +2,14 @@
 
 This board tracks the current multi-front execution state with explicit stop conditions.
 
+## Latest Round
+
+- Estressador found only external-surface gaps: bootstrap candidate-count auditability, assisted-flow coverage, wrapper failure-code coverage, and remaining bootstrap-scan CLI error-path coverage.
+- Guardião approved only fixes that stayed outside the core and blocked any move toward content-reading, semantic ranking, or runtime authority.
+- Corretor implemented the approved external fixes and no core changes.
+- Auditor revalidated the affected suites and the full suite after the changes.
+- Visionário confirmed that the current layer is now exhausted under the active contract.
+
 ## Extensions Read-Only
 
 - Objective: grow external views without touching core authority
@@ -68,7 +76,7 @@ This board tracks the current multi-front execution state with explicit stop con
 ## Bootstrap Assistive Entry
 
 - Objective: reduce bootstrap friction without giving discovery authority over runtime truth
-- State: stable assistive baseline
+- State: stable assistive baseline, safe slice exhausted
 - Executed:
   - `bootstrap-scan` exists as an assistive-only CLI command outside runtime authority
   - shortlist classification remains limited to project-tree paths and filenames
@@ -76,6 +84,10 @@ This board tracks the current multi-front execution state with explicit stop con
   - docs and architecture tests now make the heuristic boundary explicit
   - noisy-tree hardening now covers historical/acervo paths, false memory signals, and common local environment directories
   - CLI output now reports heuristic basis, total matched candidates, and returned shortlist size separately
+  - CLI output now labels candidate classes as `suggested_type` instead of presenting them as authoritative type
+  - subprocess coverage now includes invalid-limit and missing-root bootstrap-scan failures
+  - automated subprocess coverage now includes the assisted protocol `bootstrap-scan -> import-context -> checkpoint -> analyze`
+  - architecture tests now also block `Path.open()` and `io.open()` style content reads inside `bootstrap-scan`
 - Pending:
   - none inside the current assistive-only slice
 - Blockers:
@@ -99,6 +111,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - `validation-export` joins the same read-only export family without reopening runtime validation
   - contract tests now confirm that exports still reflect canonical failed validation after a real `analyze` block
   - contract tests now confirm that all current exports fail explicitly when the state becomes invalid JSON
+  - automated subprocess coverage now proves the assisted entry protocol `bootstrap-scan -> import-context -> checkpoint -> analyze`
   - adversarial revalidation completed without critical or moderate failures
 - Pending:
   - rerun proportionally whenever the public surface changes
@@ -120,6 +133,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - CLI tests now reject unapproved human aliases and keep the command surface canonical
   - shared contract tests now verify that all current exporters reject runtime paths and remain read-only in sequence
   - a duplicate contract-test method that silently overrode subprocess blocked-state coverage was removed
+  - shared contract tests now verify wrapper failure identifiers as well as wrapper success identifiers
   - tracked-file checks now fail if `extensions/` gains forbidden artifact types or non-Python shebang entrypoints
   - Git metadata checks now fail if tracked files in `extensions/` become symlinks or executable entries
   - adversarial runtime tests now cover state corruption, session corruption, blocked `analyze`, and repeated runtime cycles
@@ -187,7 +201,7 @@ This board tracks the current multi-front execution state with explicit stop con
 ## Next Layer Transition
 
 - Objective: leave the project ready for the next layer only by explicit decision
-- State: deliberate freeze baselined
+- State: deliberate freeze baselined, current layer consciously closed
 - Executed:
   - the low-risk read-only export slice is exhausted
   - the core-extension boundary is hardened and adversarially revalidated
@@ -195,6 +209,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - `alignment-export` remains explicitly blocked because the contract still has no canonical alignment artifact
   - the deliberate freeze policy, conservatism assessment, minimum safe advance rule, and resume protocol are now documented as the default operational state
   - `bootstrap-scan` was approved and implemented as one assistive-only minimum safe advance that suggests candidates without touching runtime state
+  - residual triage confirmed that no additional clearly safe block remains in the current layer
 - Pending:
   - none while the deliberate freeze remains in effect
 - Blockers:

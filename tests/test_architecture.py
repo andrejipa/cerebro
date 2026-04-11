@@ -223,6 +223,21 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Option 3, deliberate freeze", handoff)
         self.assertIn("Approved Freeze Trigger", handoff)
         self.assertIn("Minimum Safe Advance Rule", handoff)
+
+    def test_current_layer_closure_handoff_is_explicit_in_docs(self) -> None:
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_CURRENT_LAYER_CLOSED.md").read_text(
+            encoding="utf-8"
+        )
+        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+
+        self.assertIn("- State: deliberate freeze baselined, current layer consciously closed", board)
+        self.assertIn("residual triage confirmed that no additional clearly safe block remains", board)
+        self.assertIn("- State: current layer consciously closed", handoff)
+        self.assertIn("The current layer is exhausted under the active contract", handoff)
+        self.assertIn("future point correction", handoff)
+        self.assertIn("real architecture block", handoff)
+        self.assertIn("explicit next-layer decision", handoff)
         self.assertIn("Pilot Verdict", handoff)
         self.assertIn("Resume Protocol", handoff)
         self.assertIn("The project is deliberately frozen for new capability growth", freeze_policy)
@@ -276,7 +291,10 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("growth beyond the current public surface requires an explicit demand and classification step", core_contract)
         self.assertIn("further capability growth stays deliberately frozen", boundaries)
         self.assertIn("The deliberate freeze may be broken only when", freeze_policy)
-        self.assertIn("Classify the proposal as `export`, `analysis`, or another external shape.", freeze_policy)
+        self.assertIn(
+            "Classify the proposal as `export`, `analysis`, `integration`, or the already-approved `assistive discovery` carve-out.",
+            freeze_policy,
+        )
         self.assertIn("core expansion or schema growth", freeze_policy)
         self.assertIn("one minimum safe external increment at a time", readme)
         self.assertIn("`bootstrap-scan` as assistive discovery only", freeze_policy)
@@ -290,6 +308,9 @@ class ArchitectureIsolationTests(unittest.TestCase):
             encoding="utf-8"
         )
         bootstrap_handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_BOOTSTRAP_SCAN_STABLE.md").read_text(
+            encoding="utf-8"
+        )
+        current_layer_handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_CURRENT_LAYER_CLOSED.md").read_text(
             encoding="utf-8"
         )
         boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
@@ -308,6 +329,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("suggests candidates but does not decide canonical context", handoff)
         self.assertIn("stable assistive baseline", bootstrap_handoff)
         self.assertIn("it does not read file contents for classification", bootstrap_handoff)
+        self.assertIn("The current layer is exhausted under the active contract", current_layer_handoff)
         self.assertIn("bootstrap or validation by heuristic when the heuristic gains authority", reuse_map)
         self.assertIn("assistive-discovery shape for initial bootstrap only", integration_surface)
         self.assertIn("suggest candidates for explicit human review", integration_surface)
@@ -669,7 +691,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         path = REPO_ROOT / "cli" / "commands" / "bootstrap_scan.py"
         tree = parse_python(path)
         offenders: list[str] = []
-        forbidden_attribute_calls = {"read_bytes", "read_text", "write_bytes", "write_text"}
+        forbidden_attribute_calls = {"open", "read_bytes", "read_text", "write_bytes", "write_text"}
         forbidden_name_calls = {"open", "run_import_context", "run_init"}
         forbidden_attribute_names = {"register_sources", "save_state", "update_checkpoint", "validate_state"}
 
@@ -678,6 +700,8 @@ class ArchitectureIsolationTests(unittest.TestCase):
                 for alias in node.names:
                     if alias.name in {"json", "subprocess"} or alias.name.startswith("core"):
                         offenders.append(f"import {alias.name}")
+                    if alias.name == "io":
+                        offenders.append("import io")
             if isinstance(node, ast.ImportFrom):
                 if node.module in {"json", "subprocess"} or (node.module and node.module.startswith("core")):
                     offenders.append(f"from {node.module}")

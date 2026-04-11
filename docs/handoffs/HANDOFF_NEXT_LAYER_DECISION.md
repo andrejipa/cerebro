@@ -140,7 +140,7 @@
 
 1. Write one concrete use case in operational terms.
 2. Record why the current `analyze` flow plus current exports do not satisfy it cleanly.
-3. Classify the proposal as `export`, `analysis`, or another external shape.
+3. Classify the proposal as `export`, `analysis`, `integration`, or the already-approved `assistive discovery` carve-out.
 4. Check whether it requires a new canonical concept, a new source of truth, or core changes.
 5. Check whether it touches `validate`, `analyze`, `state.json`, session policy, or runtime authority.
 6. Authorize only if it stays external, derived, and proportionally testable.

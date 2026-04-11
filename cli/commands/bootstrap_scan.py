@@ -233,10 +233,7 @@ def _iter_project_files(root: Path) -> list[Path]:
     return candidates
 
 
-def scan_bootstrap_candidates(root: Path, limit: int | None = DEFAULT_LIMIT) -> list[BootstrapCandidate]:
-    if limit is not None and limit <= 0:
-        return []
-
+def _rank_bootstrap_candidates(root: Path) -> list[BootstrapCandidate]:
     ranked: list[BootstrapCandidate] = []
     for relative_path in _iter_project_files(root):
         candidate = _classify_candidate(relative_path)
@@ -251,6 +248,14 @@ def scan_bootstrap_candidates(root: Path, limit: int | None = DEFAULT_LIMIT) -> 
             item.relative_path.as_posix().lower(),
         )
     )
+    return ranked
+
+
+def scan_bootstrap_candidates(root: Path, limit: int | None = DEFAULT_LIMIT) -> list[BootstrapCandidate]:
+    if limit is not None and limit <= 0:
+        return []
+
+    ranked = _rank_bootstrap_candidates(root)
 
     family_limits = {
         "continuity-memory": 1,
@@ -290,8 +295,8 @@ def run_bootstrap_scan(cwd: Path, args: object | None = None) -> int:
         print_fail([user_error("scan_root_invalid", f"project root is not a directory: {root}")])
         return 1
 
-    matched_candidates = scan_bootstrap_candidates(root, limit=None)
-    shortlist = matched_candidates[:limit]
+    matched_candidates = _rank_bootstrap_candidates(root)
+    shortlist = scan_bootstrap_candidates(root, limit=limit)
     lines = [
         f"scan_root: {root}",
         "mode: assistive-only",
@@ -307,7 +312,7 @@ def run_bootstrap_scan(cwd: Path, args: object | None = None) -> int:
         lines.extend(
             [
                 f"{index}. path: {candidate.relative_path.as_posix()}",
-                f"   type: {candidate.artifact_type}",
+                f"   suggested_type: {candidate.artifact_type}",
                 f"   signal: {candidate.signal_label}",
                 f"   reasons: {', '.join(candidate.reasons)}",
             ]
