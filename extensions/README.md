@@ -12,6 +12,9 @@ The core does not depend on anything in this directory.
 
 Every extension must consume the stable public core API, remain disposable, and never gain authority over runtime state.
 
+Tracked extension packages currently cover read-only exports and derived analysis only.
+Any orchestration that lives outside the runtime must stay outside tracked extension packages and keep consuming only public core interfaces.
+
 Tracked extension packages stay intentionally narrow:
 
 - Python modules for read-only behavior

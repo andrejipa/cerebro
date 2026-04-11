@@ -17,6 +17,18 @@ An extension is invalid if it violates any rule below.
 7. Extensions never create a second source of truth.
 8. Extensions never execute business decisions on behalf of the core.
 
+## External Behavior Taxonomy
+
+Use these shapes to describe behavior outside the core.
+
+- `export`: a read-only view or handoff of canonical state.
+- `analysis`: a read-only transformation of canonical state into a derived report or view.
+- `integration`: orchestration outside the runtime that consumes existing commands or exports without gaining authority over state.
+
+These shapes classify behavior, not authority.
+
+If a proposal needs to guess, infer, or decide for the core, it is not an extension.
+
 ## Allowed Extension Categories
 
 Every extension must fit one of these categories.

@@ -106,6 +106,25 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("has_active_session()", extension_guidelines)
         self.assertIn("has_active_session()", integration_surface)
 
+    def test_external_behavior_taxonomy_is_explicit_in_docs(self) -> None:
+        extension_guidelines = (REPO_ROOT / "docs" / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
+        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
+        extensions_readme = (REPO_ROOT / "extensions" / "README.md").read_text(encoding="utf-8")
+
+        expected_phrases = (
+            "`export`: a read-only view or handoff of canonical state.",
+            "`analysis`: a read-only transformation of canonical state into a derived report or view.",
+            "`integration`: orchestration outside the runtime",
+            "These shapes classify behavior, not authority.",
+        )
+
+        for phrase in expected_phrases:
+            self.assertIn(phrase, extension_guidelines)
+
+        self.assertIn("These are consumer shapes only.", integration_surface)
+        self.assertIn("read-only exports and derived analysis only", extensions_readme)
+        self.assertIn("outside tracked extension packages", extensions_readme)
+
     def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_ALIGNMENT_EXPORT_BLOCKED.md").read_text(

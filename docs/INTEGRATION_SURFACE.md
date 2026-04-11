@@ -6,6 +6,16 @@ This document defines the safe boundary for future integrations.
 
 An integration is an external consumer that connects the core to another tool, interface, or transport without gaining authority over state.
 
+## Behavior Taxonomy
+
+Use the same three external shapes everywhere else in the project:
+
+- `export`: read-only rendering of canonical state
+- `analysis`: read-only processing of canonical state into a derived output
+- `integration`: orchestration outside the runtime that consumes public commands or exports
+
+These are consumer shapes only. None of them may change core authority or become a new source of truth.
+
 ## Allowed Inputs
 
 Future integrations may consume only:
