@@ -205,6 +205,21 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("- State: stopped at the current low-risk limit", legacy_handoff)
         self.assertIn("- State: stopped at the current safe limit", integration_handoff)
 
+    def test_next_layer_transition_handoff_is_explicit_in_docs(self) -> None:
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_NEXT_LAYER_DECISION.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("## Next Layer Transition", board)
+        self.assertIn("- State: decision prepared", board)
+        self.assertIn("- State: current low-risk phase closed", handoff)
+        self.assertIn("Option 1: First Concrete External Analysis", handoff)
+        self.assertIn("Option 2: Medium-Risk Graph View", handoff)
+        self.assertIn("Option 3: Deliberate Freeze", handoff)
+        self.assertIn("Recommended option now:", handoff)
+        self.assertIn("Option 3, deliberate freeze", handoff)
+
     def test_external_analysis_boundary_handoff_is_explicit_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_EXTERNAL_ANALYSIS_BOUNDARY.md").read_text(

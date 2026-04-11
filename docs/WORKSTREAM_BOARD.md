@@ -160,3 +160,21 @@ This board tracks the current multi-front execution state with explicit stop con
   - premature hooks can become shadow APIs
 - Next step:
   - stop before adding any runtime hook or template that is not justified by a concrete integration use case
+
+## Next Layer Transition
+
+- Objective: leave the project ready for the next layer only by explicit decision
+- State: decision prepared
+- Executed:
+  - the low-risk read-only export slice is exhausted
+  - the core-extension boundary is hardened and adversarially revalidated
+  - the external-analysis boundary is documented up to the safe conceptual limit
+  - `alignment-export` remains explicitly blocked because the contract still has no canonical alignment artifact
+- Pending:
+  - choose between a first concrete external analysis use case, a medium-risk graph-style view, or a deliberate freeze
+- Blockers:
+  - opening the next layer now would require an explicit semantic choice rather than more autonomous hardening
+- Risks:
+  - automatic continuation from here would create pressure to invent semantics instead of selecting them consciously
+- Next step:
+  - use the next-layer decision handoff and choose one option explicitly before any new implementation
