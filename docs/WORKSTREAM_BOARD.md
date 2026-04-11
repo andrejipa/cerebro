@@ -4,11 +4,13 @@ This board tracks the current multi-front execution state with explicit stop con
 
 ## Latest Round
 
-- Estressador found only external-surface gaps: bootstrap candidate-count auditability, assisted-flow coverage, wrapper failure-code coverage, and remaining bootstrap-scan CLI error-path coverage.
-- Guardião approved only fixes that stayed outside the core and blocked any move toward content-reading, semantic ranking, or runtime authority.
-- Corretor implemented the approved external fixes and no core changes.
-- Auditor revalidated the affected suites and the full suite after the changes.
-- Visionário confirmed that the current layer is now exhausted under the active contract.
+- Estressador produced five raw findings around the refined agent protocol: missing operational proof for the new roles in real use, board drift, absent handoff evidence, missing documentary guardrail, and speculative pressure for still more roles.
+- Triador de Casos reduced that noisy set to three cases: one operational-proof gap, one documentary-regression gap, and one unsupported speculation about further role growth.
+- Avaliador de Evidencia marked the first two cases as demonstrated by repository evidence and the role-growth idea as insufficient-evidence.
+- Guardião approved only the documentation-and-test slice needed to prove the refined team in use and blocked any further role expansion without a new recurring bottleneck.
+- Corretor closed the approved slice with board, report, handoff, and documentary-test updates only.
+- Auditor revalidated the architecture slice and the full suite after the changes.
+- Visionário confirmed that the refined team now has operational proof and that no additional permanent role is justified by the observed round.
 - Final closure review found one last external-safe slice, closed it completely, and confirmed that no additional safe executable work remains.
 
 ## Extensions Read-Only

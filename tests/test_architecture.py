@@ -247,6 +247,24 @@ class ArchitectureIsolationTests(unittest.TestCase):
             next_layer_handoff,
         )
 
+    def test_refined_agent_team_is_operationally_validated_in_docs(self) -> None:
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        report = (REPO_ROOT / "docs" / "REAL_OPERATION_REPORT.md").read_text(encoding="utf-8")
+        handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_AGENT_TEAM_VALIDATED.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("Triador de Casos reduced that noisy set to three cases", board)
+        self.assertIn("Avaliador de Evidencia marked the first two cases as demonstrated", board)
+        self.assertIn("the refined team now has operational proof", board)
+        self.assertIn("## Refined Agent Team Validation", report)
+        self.assertIn("`Triador de Casos` reduced five raw findings to three cases", report)
+        self.assertIn("`Avaliador de Evidencia` then marked two cases as demonstrated", report)
+        self.assertIn("no further permanent role is justified by this validation round", report)
+        self.assertIn("- State: refined team validated in a real round", handoff)
+        self.assertIn("a noisy set of five raw findings was reduced to two demonstrated executable cases", handoff)
+        self.assertIn("a new auxiliary role now requires a fresh, repeated bottleneck", handoff)
+
     def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_ALIGNMENT_EXPORT_BLOCKED.md").read_text(

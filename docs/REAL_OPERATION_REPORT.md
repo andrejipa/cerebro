@@ -17,6 +17,8 @@ The round was executed under the external agent protocol:
 
 - Coordenador de Rodada kept sequence and front ownership explicit.
 - Estressador searched for remaining practical gaps and real friction.
+- Triador de Casos reduced noisy findings before contract review.
+- Avaliador de Evidencia separated demonstrated issues from unproven speculation.
 - Guardião de Contrato classified limits and blocked any move toward new semantics.
 - Corretor made no product changes because no safe improvement was authorized in this phase.
 - Auditor validated operational correctness against the current contract.
@@ -25,6 +27,35 @@ The round was executed under the external agent protocol:
 
 No role acquired authority over runtime state.
 No role bypassed the canonical flow.
+
+## Refined Agent Team Validation
+
+After the role model was sharpened, one full external round was executed specifically to validate whether `Triador de Casos` and `Avaliador de Evidencia` add real operational value.
+
+Raw findings entering the round:
+- missing real-use proof for the two new auxiliary roles
+- board drift relative to the refined protocol
+- no explicit handoff capturing refined-team validation
+- no documentary regression test protecting that proof
+- speculative pressure to add even more specialist roles
+
+Observed role value:
+- `Triador de Casos` reduced five raw findings to three cases by merging the first three items into one operational-proof case and keeping the role-growth pressure separate as a distinct non-actionable idea.
+- `Avaliador de Evidencia` then marked two cases as demonstrated by repository evidence and one as insufficient-evidence, which prevented Guardião and Corretor from spending effort on ornamental team growth.
+- `Guardião de Contrato` approved only the external-safe slice: board/report/handoff synchronization plus one documentary guardrail.
+- `Corretor` updated only external documentation and tests.
+- `Auditor` validated the architecture slice first and then the full suite.
+- `Visionário` confirmed that the new roles improved noise reduction and proof quality, but did not justify any further team expansion.
+
+Operational comparison against the previous team shape:
+- less noise reached Guardião because duplicates and adjacent symptoms were grouped first
+- less speculative work reached Corretor because weakly evidenced concerns were filtered earlier
+- round closure was cleaner because the board and handoff now record exactly what the new auxiliary roles proved
+
+Result:
+- the refined team improved execution quality in a real round
+- `Triador de Casos` and `Avaliador de Evidencia` are justified as auxiliary roles
+- no further permanent role is justified by this validation round
 
 ## Scenarios Executed
 
