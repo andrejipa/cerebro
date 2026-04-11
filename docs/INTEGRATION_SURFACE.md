@@ -46,6 +46,19 @@ Safe integration shapes include:
 - synchronization of derived outputs to external systems
 - local bridges that remain disposable and non-authoritative
 
+Allowed future `analysis` outside the runtime may:
+
+- summarize, count, group, compare, or reformat canonical fields
+- report on persisted validation metadata
+- combine existing public outputs without becoming authority
+
+Forbidden future `analysis` may not:
+
+- infer missing context, intent, or alignment
+- inspect source bodies or arbitrary project files
+- recommend or decide on behalf of the runtime
+- reopen validation or reinterpret canonical failure states
+
 Current repository convention:
 
 - tracked code under `extensions/` stays limited to Python modules and Markdown documentation

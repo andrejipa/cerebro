@@ -37,6 +37,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertIn("return-map-export", result.stdout)
         self.assertIn("sources-export", result.stdout)
         self.assertIn("status-export", result.stdout)
+        self.assertIn("validation-export", result.stdout)
 
     def test_subcommand_help_pages(self) -> None:
         for command in (
@@ -50,6 +51,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             "return-map-export",
             "sources-export",
             "status-export",
+            "validation-export",
             "validate",
         ):
             with self.subTest(command=command):
@@ -83,6 +85,17 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0)
         self.assertIn("Compatibility command", result.stdout)
+
+    def test_validation_export_help_declares_persisted_validation_role(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "-m", "cli.main", "validation-export", "--help"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("read-only validation view", result.stdout)
 
     def test_cli_usage_error_returns_exit_code_2(self) -> None:
         result = subprocess.run(

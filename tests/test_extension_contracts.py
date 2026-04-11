@@ -21,11 +21,76 @@ from extensions.return_map_export.exporter import (
 )
 from extensions.sources_export.exporter import SourcesExportError, export_sources_markdown, write_sources_markdown
 from extensions.status_export.exporter import StatusExportError, export_status_markdown, write_status_markdown
+from extensions.validation_export.exporter import (
+    ValidationExportError,
+    export_validation_markdown,
+    write_validation_markdown,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReadOnlyExtensionContractTests(unittest.TestCase):
+    def test_export_commands_reflect_failed_validation_after_real_analyze_block(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            store.update_checkpoint(
+                {
+                    "goal": "Goal",
+                    "summary": "Summary",
+                    "next_step": "Next",
+                    "constraints": [],
+                }
+            )
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+
+            first_analyze = subprocess.run(
+                [sys.executable, "-m", "cli.main", "analyze", "--actor", "alice"],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(first_analyze.returncode, 0)
+
+            tracked.write_text("changed", encoding="utf-8")
+            second_analyze = subprocess.run(
+                [sys.executable, "-m", "cli.main", "analyze", "--actor", "alice"],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(second_analyze.returncode, 1)
+            self.assertIn("analysis_blocked", second_analyze.stdout)
+            self.assertIn("source_hash_mismatch", second_analyze.stdout)
+
+            for command in (
+                "handoff-export",
+                "impact-export",
+                "sources-export",
+                "status-export",
+                "validation-export",
+                "return-map-export",
+            ):
+                with self.subTest(command=command):
+                    result = subprocess.run(
+                        [sys.executable, "-m", "cli.main", command],
+                        cwd=root,
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 0)
+                    self.assertIn("Validation: fail", result.stdout)
+
     def test_exports_run_in_sequence_without_modifying_runtime(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -53,12 +118,14 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             sources = export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             return_map = export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            validation = export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             self.assertIn("# Handoff", handoff)
             self.assertIn("# Impact", impact)
             self.assertIn("# Status", status)
             self.assertIn("# Sources", sources)
             self.assertIn("# Return Map", return_map)
+            self.assertIn("# Validation", validation)
             self.assertEqual(before_revision, store.read_snapshot().revision)
             self.assertEqual(before_state, store.state_path.read_text(encoding="utf-8"))
             self.assertEqual(before_session, store.session_path.read_text(encoding="utf-8"))
@@ -95,6 +162,9 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             with self.assertRaises(ReturnMapExportError):
                 write_return_map_markdown(root, ".cerebro/blocked.md")
 
+            with self.assertRaises(ValidationExportError):
+                write_validation_markdown(root, ".cerebro/blocked.md")
+
             self.assertEqual(before_state, store.state_path.read_text(encoding="utf-8"))
             self.assertEqual(before_session, store.session_path.read_text(encoding="utf-8"))
 
@@ -121,6 +191,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
                 export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
+                export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
             ):
                 self.assertNotIn("TOP SECRET BODY", output)
 
@@ -170,12 +241,14 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             sources = export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             return_map = export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            validation = export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             self.assertIn("Validation: fail", handoff)
             self.assertIn("- Validation: fail", impact)
             self.assertIn("- Validation: fail", status)
             self.assertIn("- Validation: fail", sources)
             self.assertIn("- Validation: fail", return_map)
+            self.assertIn("- Validation: fail", validation)
 
     def test_exports_fail_explicitly_when_state_becomes_invalid_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -198,6 +271,9 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             with self.assertRaises(ReturnMapExportError):
                 export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            with self.assertRaises(ValidationExportError):
+                export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
     def test_exports_fail_explicitly_when_state_schema_becomes_invalid(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -222,3 +298,6 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             with self.assertRaises(ReturnMapExportError):
                 export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            with self.assertRaises(ValidationExportError):
+                export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00")

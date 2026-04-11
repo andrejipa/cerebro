@@ -39,6 +39,19 @@ Every extension must fit one of these categories.
 
 No category has authority over the core.
 
+Allowed `analysis` stays strictly derived:
+
+- summarize, count, group, compare, or reformat canonical fields
+- report on persisted validation metadata without reopening validation
+- combine existing read-only outputs without turning them into new truth
+
+Forbidden `analysis` crosses the boundary:
+
+- infer missing context, intent, or priority
+- inspect source contents or arbitrary project files
+- rank, decide, or recommend on behalf of the core
+- treat derived analysis as authority over runtime behavior
+
 ## Guidelines
 
 These are implementation guidelines that support the mandatory rules.

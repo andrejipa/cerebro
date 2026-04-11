@@ -42,6 +42,21 @@ def reject_runtime_output_path(store: StateStore, target: Path, error_type: type
         raise error_type(f"output path is reserved for runtime files: {target}")
 
 
+def write_markdown_output(
+    root: str | Path,
+    output_path: str | Path,
+    markdown: str,
+    error_type: type[Exception],
+) -> Path:
+    """Write derived Markdown outside runtime-owned paths."""
+    store = StateStore(root)
+    target = resolve_output_target(root, output_path)
+    reject_runtime_output_path(store, target, error_type)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(markdown, encoding="utf-8", newline="\n")
+    return target
+
+
 def validation_risk_level(result: str, details: tuple[object, ...]) -> str:
     """Map canonical validation metadata to a compact operational risk label."""
     if result == "ok":

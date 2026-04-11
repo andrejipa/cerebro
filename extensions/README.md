@@ -9,6 +9,7 @@ Current read-only extensions:
 - `status_export`
 - `sources_export`
 - `return_map_export`
+- `validation_export`
 
 The core does not depend on anything in this directory.
 

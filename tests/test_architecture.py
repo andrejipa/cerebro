@@ -142,8 +142,13 @@ class ArchitectureIsolationTests(unittest.TestCase):
             self.assertIn(phrase, extension_guidelines)
 
         self.assertIn("These are consumer shapes only.", integration_surface)
+        self.assertIn("Allowed future `analysis` outside the runtime may:", integration_surface)
+        self.assertIn("Forbidden future `analysis` may not:", integration_surface)
+        self.assertIn("Allowed `analysis` stays strictly derived:", extension_guidelines)
+        self.assertIn("Forbidden `analysis` crosses the boundary:", extension_guidelines)
         self.assertIn("read-only exports and derived analysis only", extensions_readme)
         self.assertIn("outside tracked extension packages", extensions_readme)
+        self.assertIn("validation_export", extensions_readme)
 
     def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
@@ -155,6 +160,16 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("`alignment-export` is blocked as a separate front", board)
         self.assertIn("- State: blocked", handoff)
         self.assertIn("`alignment-export` remains blocked", reuse_map)
+
+    def test_external_analysis_boundary_handoff_is_explicit_in_docs(self) -> None:
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_EXTERNAL_ANALYSIS_BOUNDARY.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("## External Analysis Preparation", board)
+        self.assertIn("- State: stopped at the safe conceptual boundary", handoff)
+        self.assertIn("no analysis module was implemented", handoff)
 
     def test_robustness_baseline_and_policy_are_explicit_in_docs(self) -> None:
         baseline = (REPO_ROOT / "docs" / "ROBUSTNESS_BASELINE.md").read_text(encoding="utf-8")
@@ -384,6 +399,28 @@ class ArchitectureIsolationTests(unittest.TestCase):
             for literal in string_literals_without_docstrings(tree):
                 if literal in forbidden_literals:
                     offenders.append(f"{path.relative_to(REPO_ROOT)} contains {literal!r}")
+
+        self.assertEqual(offenders, [])
+
+    def test_extensions_do_not_spawn_processes(self) -> None:
+        offenders: list[str] = []
+
+        for path in extension_python_files():
+            tree = parse_python(path)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        if alias.name == "subprocess":
+                            offenders.append(f"{path.relative_to(REPO_ROOT)} imports subprocess")
+                if isinstance(node, ast.ImportFrom) and node.module == "subprocess":
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} imports from subprocess")
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                    if (
+                        isinstance(node.func.value, ast.Name)
+                        and node.func.value.id == "os"
+                        and node.func.attr in {"popen", "spawnl", "spawnle", "spawnlp", "spawnlpe", "spawnv", "spawnve", "spawnvp", "spawnvpe", "system"}
+                    ):
+                        offenders.append(f"{path.relative_to(REPO_ROOT)} calls os.{node.func.attr}")
 
         self.assertEqual(offenders, [])
 

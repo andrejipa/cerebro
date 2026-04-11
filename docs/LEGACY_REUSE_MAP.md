@@ -36,6 +36,7 @@ This document records what can be reused from the old system without reintroduci
 2. `return-map-export`
 3. `impact-export` as a constrained read-only view of the current operational surface
 4. `sources-export` as a constrained read-only inventory of registered paths
-5. keep `alignment-export` blocked unless a future architecture decision adds canonical support for it
-6. optional graph views as external consumers
-7. human operational templates that remain outside runtime authority
+5. `validation-export` as a constrained read-only view of the last persisted canonical validation record
+6. keep `alignment-export` blocked unless a future architecture decision adds canonical support for it
+7. optional graph views as external consumers
+8. human operational templates that remain outside runtime authority

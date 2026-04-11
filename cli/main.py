@@ -16,6 +16,7 @@ from cli.commands.resume import run_resume
 from cli.commands.sources_export import run_sources_export
 from cli.commands.status_export import run_status_export
 from cli.commands.validate import run_validate
+from cli.commands.validation_export import run_validation_export
 from cli.output import print_fail, user_error
 
 
@@ -112,6 +113,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     status_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     status_parser.set_defaults(handler=run_status_export)
+
+    validation_export_parser = subparsers.add_parser(
+        "validation-export",
+        help="render a short view of the last persisted validation result",
+        description="Export a compact read-only validation view derived from the persisted canonical validation record.",
+    )
+    validation_export_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
+    validation_export_parser.set_defaults(handler=run_validation_export)
 
     validate_parser = subparsers.add_parser(
         "validate",
