@@ -287,11 +287,15 @@ class ArchitectureIsolationTests(unittest.TestCase):
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_NEXT_LAYER_DECISION.md").read_text(
             encoding="utf-8"
         )
+        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
 
         self.assertIn("bootstrap-scan", readme)
         self.assertIn("does not create `.cerebro`", readme)
         self.assertIn("does not register `sources`", readme)
         self.assertIn("does not bypass the manual `import-context` decision", readme)
+        self.assertIn("It is not a resume command, not a truth gate", readme)
+        self.assertIn("Assistive bootstrap discovery such as `bootstrap-scan` may suggest candidates", boundaries)
+        self.assertIn("it may not define truth, register `sources`, or bypass `import-context`", boundaries)
         self.assertIn("`bootstrap-scan` as assistive discovery only", handoff)
         self.assertIn("suggests candidates but does not decide canonical context", handoff)
 
@@ -653,20 +657,27 @@ class ArchitectureIsolationTests(unittest.TestCase):
         tree = parse_python(path)
         offenders: list[str] = []
         forbidden_attribute_calls = {"read_bytes", "read_text", "write_bytes", "write_text"}
+        forbidden_name_calls = {"open", "run_import_context", "run_init"}
+        forbidden_attribute_names = {"register_sources", "save_state", "update_checkpoint", "validate_state"}
 
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    if alias.name == "json" or alias.name.startswith("core"):
+                    if alias.name in {"json", "subprocess"} or alias.name.startswith("core"):
                         offenders.append(f"import {alias.name}")
             if isinstance(node, ast.ImportFrom):
-                if node.module == "json" or (node.module and node.module.startswith("core")):
+                if node.module in {"json", "subprocess"} or (node.module and node.module.startswith("core")):
                     offenders.append(f"from {node.module}")
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "open":
-                offenders.append("calls open")
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in forbidden_name_calls:
+                offenders.append(f"calls {node.func.id}")
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                 if node.func.attr in forbidden_attribute_calls:
                     offenders.append(f"calls .{node.func.attr}")
+                if node.func.attr in forbidden_attribute_names:
+                    offenders.append(f"calls .{node.func.attr}")
+                    offenders.append(f"attribute .{node.func.attr}")
+            if isinstance(node, ast.Name) and node.id in {"StateStore", "run_import_context"}:
+                offenders.append(f"name {node.id}")
 
         self.assertEqual(offenders, [])
 

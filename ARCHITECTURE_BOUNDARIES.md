@@ -76,6 +76,7 @@ extension -> core (implicit write)
 - Runtime path literals belong in `StateStore`.
 - JSON serialization for runtime files belongs in `StateStore`.
 - CLI commands may orchestrate calls, but may not manage state files directly.
+- Assistive bootstrap discovery such as `bootstrap-scan` may suggest candidates, but it may not define truth, register `sources`, or bypass `import-context`.
 - Tests may manipulate files directly only to simulate corruption and failure conditions.
 - When an extension design is ambiguous, the correct fallback is to not implement it until the boundary is explicit.
 

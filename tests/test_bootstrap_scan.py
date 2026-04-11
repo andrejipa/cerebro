@@ -119,6 +119,32 @@ class BootstrapScanTests(unittest.TestCase):
             self.assertNotIn(".cerebro/README.md", output)
             self.assertLessEqual(output.count(". path:"), 4)
 
+    def test_scan_ignores_noisy_directories_and_false_memory_signals(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            (root / "README.md").write_text("root readme", encoding="utf-8")
+            (root / "controle").mkdir()
+            (root / "controle" / "CONTEXTO_MESTRE.md").write_text("context", encoding="utf-8")
+            (root / "controle" / "00_ESTADO_ATUAL.md").write_text("state", encoding="utf-8")
+            (root / "docs" / "20_ACERVO_TECNICO" / "05_PARECERES_E_MEMORIAIS").mkdir(parents=True)
+            (root / "docs" / "20_ACERVO_TECNICO" / "05_PARECERES_E_MEMORIAIS" / "MEMORIAL_ENTRADAS.md").write_text(
+                "memorial",
+                encoding="utf-8",
+            )
+            (root / "node_modules").mkdir()
+            (root / "node_modules" / "README.md").write_text("ignore", encoding="utf-8")
+            (root / "livros_fontes").mkdir()
+            (root / "livros_fontes" / "README.md").write_text("ignore", encoding="utf-8")
+
+            shortlist = scan_bootstrap_candidates(root, limit=6)
+            paths = [candidate.relative_path.as_posix() for candidate in shortlist]
+
+            self.assertIn("controle/CONTEXTO_MESTRE.md", paths)
+            self.assertIn("controle/00_ESTADO_ATUAL.md", paths)
+            self.assertNotIn("docs/20_ACERVO_TECNICO/05_PARECERES_E_MEMORIAIS/MEMORIAL_ENTRADAS.md", paths)
+            self.assertNotIn("node_modules/README.md", paths)
+            self.assertNotIn("livros_fontes/README.md", paths)
+
     def test_bootstrap_scan_help_and_subprocess_smoke(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -143,3 +169,4 @@ class BootstrapScanTests(unittest.TestCase):
             self.assertIn("mode: assistive-only", result.stdout)
             self.assertIn("next_action:", result.stdout)
             self.assertIn("README.md", result.stdout)
+            self.assertNotIn("official", result.stdout.lower())

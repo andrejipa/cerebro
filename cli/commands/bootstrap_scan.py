@@ -81,8 +81,20 @@ def _signal_label(score: int) -> str:
     return "weak"
 
 
-def _family_for_type(artifact_type: str, lower_name: str) -> str:
-    if "retomada" in lower_name or "memoria" in lower_name:
+def _stem_tokens(lower_stem: str) -> tuple[str, ...]:
+    return tuple(token for token in re.split(r"[^a-z0-9]+", lower_stem) if token)
+
+
+def _token_present(tokens: tuple[str, ...], token: str) -> bool:
+    return token in tokens
+
+
+def _all_tokens_present(tokens: tuple[str, ...], *expected: str) -> bool:
+    return all(token in tokens for token in expected)
+
+
+def _family_for_type(artifact_type: str, tokens: tuple[str, ...]) -> str:
+    if _token_present(tokens, "retomada") or _token_present(tokens, "memoria"):
         return "continuity-memory"
     if artifact_type == "canon-operacional":
         return "operational-canon"
@@ -104,6 +116,7 @@ def _classify_candidate(relative_path: Path) -> BootstrapCandidate | None:
     lower_parts = [part.lower() for part in relative_path.parts]
     lower_name = relative_path.name.lower()
     lower_stem = relative_path.stem.lower()
+    tokens = _stem_tokens(lower_stem)
     depth = _depth(relative_path)
 
     if relative_path.suffix.lower() not in TEXTUAL_SUFFIXES:
@@ -123,25 +136,27 @@ def _classify_candidate(relative_path: Path) -> BootstrapCandidate | None:
     if lower_name in {"package.json", "pyproject.toml", "app.json", "cargo.toml", "go.mod"}:
         add("definicao-de-projeto", 70, "project-definition file")
 
-    if any(token in lower_stem for token in ("entrada", "inicio", "start", "bootstrap")):
+    if any(_token_present(tokens, token) for token in ("entrada", "inicio", "start", "bootstrap")):
         add("continuidade", 80, "explicit bootstrap or entrypoint naming")
 
-    if any(token in lower_stem for token in ("contexto", "continuidade", "retorno", "retomada", "memoria")):
+    if any(_token_present(tokens, token) for token in ("contexto", "continuidade", "retorno", "retomada", "memoria")):
         add("continuidade", 78, "continuity or return naming")
 
-    if "mestre" in lower_stem:
+    if _token_present(tokens, "mestre"):
         add("continuidade", 10, "master-context naming")
 
-    if any(token in lower_stem for token in ("canon", "canone")):
+    if any(_token_present(tokens, token) for token in ("canon", "canone")):
         add("canon-operacional", 85, "explicit canon naming")
 
-    if any(token in lower_stem for token in ("estado_atual", "vigente")):
+    if _all_tokens_present(tokens, "estado", "atual") or _token_present(tokens, "vigente"):
         add("canon-operacional", 88, "explicit current-state naming")
 
-    if "ordem" in lower_stem and any(token in lower_stem for token in ("canon", "operacional")):
+    if _token_present(tokens, "ordem") and (
+        _token_present(tokens, "canon") or _token_present(tokens, "operacional")
+    ):
         add("canon-operacional", 72, "ordering signal tied to operational canon")
 
-    if any(token in lower_stem for token in ("projeto", "project", "gdd")):
+    if any(_token_present(tokens, token) for token in ("projeto", "project", "gdd")):
         add("definicao-de-projeto", 72, "project-definition naming")
 
     if "controle" in lower_parts:
@@ -189,7 +204,7 @@ def _classify_candidate(relative_path: Path) -> BootstrapCandidate | None:
         signal_label=_signal_label(score),
         score=score,
         reasons=tuple(reasons[artifact_type]),
-        family=_family_for_type(artifact_type, lower_name),
+        family=_family_for_type(artifact_type, tokens),
         date_key=_extract_date_key(relative_path),
     )
 
