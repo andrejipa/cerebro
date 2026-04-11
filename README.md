@@ -2,6 +2,16 @@
 
 Minimal local checkpoint CLI for agent-assisted execution.
 
+## Baseline
+
+The repository history was rewritten on April 11, 2026.
+
+- baseline commit after history cleanup: `4be0b08`
+- the tracked repository now contains only the active product
+- pre-cleanup history and heavy legacy material were removed from Git history
+
+Any clone created before April 11, 2026 is obsolete and must not be merged back into this repository.
+
 ## Product Scope
 
 This repository tracks only the active v1 product:
@@ -15,6 +25,20 @@ This repository tracks only the active v1 product:
 - `.github/`: CI workflows
 
 Historical material, sandboxes, heavy source libraries, and local backups are intentionally excluded from versioned product scope.
+
+## Re-Clone After History Rewrite
+
+If you cloned the repository before April 11, 2026, discard that clone and create a new one.
+
+```powershell
+cd ..
+git clone https://github.com/andrejipa/cerebro.git cerebro
+cd cerebro
+pip install -e .
+python -m unittest discover -s tests -v
+```
+
+Do not merge, rebase, or cherry-pick from a pre-rewrite clone without explicitly auditing the files involved.
 
 ## What It Does
 
@@ -69,3 +93,21 @@ The following categories are preserved only as local, ignored material when need
 - `_backup_pre_cleanup/`: local safety snapshots created before repository cleanup
 
 These paths are not part of the active product and are not required for installation, tests, or CI.
+
+## Repository Policy
+
+Only the following belong in the tracked repository:
+
+- product code in `core/`, `cli/`, and `extensions/`
+- automated tests in `tests/`
+- essential product documentation in `README.md`, `docs/adr/`, `views/`, and root architecture docs
+- CI and packaging metadata such as `.github/`, `.gitignore`, and `pyproject.toml`
+
+The following do not belong in tracked history:
+
+- legacy systems, historical snapshots, or migration leftovers
+- sandboxes, temporary workspaces, and local experiments
+- source libraries, PDFs, spreadsheets, exports, or knowledge dumps
+- generated artifacts, backups, and machine-local state
+
+Keep auxiliary material outside the repository or inside ignored paths such as `_local/`, `_legacy/`, and `_backup_pre_cleanup/`.
