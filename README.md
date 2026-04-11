@@ -80,6 +80,7 @@ cerebro bootstrap-scan --root path\to\project
 
 `bootstrap-scan` only suggests candidate entry files by path and filename signals. It is heuristic assistance, not project truth. It does not create `.cerebro`, does not register `sources`, and does not bypass the manual `import-context` decision.
 It is not a resume command, not a truth gate, and not a substitute for the standard runtime entrypoint.
+If you use `--root` from another directory, change into the target project before running `import-context`, `checkpoint`, `analyze`, or any export.
 
 ## Daily Flow
 

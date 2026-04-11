@@ -305,7 +305,8 @@ def run_bootstrap_scan(cwd: Path, args: object | None = None) -> int:
         f"shortlist_limit: {limit}",
         f"candidates_found: {len(matched_candidates)}",
         f"shortlist_returned: {len(shortlist)}",
-        "next_action: review the shortlist and choose explicit files for `cerebro import-context --files ...`",
+        f'next_workdir: cd "{root}"',
+        "next_action: after reviewing the shortlist, run `cerebro import-context --files ...` from the target project directory",
     ]
 
     for index, candidate in enumerate(shortlist, start=1):

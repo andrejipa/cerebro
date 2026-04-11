@@ -46,9 +46,12 @@ def build_parser() -> argparse.ArgumentParser:
     bootstrap_scan_parser = subparsers.add_parser(
         "bootstrap-scan",
         help="suggest likely bootstrap entry files without changing runtime state",
-        description="Assistive-only scan that suggests candidate entry files from path and filename signals only; it does not create or modify runtime state.",
+        description="Assistive-only scan that suggests candidate entry files from path and filename signals only; it does not create or modify runtime state. `--root` affects this scan only; later commands still use the current working directory unless you change into the target project first.",
     )
-    bootstrap_scan_parser.add_argument("--root", help="explicit project root to scan; defaults to the current directory")
+    bootstrap_scan_parser.add_argument(
+        "--root",
+        help="explicit project root to scan; defaults to the current directory and does not change where later commands run",
+    )
     bootstrap_scan_parser.add_argument(
         "--limit",
         type=int,
@@ -60,7 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     import_parser = subparsers.add_parser(
         "import-context",
         help="replace the registered context source files",
-        description="Register an explicit set of source files used as context anchors.",
+        description="Register an explicit set of source files used as context anchors. File paths and runtime state are resolved from the current working directory.",
     )
     import_parser.add_argument("--files", nargs="+", required=True, help="explicit relative file paths")
     import_parser.set_defaults(handler=run_import_context)

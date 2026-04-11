@@ -217,6 +217,8 @@ class BootstrapScanTests(unittest.TestCase):
             self.assertIn("path and filename", help_result.stdout)
             self.assertIn("signals only", help_result.stdout)
             self.assertIn("does not create or modify runtime state", help_result.stdout)
+            self.assertIn("`--root` affects", help_result.stdout)
+            self.assertIn("this scan only", help_result.stdout)
             self.assertIn("greater than zero", help_result.stdout)
 
             result = subprocess.run(
@@ -230,6 +232,7 @@ class BootstrapScanTests(unittest.TestCase):
             self.assertIn("heuristic_basis: path-and-filename signals only", result.stdout)
             self.assertIn("candidates_found: 1", result.stdout)
             self.assertIn("shortlist_returned: 1", result.stdout)
+            self.assertIn(f'next_workdir: cd "{root}"', result.stdout)
             self.assertIn("suggested_type: readme", result.stdout)
             self.assertIn("next_action:", result.stdout)
             self.assertIn("README.md", result.stdout)
@@ -430,3 +433,53 @@ class BootstrapScanTests(unittest.TestCase):
             self.assertEqual(analyze_result.returncode, 0)
             self.assertIn("analysis_ready", analyze_result.stdout)
             self.assertIn("validation: ok", analyze_result.stdout)
+
+    def test_explicit_root_scan_requires_switching_to_target_directory_for_runtime_commands(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            (root / "README.md").write_text("root readme", encoding="utf-8")
+
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+
+            init_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "init"],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(init_result.returncode, 0)
+
+            scan_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "bootstrap-scan", "--root", str(root)],
+                cwd=REPO_ROOT,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(scan_result.returncode, 0)
+            self.assertIn(f'next_workdir: cd "{root}"', scan_result.stdout)
+
+            wrong_dir_import = subprocess.run(
+                [sys.executable, "-m", "cli.main", "import-context", "--files", "README.md"],
+                cwd=REPO_ROOT,
+                env=env,
+                input="y\n",
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(wrong_dir_import.returncode, 1)
+            self.assertIn("state file not found", wrong_dir_import.stdout)
+
+            correct_dir_import = subprocess.run(
+                [sys.executable, "-m", "cli.main", "import-context", "--files", "README.md"],
+                cwd=root,
+                env=env,
+                input="y\n",
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(correct_dir_import.returncode, 0)
+            self.assertIn("sources_registered: 1", correct_dir_import.stdout)
