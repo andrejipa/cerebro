@@ -76,3 +76,9 @@ extension -> core (implicit write)
 - CLI commands may orchestrate calls, but may not manage state files directly.
 - Tests may manipulate files directly only to simulate corruption and failure conditions.
 - When an extension design is ambiguous, the correct fallback is to not implement it until the boundary is explicit.
+
+## Evolution Guard
+
+- Public-surface changes must add proportional adversarial and regression coverage.
+- Exports and integrations consume canonical state and persisted validation results; they do not become a second validation gate.
+- Additional hardening should stop unless a concrete new evasion path appears or the public surface actually changes.

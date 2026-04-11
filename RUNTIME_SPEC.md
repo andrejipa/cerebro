@@ -196,6 +196,7 @@ They may not:
 - alter state directly
 - infer context
 - create a second source of truth
+- reopen validation independently from the persisted canonical state
 
 ## 11. Critical Separation
 

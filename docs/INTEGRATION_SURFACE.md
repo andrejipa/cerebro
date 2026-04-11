@@ -63,3 +63,5 @@ Unsafe integration shapes include:
 ## Failsafe
 
 If an integration design needs new authority over state, validation, `analyze`, session policy, or schema, stop and resolve that at the architecture level before implementation.
+
+Any new or changed integration must add proportional adversarial and regression coverage for the public behavior it introduces.

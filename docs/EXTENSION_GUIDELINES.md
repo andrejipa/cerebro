@@ -53,6 +53,8 @@ These are implementation guidelines that support the mandatory rules.
 - fail explicitly when the canonical state cannot be read safely
 - keep filesystem writes outside `.cerebro/`
 - keep extension code small, obvious, and replaceable
+- add proportional adversarial and regression tests whenever an extension changes the public surface
+- treat persisted validation as input, not something the extension may reopen independently
 
 ## Correct Example
 

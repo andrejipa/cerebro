@@ -1,3 +1,5 @@
+"""Permanent adversarial regression layer for runtime corruption and stress scenarios."""
+
 from __future__ import annotations
 
 import io

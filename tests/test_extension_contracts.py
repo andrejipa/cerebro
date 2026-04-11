@@ -1,3 +1,5 @@
+"""Shared contract tests for every tracked read-only export."""
+
 from __future__ import annotations
 
 import json

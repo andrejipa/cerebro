@@ -30,6 +30,7 @@ This document defines the stable public contract of the v1 core.
 - `resume` only succeeds after `validate OK`
 - `session.local.json` never changes business validity
 - only `StateStore` may read or write runtime JSON files
+- consumers outside the core stay subordinate to persisted validation state and do not open a second validation gate
 
 ## Stable Public API
 

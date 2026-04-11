@@ -1,3 +1,5 @@
+"""Structural and documentary guardrails for the permanent runtime boundary."""
+
 from __future__ import annotations
 
 import ast
@@ -153,6 +155,27 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("`alignment-export` is blocked as a separate front", board)
         self.assertIn("- State: blocked", handoff)
         self.assertIn("`alignment-export` remains blocked", reuse_map)
+
+    def test_robustness_baseline_and_policy_are_explicit_in_docs(self) -> None:
+        baseline = (REPO_ROOT / "docs" / "ROBUSTNESS_BASELINE.md").read_text(encoding="utf-8")
+        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        extension_guidelines = (REPO_ROOT / "docs" / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
+        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
+        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        runtime_spec = (REPO_ROOT / "RUNTIME_SPEC.md").read_text(encoding="utf-8")
+        adr = (REPO_ROOT / "docs" / "adr" / "ADR-009-adversarial-revalidation-baseline.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("No critical or moderate failures were found", baseline)
+        self.assertIn("exports do not revalidate the runtime by themselves", baseline)
+        self.assertIn("Any change that expands or changes the public surface must add proportional adversarial and regression coverage", baseline)
+        self.assertIn("Public-surface changes must add proportional adversarial and regression coverage.", boundaries)
+        self.assertIn("add proportional adversarial and regression tests whenever an extension changes the public surface", extension_guidelines)
+        self.assertIn("Any new or changed integration must add proportional adversarial and regression coverage", integration_surface)
+        self.assertIn("do not open a second validation gate", core_contract)
+        self.assertIn("reopen validation independently from the persisted canonical state", runtime_spec)
+        self.assertIn("Adopt the adversarial revalidation baseline as a permanent evolution rule", adr)
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
