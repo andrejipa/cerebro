@@ -80,13 +80,16 @@ Reject a proposed advance immediately when it is based on:
 
 ## Pilot Status
 
-- No pilot is currently authorized.
+- Approved minimum safe advance:
+  - `bootstrap-scan` as assistive discovery only
 
-Reason:
+The approved pilot remains inside the freeze policy because it:
 
-- no candidate is currently both clearly valuable and clearly justified by a concrete repeated unmet use case
-- the remaining plausible next steps now sit in either external analysis or medium-risk graph-style derivation
-- opening either one without a documented case would be continuation by momentum rather than minimum safe advance
+- does not create `.cerebro`
+- does not register `sources`
+- does not call `import-context`
+- does not alter the runtime contract
+- reduces bootstrap friction without gaining authority over state
 
 ## Out Of Scope While Frozen
 

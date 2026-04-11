@@ -279,7 +279,21 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Classify the proposal as `export`, `analysis`, or another external shape.", freeze_policy)
         self.assertIn("core expansion or schema growth", freeze_policy)
         self.assertIn("one minimum safe external increment at a time", readme)
-        self.assertIn("No pilot is currently authorized.", freeze_policy)
+        self.assertIn("`bootstrap-scan` as assistive discovery only", freeze_policy)
+        self.assertIn("does not register `sources`", freeze_policy)
+
+    def test_bootstrap_scan_docs_keep_it_assistive_only(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_NEXT_LAYER_DECISION.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("bootstrap-scan", readme)
+        self.assertIn("does not create `.cerebro`", readme)
+        self.assertIn("does not register `sources`", readme)
+        self.assertIn("does not bypass the manual `import-context` decision", readme)
+        self.assertIn("`bootstrap-scan` as assistive discovery only", handoff)
+        self.assertIn("suggests candidates but does not decide canonical context", handoff)
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
@@ -634,6 +648,28 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
         self.assertEqual(offenders, [])
 
+    def test_bootstrap_scan_command_remains_assistive_only(self) -> None:
+        path = REPO_ROOT / "cli" / "commands" / "bootstrap_scan.py"
+        tree = parse_python(path)
+        offenders: list[str] = []
+        forbidden_attribute_calls = {"read_bytes", "read_text", "write_bytes", "write_text"}
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == "json" or alias.name.startswith("core"):
+                        offenders.append(f"import {alias.name}")
+            if isinstance(node, ast.ImportFrom):
+                if node.module == "json" or (node.module and node.module.startswith("core")):
+                    offenders.append(f"from {node.module}")
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "open":
+                offenders.append("calls open")
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                if node.func.attr in forbidden_attribute_calls:
+                    offenders.append(f"calls .{node.func.attr}")
+
+        self.assertEqual(offenders, [])
+
     def test_cli_subcommand_surface_is_canonical_and_alias_free(self) -> None:
         parser = build_parser()
         subparsers = next(
@@ -641,6 +677,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         )
         expected = {
             "analyze",
+            "bootstrap-scan",
             "init",
             "import-context",
             "checkpoint",

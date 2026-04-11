@@ -31,6 +31,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertIn("Use `cerebro analyze` as the standard", result.stdout)
         self.assertIn("entrypoint.", result.stdout)
         self.assertIn("analyze", result.stdout)
+        self.assertIn("bootstrap-scan", result.stdout)
         self.assertIn("import-context", result.stdout)
         self.assertIn("handoff-export", result.stdout)
         self.assertIn("impact-export", result.stdout)
@@ -42,6 +43,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
     def test_subcommand_help_pages(self) -> None:
         for command in (
             "analyze",
+            "bootstrap-scan",
             "init",
             "import-context",
             "checkpoint",

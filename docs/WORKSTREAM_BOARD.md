@@ -171,6 +171,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - the external-analysis boundary is documented up to the safe conceptual limit
   - `alignment-export` remains explicitly blocked because the contract still has no canonical alignment artifact
   - the deliberate freeze policy, conservatism assessment, minimum safe advance rule, and resume protocol are now documented as the default operational state
+  - `bootstrap-scan` was approved and implemented as one assistive-only minimum safe advance that suggests candidates without touching runtime state
 - Pending:
   - none while the deliberate freeze remains in effect
 - Blockers:

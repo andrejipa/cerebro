@@ -129,10 +129,12 @@
 
 ## Pilot Verdict
 
-- No pilot is currently approved.
+- Approved pilot:
+  - `bootstrap-scan` as assistive discovery only
 - Reason:
-  - there is no documented repeated unmet use case that cleanly justifies a first external-analysis increment
-  - the next plausible candidates are no longer low-risk exports
+  - bootstrap friction appeared in repeated real-project validation
+  - a shortlist-only scan can reduce manual pointing without creating runtime authority
+  - it stays below the external-analysis boundary because it suggests candidates but does not decide canonical context
 
 ## Resume Protocol
 

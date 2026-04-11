@@ -72,6 +72,14 @@ cerebro validate
 
 Bootstrap a new instance once with `init`, `import-context`, `checkpoint`, and `validate`.
 
+Optional assistive step before `import-context` in a new or unknown project:
+
+```powershell
+cerebro bootstrap-scan --root path\to\project
+```
+
+`bootstrap-scan` only suggests candidate entry files by path and filename signals. It does not create `.cerebro`, does not register `sources`, and does not bypass the manual `import-context` decision.
+
 ## Daily Flow
 
 ```powershell

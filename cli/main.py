@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from cli.commands.analyze import run_analyze
+from cli.commands.bootstrap_scan import run_bootstrap_scan
 from cli.commands.checkpoint import run_checkpoint
 from cli.commands.handoff_export import run_handoff_export
 from cli.commands.impact_export import run_impact_export
@@ -41,6 +42,20 @@ def build_parser() -> argparse.ArgumentParser:
         description="Create the local checkpoint directory and initial state.",
     )
     init_parser.set_defaults(handler=run_init)
+
+    bootstrap_scan_parser = subparsers.add_parser(
+        "bootstrap-scan",
+        help="suggest likely bootstrap entry files without changing runtime state",
+        description="Assistive-only scan that suggests candidate entry files; it does not create or modify runtime state.",
+    )
+    bootstrap_scan_parser.add_argument("--root", help="explicit project root to scan; defaults to the current directory")
+    bootstrap_scan_parser.add_argument(
+        "--limit",
+        type=int,
+        default=6,
+        help="maximum number of suggested candidates to print",
+    )
+    bootstrap_scan_parser.set_defaults(handler=run_bootstrap_scan)
 
     import_parser = subparsers.add_parser(
         "import-context",
