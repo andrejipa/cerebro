@@ -210,15 +210,24 @@ class ArchitectureIsolationTests(unittest.TestCase):
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_NEXT_LAYER_DECISION.md").read_text(
             encoding="utf-8"
         )
+        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
 
         self.assertIn("## Next Layer Transition", board)
-        self.assertIn("- State: decision prepared", board)
-        self.assertIn("- State: current low-risk phase closed", handoff)
+        self.assertIn("- State: deliberate freeze baselined", board)
+        self.assertIn("break the freeze only through the formal trigger and resume protocol", board)
+        self.assertIn("- State: deliberate freeze approved and baselined", handoff)
         self.assertIn("Option 1: First Concrete External Analysis", handoff)
         self.assertIn("Option 2: Medium-Risk Graph View", handoff)
         self.assertIn("Option 3: Deliberate Freeze", handoff)
         self.assertIn("Recommended option now:", handoff)
         self.assertIn("Option 3, deliberate freeze", handoff)
+        self.assertIn("Approved Freeze Trigger", handoff)
+        self.assertIn("Resume Protocol", handoff)
+        self.assertIn("The project is deliberately frozen for new capability growth", freeze_policy)
+        self.assertIn("The following do not break the freeze:", freeze_policy)
+        self.assertIn("a concrete and repeated use case exists", freeze_policy)
+        self.assertIn("curiosity", freeze_policy)
+        self.assertIn('abstract desire to get "closer to the ideal"', freeze_policy)
 
     def test_external_analysis_boundary_handoff_is_explicit_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
@@ -252,6 +261,19 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("do not open a second validation gate", core_contract)
         self.assertIn("reopen validation independently from the persisted canonical state", runtime_spec)
         self.assertIn("Adopt the adversarial revalidation baseline as a permanent evolution rule", adr)
+
+    def test_primary_docs_make_deliberate_freeze_explicit(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+
+        self.assertIn("The project is deliberately frozen for new capability growth", readme)
+        self.assertIn("growth beyond the current public surface requires an explicit demand and classification step", core_contract)
+        self.assertIn("further capability growth stays deliberately frozen", boundaries)
+        self.assertIn("The deliberate freeze may be broken only when", freeze_policy)
+        self.assertIn("Classify the proposal as `export`, `analysis`, or another external shape.", freeze_policy)
+        self.assertIn("core expansion or schema growth", freeze_policy)
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))

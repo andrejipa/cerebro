@@ -85,3 +85,5 @@ extension -> core (implicit write)
 - Exports and integrations consume canonical state and persisted validation results; they do not become a second validation gate.
 - Additional hardening should stop unless a concrete new evasion path appears or the public surface actually changes.
 - CLI command names stay canonical unless an explicit architecture decision authorizes aliases.
+- After the low-risk export slice was exhausted, further capability growth stays deliberately frozen until a concrete repeated use case is recorded and classified.
+- Curiosity, aesthetic polish, or abstract pressure to "get closer to the ideal" do not justify opening the next layer.

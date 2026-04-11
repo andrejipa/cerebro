@@ -31,6 +31,7 @@ This document defines the stable public contract of the v1 core.
 - `session.local.json` never changes business validity
 - only `StateStore` may read or write runtime JSON files
 - consumers outside the core stay subordinate to persisted validation state and do not open a second validation gate
+- growth beyond the current public surface requires an explicit demand and classification step before implementation
 
 ## Stable Public API
 

@@ -1,6 +1,6 @@
 # Handoff: Next Layer Decision
 
-- State: current low-risk phase closed
+- State: deliberate freeze approved and baselined
 
 ## Phase Closure
 
@@ -96,8 +96,30 @@
 2. Consider Option 2 only if that need is genuinely structural or navigational and cannot be met by export or simple analysis.
 3. Keep Option 3 as the default fallback whenever no concrete demand is present.
 
-## First Exact Action If The Recommendation Is Approved
+## Approved Freeze Trigger
+
+- Break the freeze only when at least one of the following is true:
+  - a concrete and repeated use case exists that current `analyze` plus current exports cannot satisfy cleanly
+  - a real operational need is documented and shown to be unmet by the current runtime and export surface
+  - an explicit architecture decision authorizes one narrowly defined external-analysis read-only use case
+- The following do not break the freeze:
+  - curiosity
+  - aesthetic improvement
+  - abstract pressure to "get closer to the ideal"
+  - speculative capability growth without a recurring use case
+
+## Resume Protocol
+
+1. Write one concrete use case in operational terms.
+2. Record why the current `analyze` flow plus current exports do not satisfy it cleanly.
+3. Classify the proposal as `export`, `analysis`, or another external shape.
+4. Check whether it requires a new canonical concept, a new source of truth, or core changes.
+5. Check whether it touches `validate`, `analyze`, `state.json`, session policy, or runtime authority.
+6. Authorize only if it stays external, derived, and proportionally testable.
+7. Otherwise block it explicitly before implementation.
+
+## First Exact Action Under The Approved Freeze
 
 - Do not implement a new layer yet.
 - Keep the project in corrective-maintenance mode only.
-- Require the next proposed expansion to arrive as one concrete external-analysis use case, written against the existing analysis boundary, before any code is opened.
+- Require the next proposed expansion to arrive as one concrete use case written against the existing boundary before any code is opened.

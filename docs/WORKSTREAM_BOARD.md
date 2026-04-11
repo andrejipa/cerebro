@@ -164,17 +164,18 @@ This board tracks the current multi-front execution state with explicit stop con
 ## Next Layer Transition
 
 - Objective: leave the project ready for the next layer only by explicit decision
-- State: decision prepared
+- State: deliberate freeze baselined
 - Executed:
   - the low-risk read-only export slice is exhausted
   - the core-extension boundary is hardened and adversarially revalidated
   - the external-analysis boundary is documented up to the safe conceptual limit
   - `alignment-export` remains explicitly blocked because the contract still has no canonical alignment artifact
+-  the deliberate freeze policy, resume trigger, and resume protocol are now documented as the default operational state
 - Pending:
-  - choose between a first concrete external analysis use case, a medium-risk graph-style view, or a deliberate freeze
+  - none while the deliberate freeze remains in effect
 - Blockers:
   - opening the next layer now would require an explicit semantic choice rather than more autonomous hardening
 - Risks:
   - automatic continuation from here would create pressure to invent semantics instead of selecting them consciously
 - Next step:
-  - use the next-layer decision handoff and choose one option explicitly before any new implementation
+  - keep corrective maintenance only, and break the freeze only through the formal trigger and resume protocol
