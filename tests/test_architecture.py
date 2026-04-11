@@ -194,6 +194,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("official operational baseline", roles)
         self.assertIn("The core role set is closed for the current layer.", roles)
         self.assertIn("The auxiliary role set below is the official baseline for continued operation.", roles)
+        self.assertIn("Do not add or promote auxiliary roles unless a repeated real bottleneck proves the current team insufficient.", roles)
         self.assertIn("The core cycle remains the same:", roles)
         self.assertIn("1. Estressador produces findings.", roles)
         self.assertIn("2. Guardião approves or blocks the safe slice.", roles)
@@ -250,6 +251,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
             "No auxiliary role should be added, promoted, or kept by default unless repeated real rounds demonstrate a concrete unresolved bottleneck.",
             protocol,
         )
+        self.assertIn("Treat the current role roster as closed for ordinary operation.", protocol)
         self.assertIn("the current team remains frozen as the operational baseline", protocol)
         self.assertIn("## Relationship To The Freeze", protocol)
         self.assertIn("Until such a decision exists, the protocol prepares the next layer but does not initiate it.", protocol)
@@ -270,6 +272,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Avaliador de Evidencia marked the first two cases as demonstrated", board)
         self.assertIn("the refined team now has operational proof", board)
         self.assertIn("the official operational baseline and remains frozen", board)
+        self.assertIn("Team-shape discussion is closed until a formal role-layer trigger is documented against repeated real rounds.", board)
         self.assertIn("## Refined Agent Team Validation", report)
         self.assertIn("`Triador de Casos` reduced five raw findings to three cases", report)
         self.assertIn("`Avaliador de Evidencia` then marked two cases as demonstrated", report)
@@ -278,6 +281,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("a noisy set of five raw findings was reduced to two demonstrated executable cases", handoff)
         self.assertIn("a new auxiliary role now requires a fresh, repeated bottleneck", handoff)
         self.assertIn("treat the current team shape as the frozen operational baseline", handoff)
+        self.assertIn("role-shape experimentation is closed for the current layer", handoff)
 
     def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")

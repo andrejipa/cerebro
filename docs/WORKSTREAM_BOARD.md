@@ -13,6 +13,7 @@ This board tracks the current multi-front execution state with explicit stop con
 - Visionário confirmed that the refined team now has operational proof and that no additional permanent role is justified by the observed round.
 - Final closure review found one last external-safe slice, closed it completely, and confirmed that no additional safe executable work remains.
 - The refined external team is now the official operational baseline and remains frozen unless a repeated real bottleneck triggers formal reopening.
+- Team-shape discussion is closed until a formal role-layer trigger is documented against repeated real rounds.
 
 ## Extensions Read-Only
 

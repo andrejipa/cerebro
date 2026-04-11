@@ -116,6 +116,7 @@ When it stops:
 These roles exist to reduce overload in the permanent core roles.
 They are optional and must remain subordinate to the same contract.
 The auxiliary role set below is the official baseline for continued operation.
+Do not add or promote auxiliary roles unless a repeated real bottleneck proves the current team insufficient.
 
 ### Triador de Casos
 

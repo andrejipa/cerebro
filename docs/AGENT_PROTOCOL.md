@@ -24,6 +24,7 @@ Auxiliary roles:
 
 No additional permanent role should be introduced unless `AGENT_ROLES.md` is revised explicitly.
 No auxiliary role should be added, promoted, or kept by default unless repeated real rounds demonstrate a concrete unresolved bottleneck.
+Treat the current role roster as closed for ordinary operation.
 
 ## Round States
 
