@@ -11,6 +11,7 @@ from cli.commands.handoff_export import run_handoff_export
 from cli.commands.import_context import run_import_context
 from cli.commands.init import run_init
 from cli.commands.resume import run_resume
+from cli.commands.status_export import run_status_export
 from cli.commands.validate import run_validate
 from cli.output import print_fail, user_error
 
@@ -76,6 +77,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     handoff_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     handoff_parser.set_defaults(handler=run_handoff_export)
+
+    status_parser = subparsers.add_parser(
+        "status-export",
+        help="render a short operational status from the current state",
+        description="Export a compact read-only operational status derived from the canonical state.",
+    )
+    status_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
+    status_parser.set_defaults(handler=run_status_export)
 
     validate_parser = subparsers.add_parser(
         "validate",

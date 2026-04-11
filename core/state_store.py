@@ -108,6 +108,10 @@ class StateStore:
         """Return the current sources via the stable read interface."""
         return self.read_snapshot().sources
 
+    def has_active_session(self) -> bool:
+        """Return whether a local session file is currently present."""
+        return self.session_path.exists()
+
     def is_runtime_path(self, path: str | Path) -> bool:
         """Return whether a path falls under the runtime-owned directory."""
         candidate = Path(path)

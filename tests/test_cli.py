@@ -33,9 +33,19 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertIn("analyze", result.stdout)
         self.assertIn("import-context", result.stdout)
         self.assertIn("handoff-export", result.stdout)
+        self.assertIn("status-export", result.stdout)
 
     def test_subcommand_help_pages(self) -> None:
-        for command in ("analyze", "init", "import-context", "checkpoint", "resume", "handoff-export", "validate"):
+        for command in (
+            "analyze",
+            "init",
+            "import-context",
+            "checkpoint",
+            "resume",
+            "handoff-export",
+            "status-export",
+            "validate",
+        ):
             with self.subTest(command=command):
                 result = subprocess.run(
                     [sys.executable, "-m", "cli.main", command, "--help"],
