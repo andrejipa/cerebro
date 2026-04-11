@@ -71,10 +71,24 @@ def export_handoff_markdown(root: str | Path, exported_at: str | None = None) ->
 
 def write_handoff_markdown(root: str | Path, output_path: str | Path, exported_at: str | None = None) -> Path:
     """Write the rendered handoff to an explicit output file."""
-    markdown = export_handoff_markdown(root, exported_at=exported_at)
+    store = StateStore(root)
+    markdown = export_handoff_markdown(store.root, exported_at=exported_at)
     target = Path(output_path)
     if not target.is_absolute():
-        target = Path(root) / target
+        target = store.root / target
+    target = target.resolve()
+    _reject_runtime_output_path(store, target)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(markdown, encoding="utf-8", newline="\n")
     return target
+
+
+def _reject_runtime_output_path(store: StateStore, target: Path) -> None:
+    """Reject writes to runtime-owned files and directories."""
+    runtime_root = store.cerebro_dir.resolve()
+    try:
+        target.relative_to(runtime_root)
+    except ValueError:
+        return
+
+    raise HandoffExportError(f"output path is reserved for runtime files: {target}")

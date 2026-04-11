@@ -12,7 +12,7 @@ from pathlib import Path
 from cli.commands.handoff_export import run_handoff_export
 from cli.commands.init import run_init
 from core.state_store import StateStore
-from extensions.handoff_export.exporter import HandoffExportError, export_handoff_markdown
+from extensions.handoff_export.exporter import HandoffExportError, export_handoff_markdown, write_handoff_markdown
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -83,15 +83,48 @@ class HandoffExportTests(unittest.TestCase):
                     "constraints": [],
                 }
             )
+            store.open_session("alice")
             before_state = store.state_path.read_text(encoding="utf-8")
+            before_session = store.session_path.read_text(encoding="utf-8")
             before_revision = store.read_snapshot().revision
 
             export_handoff_markdown(root, exported_at="2026-04-10T12:00:00+00:00")
 
             after_state = store.state_path.read_text(encoding="utf-8")
+            after_session = store.session_path.read_text(encoding="utf-8")
             after_revision = store.read_snapshot().revision
             self.assertEqual(before_revision, after_revision)
             self.assertEqual(before_state, after_state)
+            self.assertEqual(before_session, after_session)
+
+    def test_export_rejects_runtime_output_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            store.update_checkpoint(
+                {
+                    "goal": "Goal",
+                    "summary": "Summary",
+                    "next_step": "Next",
+                    "constraints": [],
+                }
+            )
+            store.open_session("alice")
+            before_state = store.state_path.read_text(encoding="utf-8")
+            before_session = store.session_path.read_text(encoding="utf-8")
+
+            with self.assertRaises(HandoffExportError):
+                write_handoff_markdown(root, ".cerebro/state.json")
+
+            with self.assertRaises(HandoffExportError):
+                write_handoff_markdown(root, ".cerebro/session.local.json")
+
+            with self.assertRaises(HandoffExportError):
+                write_handoff_markdown(root, ".cerebro/handoff.md")
+
+            self.assertEqual(before_state, store.state_path.read_text(encoding="utf-8"))
+            self.assertEqual(before_session, store.session_path.read_text(encoding="utf-8"))
 
     def test_cli_exports_to_stdout(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
