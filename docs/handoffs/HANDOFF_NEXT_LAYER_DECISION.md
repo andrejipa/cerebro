@@ -90,6 +90,16 @@
   - opening analysis without a concrete use case would be continuation by momentum, not by need
   - opening a graph view first would take the riskier path before proving that a narrower analysis case is insufficient
 
+## Conservatism Verdict
+
+- Current verdict:
+  - healthy conservatism, not excessive conservatism
+- Basis:
+  - no critical or moderate failures were found in adversarial revalidation
+  - the low-risk export slice was exhausted explicitly
+  - the current boundary is clear and enforced
+  - no repeated unmet use case is currently documented against `analyze` plus the six exports
+
 ## Order If Conditions Change
 
 1. Open Option 1 first when a narrow, recurring, clearly derived analysis use case is explicitly named.
@@ -107,6 +117,22 @@
   - aesthetic improvement
   - abstract pressure to "get closer to the ideal"
   - speculative capability growth without a recurring use case
+
+## Minimum Safe Advance Rule
+
+- If the freeze is broken, authorize only one minimum safe external increment at a time.
+- That increment must:
+  - stay external to the core
+  - consume canonical snapshot data or persisted validation metadata only
+  - avoid reopening validation, touching `.cerebro/`, or changing `analyze`, `validate`, schema, or session policy
+  - remain small enough for proportional adversarial coverage and clean-environment validation
+
+## Pilot Verdict
+
+- No pilot is currently approved.
+- Reason:
+  - there is no documented repeated unmet use case that cleanly justifies a first external-analysis increment
+  - the next plausible candidates are no longer low-risk exports
 
 ## Resume Protocol
 

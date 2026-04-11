@@ -170,12 +170,13 @@ This board tracks the current multi-front execution state with explicit stop con
   - the core-extension boundary is hardened and adversarially revalidated
   - the external-analysis boundary is documented up to the safe conceptual limit
   - `alignment-export` remains explicitly blocked because the contract still has no canonical alignment artifact
--  the deliberate freeze policy, resume trigger, and resume protocol are now documented as the default operational state
+  - the deliberate freeze policy, conservatism assessment, minimum safe advance rule, and resume protocol are now documented as the default operational state
 - Pending:
   - none while the deliberate freeze remains in effect
 - Blockers:
   - opening the next layer now would require an explicit semantic choice rather than more autonomous hardening
 - Risks:
   - automatic continuation from here would create pressure to invent semantics instead of selecting them consciously
+  - false urgency could reopen growth without a concrete repeated unmet use case
 - Next step:
-  - keep corrective maintenance only, and break the freeze only through the formal trigger and resume protocol
+  - keep corrective maintenance only, break the freeze only through the formal trigger and resume protocol, and authorize at most one minimum safe external increment if the trigger is met

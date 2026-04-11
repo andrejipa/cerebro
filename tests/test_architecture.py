@@ -222,8 +222,12 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Recommended option now:", handoff)
         self.assertIn("Option 3, deliberate freeze", handoff)
         self.assertIn("Approved Freeze Trigger", handoff)
+        self.assertIn("Minimum Safe Advance Rule", handoff)
+        self.assertIn("Pilot Verdict", handoff)
         self.assertIn("Resume Protocol", handoff)
         self.assertIn("The project is deliberately frozen for new capability growth", freeze_policy)
+        self.assertIn("Current classification: healthy conservatism, not excessive conservatism.", freeze_policy)
+        self.assertIn("one minimum safe increment at a time", freeze_policy)
         self.assertIn("The following do not break the freeze:", freeze_policy)
         self.assertIn("a concrete and repeated use case exists", freeze_policy)
         self.assertIn("curiosity", freeze_policy)
@@ -274,6 +278,8 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("The deliberate freeze may be broken only when", freeze_policy)
         self.assertIn("Classify the proposal as `export`, `analysis`, or another external shape.", freeze_policy)
         self.assertIn("core expansion or schema growth", freeze_policy)
+        self.assertIn("one minimum safe external increment at a time", readme)
+        self.assertIn("No pilot is currently authorized.", freeze_policy)
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))

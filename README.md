@@ -93,6 +93,7 @@ Use the canonical CLI command names as documented; do not rely on aliases or syn
 The core runtime and the current read-only export surface are complete for the current demand.
 
 The project is deliberately frozen for new capability growth until a concrete and repeated use case justifies opening the next layer explicitly.
+Any future growth must enter through one minimum safe external increment at a time, not by automatic continuation.
 
 ## Runtime Files
 
