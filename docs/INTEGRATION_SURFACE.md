@@ -52,6 +52,27 @@ Safe integration shapes include:
 - synchronization of derived outputs to external systems
 - local bridges that remain disposable and non-authoritative
 
+## Automation Bridges
+
+An automation bridge is a narrow `integration` shape that reduces mechanical handoff between a human coordinator and an external executor such as Codex.
+
+Safe automation bridges may:
+
+- package an explicit task, context list, and approval mode into a disposable run directory
+- invoke external execution through supported public surfaces such as `codex exec`
+- capture JSONL events, structured final outputs, and human-readable logs outside `.cerebro/`
+- require explicit human approval before any write-capable or core-sensitive step continues
+
+Automation bridges must not:
+
+- persist hidden project memory as a second source of truth
+- register `sources` automatically
+- call `import-context` automatically
+- treat executor logs as canonical project state
+- bypass `analyze`, `validate`, or the existing runtime entrypoints
+
+Disposable automation-bridge implementations should stay outside tracked product code while the workflow is still evolving. `_local/` is the default incubation area for that kind of bridge.
+
 Allowed future `analysis` outside the runtime may:
 
 - summarize, count, group, compare, or reformat canonical fields

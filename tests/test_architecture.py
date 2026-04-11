@@ -458,6 +458,31 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("assistive-discovery shape for initial bootstrap only", integration_surface)
         self.assertIn("suggest candidates for explicit human review", integration_surface)
 
+    def test_automation_bridge_docs_keep_it_external_and_non_authoritative(self) -> None:
+        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
+        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_AUTOMATION_BRIDGE_MVP.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("## Automation Bridges", integration_surface)
+        self.assertIn("local bridges that remain disposable and non-authoritative", integration_surface)
+        self.assertIn("Disposable automation-bridge implementations should stay outside tracked product code", integration_surface)
+        self.assertIn("`_local/` is the default incubation area", integration_surface)
+        self.assertIn("local automation bridge MVP as `integration` only", freeze_policy)
+        self.assertIn("uses disposable structured logs instead of project memory", freeze_policy)
+        self.assertIn("## Automation Bridge", board)
+        self.assertIn("disposable MVP initialized outside tracked product code", board)
+        self.assertIn("## Architecture Options", handoff)
+        self.assertIn("Option 1: Local Orchestrator With Agents SDK Plus Codex Executor Over MCP", handoff)
+        self.assertIn("Option 2: Deep Integration Through Codex App Server", handoff)
+        self.assertIn("Option 3: Minimal Local Orchestrator Using `codex exec`", handoff)
+        self.assertIn("Recommended architecture:", handoff)
+        self.assertIn("`codex exec --ephemeral --json --output-schema -o`", handoff)
+        self.assertIn("does not register `sources`", handoff)
+        self.assertIn("outside tracked product code during incubation", handoff)
+
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
         offenders: list[str] = []

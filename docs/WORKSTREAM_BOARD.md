@@ -206,6 +206,25 @@ This board tracks the current multi-front execution state with explicit stop con
 - Next step:
   - stop before adding any runtime hook or template that is not justified by a concrete integration use case
 
+## Automation Bridge
+
+- Objective: reduce manual copy-paste between human coordination and Codex execution without creating runtime authority
+- State: architecture chosen, disposable MVP initialized outside tracked product code
+- Executed:
+  - compared three candidate architectures for the bridge: Agents SDK plus Codex over MCP, deep app-server integration, and a minimal local orchestrator using `codex exec`
+  - selected the minimal local orchestrator as the primary path because it is the smallest auditable replacement for the current manual loop
+  - documented the bridge as an `integration` shape only, not a runtime extension and not a new source of truth
+  - initialized a disposable local MVP under `_local/automation_bridge/` that uses `codex exec --ephemeral --json --output-schema`
+- Pending:
+  - use the disposable bridge on real external rounds and reopen only if repeated friction remains after the MVP
+- Blockers:
+  - any write-capable or core-sensitive automation still needs explicit human approval and must not be promoted silently
+- Risks:
+  - convenience pressure can turn orchestration logs into hidden memory or hidden authority
+  - deeper app-server or SDK coupling can arrive too early and create an unnecessary second coordination runtime
+- Next step:
+  - keep the first bridge disposable, read-only by default, and explicitly subordinate to the current brain contract
+
 ## Next Layer Transition
 
 - Objective: leave the project ready for the next layer only by explicit decision

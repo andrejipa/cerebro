@@ -98,6 +98,7 @@ Reject a proposed advance immediately when it is based on:
 
 - Approved minimum safe advance:
   - `bootstrap-scan` as assistive discovery only
+  - local automation bridge MVP as `integration` only
 
 The approved pilot remains inside the freeze policy because it:
 
@@ -106,6 +107,16 @@ The approved pilot remains inside the freeze policy because it:
 - does not call `import-context`
 - does not alter the runtime contract
 - reduces bootstrap friction without gaining authority over state
+
+The approved automation bridge remains inside the freeze policy because it:
+
+- stays outside tracked runtime code and outside `.cerebro/`
+- packages explicit task and context handoff without deciding canonical context
+- uses disposable structured logs instead of project memory
+- does not register `sources`, call `import-context`, or alter `state.json`
+- keeps write-capable or core-sensitive work behind explicit human approval
+
+If that bridge starts acting as hidden memory, hidden routing authority, or automatic runtime control, it leaves the minimum safe slice and must stop.
 
 ## Out Of Scope While Frozen
 
