@@ -4,6 +4,7 @@ This document defines the operational protocol for external agent work around th
 
 It prepares the next layer of engineering coordination.
 It does not open the next product layer, does not change the freeze policy, and does not authorize new runtime semantics.
+The role and protocol shape below is the official stable baseline for continuous use until a formal team-layer trigger says otherwise.
 
 ## Fixed Role Set
 
@@ -22,6 +23,7 @@ Auxiliary roles:
 - Coordenador de Rodada
 
 No additional permanent role should be introduced unless `AGENT_ROLES.md` is revised explicitly.
+No auxiliary role should be added, promoted, or kept by default unless repeated real rounds demonstrate a concrete unresolved bottleneck.
 
 ## Round States
 
@@ -211,6 +213,8 @@ Remove or merge a role when:
 - its outputs duplicate another role's outputs
 - it mostly restates board or handoff data without improving decisions
 - it starts to look like a hidden owner of truth, priority, or semantics
+
+In the absence of a repeated demonstrated bottleneck, the current team remains frozen as the operational baseline.
 
 ## Stop Rules
 

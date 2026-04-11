@@ -31,6 +31,7 @@
 
 - none for the current refined team
 - a new auxiliary role now requires a fresh, repeated bottleneck that the current team demonstrably cannot absorb
+- until that happens, treat the current team shape as the frozen operational baseline
 
 ## First Exact Action After Release
 

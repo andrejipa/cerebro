@@ -2,6 +2,7 @@
 
 This document defines the external engineering roles used around the Cerebro project.
 It defines role boundaries only. The execution protocol lives in `docs/AGENT_PROTOCOL.md`.
+The role set below is the official operational baseline for the current external team layer.
 
 These roles are not part of the runtime.
 They do not hold authority over state, do not create truth, and do not alter the core contract.
@@ -16,6 +17,9 @@ They do not hold authority over state, do not create truth, and do not alter the
 - No role may leave a partially approved local block unfinished when it can be closed safely.
 
 ## Permanent Core Roles
+
+The core role set is closed for the current layer.
+Do not add, rename, or reshuffle core roles unless a formal next-layer decision reopens the team model explicitly.
 
 ### Estressador
 
@@ -111,6 +115,7 @@ When it stops:
 
 These roles exist to reduce overload in the permanent core roles.
 They are optional and must remain subordinate to the same contract.
+The auxiliary role set below is the official baseline for continued operation.
 
 ### Triador de Casos
 
@@ -135,6 +140,10 @@ Interaction:
 - informs Coordenador de Rodada and Guardião
 - never replaces Guardião prioritization or contract blocking
 
+Maintenance note:
+- keep this role only while repeated rounds show real gains in deduplication, queue quality, or noise reduction
+- if that gain stops recurring, merge or remove it instead of preserving it by habit
+
 ### Avaliador de Evidencia
 
 What it does:
@@ -157,6 +166,10 @@ Interaction:
 - feeds Guardião with evidence quality
 - feeds Validador de Fluxo when reproduction work is needed
 - reduces overload on Estressador, Guardião, and Auditor without replacing any of them
+
+Maintenance note:
+- keep this role only while repeated rounds show real gains in proof quality or wasted-work reduction
+- if that gain stops recurring, merge or remove it instead of preserving it by habit
 
 ### Explorador de Superficie
 
@@ -315,6 +328,7 @@ The auxiliary roles enter only at specific points:
 - If two roles start to overlap heavily, collapse them instead of adding nuance.
 - If a role starts to look smarter or more authoritative than the runtime, it is wrong.
 - If a role needs to decide truth, semantics, or validity of context, stop immediately.
+- Treat the current team shape as frozen unless a repeated real bottleneck proves it insufficient.
 
 ## Stop Conditions
 

@@ -12,6 +12,7 @@ This board tracks the current multi-front execution state with explicit stop con
 - Auditor revalidated the architecture slice and the full suite after the changes.
 - Visionário confirmed that the refined team now has operational proof and that no additional permanent role is justified by the observed round.
 - Final closure review found one last external-safe slice, closed it completely, and confirmed that no additional safe executable work remains.
+- The refined external team is now the official operational baseline and remains frozen unless a repeated real bottleneck triggers formal reopening.
 
 ## Extensions Read-Only
 

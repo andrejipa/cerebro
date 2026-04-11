@@ -191,14 +191,20 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Planejador de Experimentos", roles)
         self.assertIn("No role may modify the core", roles)
         self.assertIn("No role may create a new source of truth.", roles)
+        self.assertIn("official operational baseline", roles)
+        self.assertIn("The core role set is closed for the current layer.", roles)
+        self.assertIn("The auxiliary role set below is the official baseline for continued operation.", roles)
         self.assertIn("The core cycle remains the same:", roles)
         self.assertIn("1. Estressador produces findings.", roles)
         self.assertIn("2. Guardião approves or blocks the safe slice.", roles)
         self.assertIn("5. Visionário classifies what remains.", roles)
         self.assertIn("Triador de Casos may deduplicate and group findings", roles)
         self.assertIn("Avaliador de Evidencia may verify whether each finding is actually demonstrated", roles)
+        self.assertIn("keep this role only while repeated rounds show real gains in deduplication", roles)
+        self.assertIn("keep this role only while repeated rounds show real gains in proof quality", roles)
         self.assertIn("Validador de Fluxo may run real-use or subprocess validation", roles)
         self.assertIn("If a role starts to look smarter or more authoritative than the runtime, it is wrong.", roles)
+        self.assertIn("Treat the current team shape as frozen unless a repeated real bottleneck proves it insufficient.", roles)
         self.assertIn("The execution protocol lives in `docs/AGENT_PROTOCOL.md`.", roles)
 
     def test_agent_protocol_is_explicit_and_does_not_open_next_layer(self) -> None:
@@ -239,6 +245,12 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Avaliador de Evidencia:", protocol)
         self.assertIn("## Role Creation And Removal Criteria", protocol)
         self.assertIn("Auxiliary roles never create work on their own.", protocol)
+        self.assertIn("official stable baseline for continuous use", protocol)
+        self.assertIn(
+            "No auxiliary role should be added, promoted, or kept by default unless repeated real rounds demonstrate a concrete unresolved bottleneck.",
+            protocol,
+        )
+        self.assertIn("the current team remains frozen as the operational baseline", protocol)
         self.assertIn("## Relationship To The Freeze", protocol)
         self.assertIn("Until such a decision exists, the protocol prepares the next layer but does not initiate it.", protocol)
         self.assertIn("external agent roles now have an explicit operational protocol", board)
@@ -257,6 +269,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Triador de Casos reduced that noisy set to three cases", board)
         self.assertIn("Avaliador de Evidencia marked the first two cases as demonstrated", board)
         self.assertIn("the refined team now has operational proof", board)
+        self.assertIn("the official operational baseline and remains frozen", board)
         self.assertIn("## Refined Agent Team Validation", report)
         self.assertIn("`Triador de Casos` reduced five raw findings to three cases", report)
         self.assertIn("`Avaliador de Evidencia` then marked two cases as demonstrated", report)
@@ -264,6 +277,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("- State: refined team validated in a real round", handoff)
         self.assertIn("a noisy set of five raw findings was reduced to two demonstrated executable cases", handoff)
         self.assertIn("a new auxiliary role now requires a fresh, repeated bottleneck", handoff)
+        self.assertIn("treat the current team shape as the frozen operational baseline", handoff)
 
     def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
