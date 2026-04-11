@@ -66,6 +66,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - after changing `tracked.txt`, a second `analyze` blocked with `analysis_blocked` and `source_hash_mismatch`
   - clean installed flow executed on April 11, 2026 with `analyze -> handoff-export -> status-export -> return-map-export`
   - contract tests now confirm that exports still reflect canonical failed validation after a real `analyze` block
+  - contract tests now confirm that all current exports fail explicitly when the state becomes invalid JSON
 - Pending:
   - repeat the same flow whenever the public CLI protocol changes
 - Blockers:
@@ -85,14 +86,15 @@ This board tracks the current multi-front execution state with explicit stop con
   - next hardening slice targets shared extension contracts and more dynamic bypass routes
   - shared contract tests now verify that all current exporters reject runtime paths and remain read-only in sequence
   - tracked-file checks now fail if `extensions/` gains forbidden artifact types or non-Python shebang entrypoints
+  - Git metadata checks now fail if tracked files in `extensions/` become symlinks or executable entries
 - Pending:
-  - decide whether Git mode or symlink-specific checks add enough value beyond the current tracked-file allowlist
+  - stop here unless a concrete new evasion path appears outside the current test net
 - Blockers:
   - none for the current hardening slice
 - Risks:
   - static checks that are too shallow can be bypassed without obvious breakage
 - Next step:
-  - keep hardening test-only and evaluate whether executable-mode or symlink-specific enforcement is worth adding
+  - keep hardening test-only and wait for a concrete new gap before adding more structural rules
 
 ## Legacy Mining
 

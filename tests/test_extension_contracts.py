@@ -155,3 +155,19 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             self.assertIn("Validation: fail", handoff)
             self.assertIn("- Validation: fail", status)
             self.assertIn("- Validation: fail", return_map)
+
+    def test_exports_fail_explicitly_when_state_becomes_invalid_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            store.state_path.write_text("{invalid", encoding="utf-8")
+
+            with self.assertRaises(HandoffExportError):
+                export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            with self.assertRaises(StatusExportError):
+                export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            with self.assertRaises(ReturnMapExportError):
+                export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")

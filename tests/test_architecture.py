@@ -45,6 +45,24 @@ def tracked_extension_files() -> list[Path]:
     return [path for path in tracked_files() if path.parts and path.parts[0] == "extensions"]
 
 
+def tracked_extension_git_entries() -> list[tuple[str, Path]]:
+    result = subprocess.run(
+        ["git", "ls-files", "-s", "--", "extensions"],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    entries: list[tuple[str, Path]] = []
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            continue
+        metadata, path = line.split("\t", maxsplit=1)
+        mode = metadata.split()[0]
+        entries.append((mode, Path(path)))
+    return entries
+
+
 def parse_python(path: Path) -> ast.AST:
     return ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
 
@@ -398,6 +416,16 @@ class ArchitectureIsolationTests(unittest.TestCase):
                 content = absolute_path.read_text(encoding="utf-8")
                 if content.startswith("#!"):
                     offenders.append(str(relative_path))
+
+        self.assertEqual(offenders, [])
+
+    def test_tracked_extension_files_are_not_git_symlinks(self) -> None:
+        offenders = [str(path) for mode, path in tracked_extension_git_entries() if mode == "120000"]
+
+        self.assertEqual(offenders, [])
+
+    def test_tracked_extension_files_are_not_git_executables(self) -> None:
+        offenders = [str(path) for mode, path in tracked_extension_git_entries() if mode == "100755"]
 
         self.assertEqual(offenders, [])
 
