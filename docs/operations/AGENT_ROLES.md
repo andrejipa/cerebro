@@ -1,7 +1,7 @@
 # Agent Roles
 
 This document defines the external engineering roles used around the Cerebro project.
-It defines role boundaries only. The execution protocol lives in `docs/AGENT_PROTOCOL.md`.
+It defines role boundaries only. The execution protocol lives in `docs/operations/AGENT_PROTOCOL.md`.
 The role set below is the official operational baseline for the current external team layer.
 
 These roles are not part of the runtime.

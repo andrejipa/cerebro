@@ -20,7 +20,7 @@ If this result remains only as an informal memory of one test cycle, future chan
 
 Adopt the adversarial revalidation baseline as a permanent evolution rule for the public surface of the system.
 
-- the current robustness baseline is recorded in `docs/ROBUSTNESS_BASELINE.md`
+- the current robustness baseline is recorded in `docs/operations/ROBUSTNESS_BASELINE.md`
 - exports and derived views remain subordinate to the canonical snapshot and the last persisted validation result
 - exports do not revalidate the runtime by themselves and do not create a second validation gate
 - any change to the public surface must add proportional adversarial and regression coverage

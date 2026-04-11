@@ -23,7 +23,7 @@ This repository tracks only the active v1 product:
 - `extensions/`: optional product extensions
 - `tests/`: automated regression suite used by CI
 - `docs/adr/`: architecture decisions for the active product
-- `views/`: product-facing view documentation
+- `docs/reference/`: contracts, specs, extension model, and stable reference material
 - `.github/`: CI workflows
 
 Historical material, sandboxes, heavy source libraries, and local backups are intentionally excluded from versioned product scope.
@@ -102,7 +102,7 @@ Use the canonical CLI command names as documented; do not rely on aliases or syn
 
 ## Operating It
 
-Use the approved operational baseline in [docs/OPERATIONS_BASELINE.md](docs/OPERATIONS_BASELINE.md).
+Use the approved operational baseline in [docs/operations/OPERATIONS_BASELINE.md](docs/operations/OPERATIONS_BASELINE.md).
 
 - bootstrap mode: `bootstrap-scan` if needed, then `init -> import-context -> checkpoint -> validate`
 - continuous work mode: start with `cerebro analyze`, finish with `cerebro checkpoint`
@@ -129,9 +129,9 @@ Only the first two affect runtime behavior.
 
 The following categories are preserved only as local, ignored material when needed:
 
-- `_legacy/`: old systems, historical scripts, and archived snapshots
-- `_local/`: sandboxes, ad hoc experiments, and machine-local workspaces
-- `_backup_pre_cleanup/`: local safety snapshots created before repository cleanup
+- `_local/legacy/`: old systems, historical scripts, and archived snapshots
+- `_local/`: sandboxes, ad hoc experiments, local tools, and machine-local workspaces
+- `_local/backup_pre_cleanup/`: local safety snapshots created before repository cleanup
 
 These paths are not part of the active product and are not required for installation, tests, or CI.
 
@@ -141,7 +141,7 @@ Only the following belong in the tracked repository:
 
 - product code in `core/`, `cli/`, and `extensions/`
 - automated tests in `tests/`
-- essential product documentation in `README.md`, `docs/adr/`, `views/`, and root architecture docs
+- essential product documentation in `README.md`, `docs/reference/`, `docs/operations/`, `docs/adr/`, and `docs/handoffs/`
 - CI and packaging metadata such as `.github/`, `.gitignore`, and `pyproject.toml`
 
 The following do not belong in tracked history:
@@ -151,4 +151,4 @@ The following do not belong in tracked history:
 - source libraries, PDFs, spreadsheets, exports, or knowledge dumps
 - generated artifacts, backups, and machine-local state
 
-Keep auxiliary material outside the repository or inside ignored paths such as `_local/`, `_legacy/`, and `_backup_pre_cleanup/`.
+Keep auxiliary material outside the tracked product or inside ignored paths under `_local/`.

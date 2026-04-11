@@ -19,7 +19,7 @@ The project needs a permanent decision aid that reinforces those distinctions wi
 
 Adopt an Aristotelian-inspired decision checklist as a permanent architectural governance artifact.
 
-- The checklist lives in `docs/DECISION_CHECKLIST.md`.
+- The checklist lives in `docs/reference/DECISION_CHECKLIST.md`.
 - It is intended for human decision-making, ADR drafting, design review, and agent work prompts.
 - It must be used as a manual discipline layer before introducing new files, flows, abstractions, or sources of truth.
 - It must remain outside runtime state and outside automatic validation behavior.

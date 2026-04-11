@@ -14,6 +14,8 @@ from cli.main import build_parser
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+REFERENCE_DOCS = REPO_ROOT / "docs" / "reference"
+OPERATIONS_DOCS = REPO_ROOT / "docs" / "operations"
 
 
 def tracked_files() -> list[Path]:
@@ -92,10 +94,30 @@ def string_literals_without_docstrings(tree: ast.AST) -> list[str]:
 
 
 class ArchitectureIsolationTests(unittest.TestCase):
+    def test_tracked_root_surface_is_minimal_and_docs_are_grouped(self) -> None:
+        root_entries = {path.parts[0] for path in tracked_files()}
+        self.assertEqual(
+            root_entries,
+            {
+                ".github",
+                ".gitignore",
+                "README.md",
+                "cli",
+                "core",
+                "docs",
+                "extensions",
+                "pyproject.toml",
+                "tests",
+            },
+        )
+
+        docs_children = {path.name for path in (REPO_ROOT / "docs").iterdir() if path.is_dir()}
+        self.assertEqual(docs_children, {"adr", "handoffs", "operations", "reference"})
+
     def test_primary_docs_converge_on_analyze_as_standard_entrypoint(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-        runtime_spec = (REPO_ROOT / "RUNTIME_SPEC.md").read_text(encoding="utf-8")
-        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        runtime_spec = (REFERENCE_DOCS / "RUNTIME_SPEC.md").read_text(encoding="utf-8")
+        core_contract = (REFERENCE_DOCS / "CORE_CONTRACT.md").read_text(encoding="utf-8")
         adr = (REPO_ROOT / "docs" / "adr" / "ADR-008-analyze-is-the-standard-entrypoint.md").read_text(
             encoding="utf-8"
         )
@@ -108,9 +130,9 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
     def test_operations_baseline_is_explicit_and_infrastructure_oriented(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
-        operations = (REPO_ROOT / "docs" / "OPERATIONS_BASELINE.md").read_text(encoding="utf-8")
+        freeze_policy = (OPERATIONS_DOCS / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        operations = (OPERATIONS_DOCS / "OPERATIONS_BASELINE.md").read_text(encoding="utf-8")
         current_layer = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_CURRENT_LAYER_CLOSED.md").read_text(
             encoding="utf-8"
         )
@@ -146,10 +168,10 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("- start with `cerebro analyze`", daily_section)
 
     def test_core_contract_documents_public_read_only_session_helper(self) -> None:
-        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
-        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
-        extension_guidelines = (REPO_ROOT / "docs" / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
-        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
+        core_contract = (REFERENCE_DOCS / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        boundaries = (REFERENCE_DOCS / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        extension_guidelines = (REFERENCE_DOCS / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
+        integration_surface = (REFERENCE_DOCS / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
 
         self.assertIn("has_active_session()", core_contract)
         self.assertIn("has_active_session()", boundaries)
@@ -162,16 +184,16 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
     def test_primary_docs_reject_cli_alias_proliferation(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
-        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        core_contract = (REFERENCE_DOCS / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        boundaries = (REFERENCE_DOCS / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
 
         self.assertIn("do not rely on aliases or synonyms", readme)
         self.assertIn("Do not add aliases or synonyms", core_contract)
         self.assertIn("CLI command names stay canonical", boundaries)
 
     def test_external_behavior_taxonomy_is_explicit_in_docs(self) -> None:
-        extension_guidelines = (REPO_ROOT / "docs" / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
-        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
+        extension_guidelines = (REFERENCE_DOCS / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
+        integration_surface = (REFERENCE_DOCS / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
         extensions_readme = (REPO_ROOT / "extensions" / "README.md").read_text(encoding="utf-8")
 
         expected_phrases = (
@@ -194,7 +216,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("validation_export", extensions_readme)
 
     def test_agent_role_model_is_explicit_and_contract_safe(self) -> None:
-        roles = (REPO_ROOT / "docs" / "AGENT_ROLES.md").read_text(encoding="utf-8")
+        roles = (OPERATIONS_DOCS / "AGENT_ROLES.md").read_text(encoding="utf-8")
 
         for role in (
             "Estressador",
@@ -233,11 +255,11 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Validador de Fluxo may run real-use or subprocess validation", roles)
         self.assertIn("If a role starts to look smarter or more authoritative than the runtime, it is wrong.", roles)
         self.assertIn("Treat the current team shape as frozen unless a repeated real bottleneck proves it insufficient.", roles)
-        self.assertIn("The execution protocol lives in `docs/AGENT_PROTOCOL.md`.", roles)
+        self.assertIn("The execution protocol lives in `docs/operations/AGENT_PROTOCOL.md`.", roles)
 
     def test_agent_protocol_is_explicit_and_does_not_open_next_layer(self) -> None:
-        protocol = (REPO_ROOT / "docs" / "AGENT_PROTOCOL.md").read_text(encoding="utf-8")
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        protocol = (OPERATIONS_DOCS / "AGENT_PROTOCOL.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         next_layer_handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_NEXT_LAYER_DECISION.md").read_text(
             encoding="utf-8"
         )
@@ -289,8 +311,8 @@ class ArchitectureIsolationTests(unittest.TestCase):
         )
 
     def test_refined_agent_team_is_operationally_validated_in_docs(self) -> None:
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
-        report = (REPO_ROOT / "docs" / "REAL_OPERATION_REPORT.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        report = (OPERATIONS_DOCS / "REAL_OPERATION_REPORT.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_AGENT_TEAM_VALIDATED.md").read_text(
             encoding="utf-8"
         )
@@ -311,22 +333,22 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("role-shape experimentation is closed for the current layer", handoff)
 
     def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_ALIGNMENT_EXPORT_BLOCKED.md").read_text(
             encoding="utf-8"
         )
-        reuse_map = (REPO_ROOT / "docs" / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
+        reuse_map = (REFERENCE_DOCS / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
 
         self.assertIn("`alignment-export` is blocked as a separate front", board)
         self.assertIn("- State: blocked", handoff)
         self.assertIn("`alignment-export` remains blocked", reuse_map)
 
     def test_read_only_exports_stop_handoff_is_explicit_in_docs(self) -> None:
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_READ_ONLY_EXPORTS_EXHAUSTED.md").read_text(
             encoding="utf-8"
         )
-        reuse_map = (REPO_ROOT / "docs" / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
+        reuse_map = (REFERENCE_DOCS / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
 
         self.assertIn("## Extensions Read-Only", board)
         self.assertIn("- State: safe limit reached", board)
@@ -334,7 +356,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("no longer exposes any additional low-risk read-only export", reuse_map)
 
     def test_legacy_and_integration_stop_handoffs_are_explicit_in_docs(self) -> None:
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         legacy_handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_LEGACY_LOW_RISK_EXHAUSTED.md").read_text(
             encoding="utf-8"
         )
@@ -350,11 +372,11 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("- State: stopped at the current safe limit", integration_handoff)
 
     def test_next_layer_transition_handoff_is_explicit_in_docs(self) -> None:
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_NEXT_LAYER_DECISION.md").read_text(
             encoding="utf-8"
         )
-        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+        freeze_policy = (OPERATIONS_DOCS / "FREEZE_POLICY.md").read_text(encoding="utf-8")
 
         self.assertIn("## Next Layer Transition", board)
         self.assertIn("- State: deliberate freeze baselined", board)
@@ -369,11 +391,11 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Minimum Safe Advance Rule", handoff)
 
     def test_current_layer_closure_handoff_is_explicit_in_docs(self) -> None:
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_CURRENT_LAYER_CLOSED.md").read_text(
             encoding="utf-8"
         )
-        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+        freeze_policy = (OPERATIONS_DOCS / "FREEZE_POLICY.md").read_text(encoding="utf-8")
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
         self.assertIn("- State: deliberate freeze baselined, current layer consciously closed", board)
@@ -400,7 +422,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("A final multi-role closure review closed the last safe external gaps", readme)
 
     def test_external_analysis_boundary_handoff_is_explicit_in_docs(self) -> None:
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_EXTERNAL_ANALYSIS_BOUNDARY.md").read_text(
             encoding="utf-8"
         )
@@ -410,12 +432,12 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("no analysis module was implemented", handoff)
 
     def test_robustness_baseline_and_policy_are_explicit_in_docs(self) -> None:
-        baseline = (REPO_ROOT / "docs" / "ROBUSTNESS_BASELINE.md").read_text(encoding="utf-8")
-        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
-        extension_guidelines = (REPO_ROOT / "docs" / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
-        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
-        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
-        runtime_spec = (REPO_ROOT / "RUNTIME_SPEC.md").read_text(encoding="utf-8")
+        baseline = (OPERATIONS_DOCS / "ROBUSTNESS_BASELINE.md").read_text(encoding="utf-8")
+        boundaries = (REFERENCE_DOCS / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        extension_guidelines = (REFERENCE_DOCS / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
+        integration_surface = (REFERENCE_DOCS / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
+        core_contract = (REFERENCE_DOCS / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        runtime_spec = (REFERENCE_DOCS / "RUNTIME_SPEC.md").read_text(encoding="utf-8")
         adr = (REPO_ROOT / "docs" / "adr" / "ADR-009-adversarial-revalidation-baseline.md").read_text(
             encoding="utf-8"
         )
@@ -434,9 +456,9 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
     def test_primary_docs_make_deliberate_freeze_explicit(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
-        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
-        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+        core_contract = (REFERENCE_DOCS / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        boundaries = (REFERENCE_DOCS / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        freeze_policy = (OPERATIONS_DOCS / "FREEZE_POLICY.md").read_text(encoding="utf-8")
 
         self.assertIn("The project is deliberately frozen for new capability growth", readme)
         self.assertIn("growth beyond the current public surface requires an explicit demand and classification step", core_contract)
@@ -464,9 +486,9 @@ class ArchitectureIsolationTests(unittest.TestCase):
         current_layer_handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_CURRENT_LAYER_CLOSED.md").read_text(
             encoding="utf-8"
         )
-        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
-        reuse_map = (REPO_ROOT / "docs" / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
-        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
+        boundaries = (REFERENCE_DOCS / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        reuse_map = (REFERENCE_DOCS / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
+        integration_surface = (REFERENCE_DOCS / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
 
         self.assertIn("bootstrap-scan", readme)
         self.assertIn("It is heuristic assistance, not project truth", readme)
@@ -486,9 +508,9 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("suggest candidates for explicit human review", integration_surface)
 
     def test_automation_bridge_docs_keep_it_external_and_non_authoritative(self) -> None:
-        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
-        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
-        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        integration_surface = (REFERENCE_DOCS / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
+        freeze_policy = (OPERATIONS_DOCS / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_AUTOMATION_BRIDGE_MVP.md").read_text(
             encoding="utf-8"
         )
