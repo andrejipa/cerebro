@@ -61,17 +61,23 @@ Do not merge, rebase, or cherry-pick from a pre-rewrite clone without explicitly
 pip install -e .
 ```
 
-## Basic Flow
+## Bootstrap Once
 
 ```powershell
 cerebro init
 cerebro import-context --files path\\to\\file.txt
 cerebro checkpoint --goal "..." --summary "..." --next-step "..."
 cerebro validate
-cerebro analyze
 ```
 
 Bootstrap a new instance once with `init`, `import-context`, `checkpoint`, and `validate`.
+
+## Daily Flow
+
+```powershell
+cerebro analyze
+cerebro checkpoint --goal "..." --summary "..." --next-step "..."
+```
 
 Normal daily flow after the instance already exists:
 

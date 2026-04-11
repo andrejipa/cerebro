@@ -82,16 +82,36 @@ class ArchitectureIsolationTests(unittest.TestCase):
     def test_readme_separates_bootstrap_flow_from_daily_analyze_flow(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
-        self.assertIn("Bootstrap a new instance once with `init`, `import-context`, `checkpoint`, and `validate`.", readme)
-        self.assertIn("Normal daily flow after the instance already exists:", readme)
-        self.assertIn("- start with `cerebro analyze`", readme)
+        bootstrap_section = readme.split("## Bootstrap Once", maxsplit=1)[1].split("## Daily Flow", maxsplit=1)[0]
+        daily_section = readme.split("## Daily Flow", maxsplit=1)[1]
+
+        self.assertIn("cerebro init", bootstrap_section)
+        self.assertIn("cerebro validate", bootstrap_section)
+        self.assertNotIn("cerebro analyze", bootstrap_section)
+        self.assertIn("cerebro analyze", daily_section)
+        self.assertIn("- start with `cerebro analyze`", daily_section)
 
     def test_core_contract_documents_public_read_only_session_helper(self) -> None:
         core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
         boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        extension_guidelines = (REPO_ROOT / "docs" / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
+        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
 
         self.assertIn("has_active_session()", core_contract)
         self.assertIn("has_active_session()", boundaries)
+        self.assertIn("has_active_session()", extension_guidelines)
+        self.assertIn("has_active_session()", integration_surface)
+
+    def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_ALIGNMENT_EXPORT_BLOCKED.md").read_text(
+            encoding="utf-8"
+        )
+        reuse_map = (REPO_ROOT / "docs" / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
+
+        self.assertIn("`alignment-export` is blocked", board)
+        self.assertIn("- State: blocked", handoff)
+        self.assertIn("`alignment-export` remains blocked", reuse_map)
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
@@ -261,7 +281,18 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertEqual(offenders, [])
 
     def test_extensions_do_not_use_dynamic_runtime_bypass_primitives(self) -> None:
-        forbidden_calls = {"__import__", "delattr", "eval", "exec", "getattr", "hasattr", "setattr", "vars"}
+        forbidden_calls = {
+            "__import__",
+            "delattr",
+            "eval",
+            "exec",
+            "getattr",
+            "globals",
+            "hasattr",
+            "locals",
+            "setattr",
+            "vars",
+        }
         forbidden_literals = {"__dict__", "__getattribute__", "__setattr__", "__import__"}
         offenders: list[str] = []
 
@@ -270,6 +301,22 @@ class ArchitectureIsolationTests(unittest.TestCase):
             for node in ast.walk(tree):
                 if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in forbidden_calls:
                     offenders.append(f"{path.relative_to(REPO_ROOT)} calls {node.func.id}")
+                if (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "importlib"
+                    and node.func.attr == "import_module"
+                ):
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} calls importlib.import_module")
+                if (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "object"
+                    and node.func.attr == "__getattribute__"
+                ):
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} calls object.__getattribute__")
             for literal in string_literals_without_docstrings(tree):
                 if literal in forbidden_literals:
                     offenders.append(f"{path.relative_to(REPO_ROOT)} contains {literal!r}")
@@ -289,6 +336,16 @@ class ArchitectureIsolationTests(unittest.TestCase):
             for path in extension_package_dirs()
             if not (path / "README.md").exists()
         ]
+
+        self.assertEqual(missing, [])
+
+    def test_extension_readmes_describe_read_only_behavior(self) -> None:
+        missing = []
+
+        for path in extension_package_dirs():
+            readme = (path / "README.md").read_text(encoding="utf-8").lower()
+            if "read-only" not in readme or "does not" not in readme:
+                missing.append(str(path.relative_to(REPO_ROOT)))
 
         self.assertEqual(missing, [])
 

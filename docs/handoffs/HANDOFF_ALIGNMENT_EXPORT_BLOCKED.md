@@ -9,4 +9,4 @@
   - reusing legacy terminology directly would reintroduce ambiguous authority
   - duplicating validation logic would weaken the boundary between core and extension
 - Safe next action after release:
-  - define `alignment-export` strictly as a derived consistency view over already-canonical fields, or reject it if that definition still depends on inferred semantics
+  - keep this front blocked unless a future architecture decision adds a canonical alignment artifact to the contract

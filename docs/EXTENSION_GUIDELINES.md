@@ -33,6 +33,7 @@ These are implementation guidelines that support the mandatory rules.
 
 - import from `core`, not from `core.*` internals
 - read state through `read_snapshot()`, `read_checkpoint()`, or `read_sources()`
+- use read-only helpers such as `has_active_session()` only when they are explicitly exposed by `StateStore`
 - treat every extension output as derived and disposable
 - reject ambiguous behavior instead of guessing
 - fail explicitly when the canonical state cannot be read safely

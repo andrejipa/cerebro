@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 
-from core import StateStore, StateStoreError, StateValidationError
+from core import StateStore
+from extensions._support import exported_timestamp, read_snapshot, reject_runtime_output_path, resolve_output_target
 
 
 class ReturnMapExportError(Exception):
@@ -14,17 +14,12 @@ class ReturnMapExportError(Exception):
 
 def export_return_map_markdown(root: str | Path, exported_at: str | None = None) -> str:
     """Render a short restart map from the canonical checkpoint."""
-    store = StateStore(root)
-
-    try:
-        snapshot = store.read_snapshot()
-    except (StateStoreError, StateValidationError) as exc:
-        raise ReturnMapExportError(f"failed to read state snapshot: {exc}") from exc
+    store, snapshot = read_snapshot(root, ReturnMapExportError)
 
     checkpoint = snapshot.checkpoint
     validation = snapshot.last_validation
     session = "active" if store.has_active_session() else "inactive"
-    exported_at_value = exported_at or datetime.now(timezone.utc).isoformat(timespec="seconds")
+    exported_at_value = exported_timestamp(exported_at)
 
     lines = [
         "# Return Map",
@@ -75,16 +70,10 @@ def export_return_map_markdown(root: str | Path, exported_at: str | None = None)
 def write_return_map_markdown(root: str | Path, output_path: str | Path, exported_at: str | None = None) -> Path:
     """Write the return map outside runtime-owned paths."""
     store = StateStore(root)
-    root_path = Path(root).resolve()
-    target = Path(output_path)
-    if not target.is_absolute():
-        target = root_path / target
-    target = target.resolve()
+    target = resolve_output_target(root, output_path)
+    reject_runtime_output_path(store, target, ReturnMapExportError)
 
-    if store.is_runtime_path(target):
-        raise ReturnMapExportError("refusing to write return-map output inside the runtime directory")
-
-    markdown = export_return_map_markdown(root_path, exported_at=exported_at)
+    markdown = export_return_map_markdown(root, exported_at=exported_at)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(markdown, encoding="utf-8", newline="\n")
     return target

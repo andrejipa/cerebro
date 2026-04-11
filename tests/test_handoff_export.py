@@ -44,7 +44,7 @@ class HandoffExportTests(unittest.TestCase):
             self.assertIn("Open tracked.txt and continue.", output)
             self.assertIn("Do not change API", output)
             self.assertIn("tracked.txt", output)
-            self.assertIn("Last validation: ok", output)
+            self.assertIn("Validation: ok", output)
             self.assertIn("Revision: 2", output)
 
     def test_export_does_not_include_source_contents(self) -> None:
@@ -147,7 +147,7 @@ class HandoffExportTests(unittest.TestCase):
             output = stream.getvalue()
             self.assertEqual(exit_code, 0)
             self.assertIn("# Handoff", output)
-            self.assertIn("## Objetivo", output)
+            self.assertIn("## Goal", output)
 
     def test_cli_exports_to_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -199,4 +199,4 @@ class HandoffExportTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0)
             self.assertIn("# Handoff", result.stdout)
-            self.assertIn("## Objetivo", result.stdout)
+            self.assertIn("## Goal", result.stdout)

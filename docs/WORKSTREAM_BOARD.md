@@ -9,14 +9,15 @@ This board tracks the current multi-front execution state with explicit stop con
 - Executed:
   - `handoff-export` and `status-export` are active
   - `return-map-export` added as a read-only extension
+  - the three exporters now share only narrow support code for snapshot loading, timestamps, and runtime-path rejection
 - Pending:
-  - decide whether `alignment-export` can be defined without inventing semantics
+  - keep output conventions, write-safety, and test coverage convergent across the existing exporters
 - Blockers:
-  - the current contract does not define canonical lineage or a canonical alignment artifact
+  - `alignment-export` is blocked because the current contract does not define a canonical alignment artifact
 - Risks:
   - inventing alignment semantics would create a second source of truth
 - Next step:
-  - keep `alignment-export` blocked until a precise derived-only definition exists
+  - harden the existing read-only exporters and preserve the alignment block unchanged
 
 ## Extension Standardization
 
@@ -25,9 +26,10 @@ This board tracks the current multi-front execution state with explicit stop con
 - Executed:
   - extension guidelines, template, and architectural tests already exist
   - package and CLI coverage now include `return-map-export`
+  - shared safe extension plumbing now covers snapshot loading, timestamp normalization, and runtime-path rejection
+  - shared extension contract tests now verify read-only behavior across all current exporters
 - Pending:
-  - strengthen enforcement against dynamic bypass patterns
-  - require extension package metadata to stay aligned with packaging
+  - keep the shared support layer narrow and resist turning it into a framework
 - Blockers:
   - none for the current hardening slice
 - Risks:
@@ -42,6 +44,7 @@ This board tracks the current multi-front execution state with explicit stop con
 - Executed:
   - README clarified between bootstrap flow and daily `analyze` flow
   - public read-only helper usage was documented
+  - the alignment block remains recorded in the workstream board, handoff, and reuse map
 - Pending:
   - keep future entrypoint and extension docs convergent
 - Blockers:
@@ -59,6 +62,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - regression suite covers `analyze`, `handoff-export`, `status-export`, and `return-map-export`
   - clean flow executed on April 11, 2026 with `init -> import-context -> checkpoint -> analyze`
   - after changing `tracked.txt`, a second `analyze` blocked with `analysis_blocked` and `source_hash_mismatch`
+  - clean installed flow executed on April 11, 2026 with `analyze -> handoff-export -> status-export -> return-map-export`
 - Pending:
   - repeat the same flow whenever the public CLI protocol changes
 - Blockers:
@@ -75,6 +79,8 @@ This board tracks the current multi-front execution state with explicit stop con
 - Executed:
   - current architecture tests protect the core-extension boundary
   - architecture tests now cover package alignment, extension READMEs, bootstrap-vs-daily-flow wording, and dynamic bypass primitives
+  - next hardening slice targets shared extension contracts and more dynamic bypass routes
+  - shared contract tests now verify that all current exporters reject runtime paths and remain read-only in sequence
 - Pending:
   - consider whether non-Python executable artifacts under `extensions/` need separate enforcement
 - Blockers:
@@ -82,7 +88,7 @@ This board tracks the current multi-front execution state with explicit stop con
 - Risks:
   - static checks that are too shallow can be bypassed without obvious breakage
 - Next step:
-  - keep hardening test-only unless a new gap can be closed without expanding runtime
+  - keep hardening test-only and evaluate whether non-Python extension artifacts need separate coverage
 
 ## Legacy Mining
 
@@ -91,6 +97,7 @@ This board tracks the current multi-front execution state with explicit stop con
 - Executed:
   - `status-export` and `return-map-export` were identified as low-risk descendants
   - the reuse map now records safe reuse, reinterpretation, and prohibitions
+  - `alignment-export` remains explicitly blocked instead of being interpreted into existence
 - Pending:
   - continue cataloging medium-risk ideas such as graph and impact views
 - Blockers:

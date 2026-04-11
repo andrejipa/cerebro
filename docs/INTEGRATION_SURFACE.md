@@ -12,7 +12,7 @@ Future integrations may consume only:
 
 - CLI commands that already exist
 - public `core` API exports
-- read-only `StateStore` methods
+- read-only `StateStore` methods such as `read_snapshot()` and `has_active_session()`
 - read models returned by the public API
 
 ## Forbidden Influence

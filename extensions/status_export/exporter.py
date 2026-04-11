@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 
-from core import StateStore, StateStoreError, StateValidationError
+from core import StateStore
+from extensions._support import exported_timestamp, read_snapshot, reject_runtime_output_path, resolve_output_target
 
 
 class StatusExportError(Exception):
@@ -14,16 +14,11 @@ class StatusExportError(Exception):
 
 def export_status_markdown(root: str | Path, exported_at: str | None = None) -> str:
     """Render a compact operational status panel from the current snapshot."""
-    store = StateStore(root)
-
-    try:
-        snapshot = store.read_snapshot()
-    except (StateStoreError, StateValidationError) as exc:
-        raise StatusExportError(f"failed to read state snapshot: {exc}") from exc
+    store, snapshot = read_snapshot(root, StatusExportError)
 
     validation = snapshot.last_validation
     session = "active" if store.has_active_session() else "inactive"
-    exported_at_value = exported_at or datetime.now(timezone.utc).isoformat(timespec="seconds")
+    exported_at_value = exported_timestamp(exported_at)
 
     lines = [
         "# Status",
@@ -51,16 +46,10 @@ def export_status_markdown(root: str | Path, exported_at: str | None = None) -> 
 def write_status_markdown(root: str | Path, output_path: str | Path, exported_at: str | None = None) -> Path:
     """Write the operational status to a non-runtime file."""
     store = StateStore(root)
-    root_path = Path(root).resolve()
-    target = Path(output_path)
-    if not target.is_absolute():
-        target = root_path / target
-    target = target.resolve()
+    target = resolve_output_target(root, output_path)
+    reject_runtime_output_path(store, target, StatusExportError)
 
-    if store.is_runtime_path(target):
-        raise StatusExportError("refusing to write status output inside the runtime directory")
-
-    markdown = export_status_markdown(root_path, exported_at=exported_at)
+    markdown = export_status_markdown(root, exported_at=exported_at)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(markdown, encoding="utf-8", newline="\n")
     return target
