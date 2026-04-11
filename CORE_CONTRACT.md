@@ -25,6 +25,8 @@ This document defines the stable public contract of the v1 core.
 
 - `validate` never increments `revision`
 - `checkpoint` never changes `sources`
+- `analyze` is the standard operational entrypoint for continuity
+- `analyze` only succeeds after `validate OK`
 - `resume` only succeeds after `validate OK`
 - `session.local.json` never changes business validity
 - only `StateStore` may read or write runtime JSON files

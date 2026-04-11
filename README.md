@@ -46,7 +46,7 @@ Do not merge, rebase, or cherry-pick from a pre-rewrite clone without explicitly
 - registers explicit context sources with SHA-256 hashes
 - validates that registered sources still match
 - stores a short operational checkpoint
-- opens a local session on `resume`
+- opens a local session through `cerebro analyze`
 
 ## What It Does Not Do
 
@@ -75,6 +75,9 @@ Normal daily flow:
 
 - start with `cerebro analyze`
 - finish with `cerebro checkpoint`
+
+`cerebro analyze` is the official runtime entrypoint for human and agent resume flow.
+`cerebro resume` remains available for compatibility, but it is not the recommended surface.
 
 ## Runtime Files
 

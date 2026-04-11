@@ -56,6 +56,9 @@ Default entrypoint:
 cerebro analyze
 ```
 
+`cerebro analyze` is the official operational entrypoint for runtime continuity.
+`resume` remains only as a compatibility command over the same deterministic core flow.
+
 Required flow:
 
 1. load state from `state.json`
@@ -91,6 +94,15 @@ Responsibilities:
 - record the next step
 - close the local session
 
+### `analyze`
+
+Responsibilities:
+
+- execute `validate`
+- reconstruct context
+- present the current checkpoint and registered source paths
+- open a new local session
+
 ### `resume`
 
 Responsibilities:
@@ -98,6 +110,11 @@ Responsibilities:
 - execute `validate`
 - reconstruct context
 - open a new local session
+
+Compatibility rule:
+
+- `resume` remains available for compatibility
+- `analyze` is the official recommended entrypoint
 
 ## 6. Canonical State
 
@@ -239,7 +256,7 @@ Cerebro is:
 
 The system is successful if it:
 
-- allows resume without chat history
+- allows context resume without chat history
 - prevents use of invalid context
 - maintains consistency over time
 - stays simple while it grows

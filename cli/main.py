@@ -18,14 +18,14 @@ from cli.output import print_fail, user_error
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="cerebro",
-        description="Local context checkpoint CLI for agent-assisted execution.",
+        description="Deterministic context runtime. Use `cerebro analyze` as the standard entrypoint.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     analyze_parser = subparsers.add_parser(
         "analyze",
-        help="run the standard continuity protocol for the current project",
-        description="Validate the current state, reconstruct context, and open a local session.",
+        help="standard entrypoint for continuity context",
+        description="Official runtime entrypoint: validate state, present context, and open a local session.",
     )
     analyze_parser.add_argument("--actor", help="explicit local actor name")
     analyze_parser.set_defaults(handler=run_analyze)
@@ -63,8 +63,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     resume_parser = subparsers.add_parser(
         "resume",
-        help="validate state, show checkpoint and open a local session",
-        description="Validate the current checkpoint, show it, and open a local session.",
+        help="compatibility command for the legacy resume flow",
+        description="Compatibility command that runs the legacy resume flow on top of the same core state.",
     )
     resume_parser.add_argument("--actor", help="explicit local actor name")
     resume_parser.set_defaults(handler=run_resume)

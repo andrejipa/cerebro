@@ -27,7 +27,9 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         )
 
         self.assertEqual(result.returncode, 0)
-        self.assertIn("Local context checkpoint CLI", result.stdout)
+        self.assertIn("Deterministic context runtime.", result.stdout)
+        self.assertIn("Use `cerebro analyze` as the standard", result.stdout)
+        self.assertIn("entrypoint.", result.stdout)
         self.assertIn("analyze", result.stdout)
         self.assertIn("import-context", result.stdout)
         self.assertIn("handoff-export", result.stdout)
@@ -43,6 +45,28 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 )
                 self.assertEqual(result.returncode, 0)
                 self.assertIn(command, result.stdout)
+
+    def test_analyze_help_declares_standard_entrypoint(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "-m", "cli.main", "analyze", "--help"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Official runtime entrypoint", result.stdout)
+
+    def test_resume_help_declares_compatibility_role(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "-m", "cli.main", "resume", "--help"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Compatibility command", result.stdout)
 
     def test_cli_usage_error_returns_exit_code_2(self) -> None:
         result = subprocess.run(

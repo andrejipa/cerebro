@@ -53,6 +53,20 @@ def string_literals_without_docstrings(tree: ast.AST) -> list[str]:
 
 
 class ArchitectureIsolationTests(unittest.TestCase):
+    def test_primary_docs_converge_on_analyze_as_standard_entrypoint(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        runtime_spec = (REPO_ROOT / "RUNTIME_SPEC.md").read_text(encoding="utf-8")
+        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        adr = (REPO_ROOT / "docs" / "adr" / "ADR-008-analyze-is-the-standard-entrypoint.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("start with `cerebro analyze`", readme)
+        self.assertNotIn("opens a local session on `resume`", readme)
+        self.assertIn("official operational entrypoint", runtime_spec)
+        self.assertIn("`analyze` is the standard operational entrypoint", core_contract)
+        self.assertIn("`cerebro analyze` as the permanent standard entrypoint", adr)
+
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
         offenders: list[str] = []
@@ -217,5 +231,38 @@ class ArchitectureIsolationTests(unittest.TestCase):
             for node in ast.walk(tree):
                 if isinstance(node, ast.Attribute) and node.attr in forbidden_attributes:
                     offenders.append(f"{path.relative_to(REPO_ROOT)} uses .{node.attr}")
+
+        self.assertEqual(offenders, [])
+
+    def test_analyze_command_remains_orchestration_only(self) -> None:
+        path = REPO_ROOT / "cli" / "commands" / "analyze.py"
+        tree = parse_python(path)
+        forbidden_attributes = {
+            "close_session",
+            "compute_sha256",
+            "initialize",
+            "is_runtime_path",
+            "load_state",
+            "prepare_sources",
+            "register_sources",
+            "save_state",
+            "update_checkpoint",
+        }
+        offenders: list[str] = []
+
+        for literal in string_literals_without_docstrings(tree):
+            if any(fragment in literal for fragment in (".cerebro", "state.json", "session.local.json")):
+                offenders.append(f"literal {literal!r}")
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == "json" or alias.name.startswith("core."):
+                        offenders.append(f"import {alias.name}")
+            if isinstance(node, ast.ImportFrom):
+                if node.module == "json" or (node.module and node.module.startswith("core.")):
+                    offenders.append(f"from {node.module}")
+            if isinstance(node, ast.Attribute) and node.attr in forbidden_attributes:
+                offenders.append(f"attribute .{node.attr}")
 
         self.assertEqual(offenders, [])
