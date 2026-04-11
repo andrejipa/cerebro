@@ -175,6 +175,8 @@ class ArchitectureIsolationTests(unittest.TestCase):
             "Corretor",
             "Auditor",
             "Visionário",
+            "Triador de Casos",
+            "Avaliador de Evidencia",
             "Explorador de Superficie",
             "Validador de Fluxo",
             "Coordenador de Rodada",
@@ -184,12 +186,17 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("Curador de Contexto", roles)
         self.assertIn("Why not permanent:", roles)
         self.assertIn("Sintetizador de Saida", roles)
+        self.assertIn("Cartografo de Superficie", roles)
+        self.assertIn("Monitor de Observabilidade", roles)
+        self.assertIn("Planejador de Experimentos", roles)
         self.assertIn("No role may modify the core", roles)
         self.assertIn("No role may create a new source of truth.", roles)
         self.assertIn("The core cycle remains the same:", roles)
         self.assertIn("1. Estressador produces findings.", roles)
         self.assertIn("2. Guardião approves or blocks the safe slice.", roles)
         self.assertIn("5. Visionário classifies what remains.", roles)
+        self.assertIn("Triador de Casos may deduplicate and group findings", roles)
+        self.assertIn("Avaliador de Evidencia may verify whether each finding is actually demonstrated", roles)
         self.assertIn("Validador de Fluxo may run real-use or subprocess validation", roles)
         self.assertIn("If a role starts to look smarter or more authoritative than the runtime, it is wrong.", roles)
         self.assertIn("The execution protocol lives in `docs/AGENT_PROTOCOL.md`.", roles)
@@ -206,18 +213,31 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("## Base Round Protocol", protocol)
         self.assertIn("1. Coordenador de Rodada opens the round", protocol)
         self.assertIn(
-            "4. Guardião de Contrato marks each item as `approved`, `blocked`, or `decision-required`.",
+            "4. Triador de Casos enters only if the finding set is noisy, duplicated, or spread across multiple fronts.",
+            protocol,
+        )
+        self.assertIn(
+            "5. Avaliador de Evidencia enters only if a finding is not yet clearly demonstrated.",
+            protocol,
+        )
+        self.assertIn(
+            "6. Guardião de Contrato marks each item as `approved`, `blocked`, or `decision-required`.",
             protocol,
         )
         self.assertIn("## Ownership And Collision Rules", protocol)
         self.assertIn("one active editor per file at a time", protocol)
         self.assertIn("## Handoff Format", protocol)
         self.assertIn("### Estressador Handoff", protocol)
+        self.assertIn("### Triador de Casos Handoff", protocol)
+        self.assertIn("### Avaliador de Evidencia Handoff", protocol)
         self.assertIn("### Guardião Handoff", protocol)
         self.assertIn("### Corretor Handoff", protocol)
         self.assertIn("### Auditor Handoff", protocol)
         self.assertIn("### Visionário Handoff", protocol)
         self.assertIn("## Auxiliary Activation Policy", protocol)
+        self.assertIn("Triador de Casos:", protocol)
+        self.assertIn("Avaliador de Evidencia:", protocol)
+        self.assertIn("## Role Creation And Removal Criteria", protocol)
         self.assertIn("Auxiliary roles never create work on their own.", protocol)
         self.assertIn("## Relationship To The Freeze", protocol)
         self.assertIn("Until such a decision exists, the protocol prepares the next layer but does not initiate it.", protocol)

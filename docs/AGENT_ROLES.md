@@ -112,6 +112,52 @@ When it stops:
 These roles exist to reduce overload in the permanent core roles.
 They are optional and must remain subordinate to the same contract.
 
+### Triador de Casos
+
+What it does:
+- turns raw findings into a deduplicated, front-aware, non-redundant queue
+- separates one bug from several symptoms of the same bug
+- keeps Guardião and Corretor from spending time on noisy or overlapping findings
+
+What it never does:
+- approve or block scope
+- weaken risk classification
+- invent priority detached from demonstrated impact
+
+When it enters:
+- after Estressador when findings span multiple fronts, contain duplicates, or arrive from more than one source
+
+When it stops:
+- after producing a clean queue with grouped findings, affected fronts, and reproduction status
+
+Interaction:
+- consumes Estressador output
+- informs Coordenador de Rodada and Guardião
+- never replaces Guardião prioritization or contract blocking
+
+### Avaliador de Evidencia
+
+What it does:
+- checks whether a finding is demonstrated by proof rather than impression
+- confirms reproduction quality, trace quality, and whether the claimed risk is actually shown
+- marks weak signals before Guardião or Corretor spend effort on them
+
+What it never does:
+- approve scope
+- implement fixes
+- elevate a plausible idea into a proven issue
+
+When it enters:
+- after Estressador or Triador when a finding is not yet clearly demonstrated
+
+When it stops:
+- after each finding is marked as demonstrated, insufficient-evidence, or needs-repro
+
+Interaction:
+- feeds Guardião with evidence quality
+- feeds Validador de Fluxo when reproduction work is needed
+- reduces overload on Estressador, Guardião, and Auditor without replacing any of them
+
 ### Explorador de Superficie
 
 What it does:
@@ -207,6 +253,35 @@ Allowed narrower use:
 - temporary review pass when multiple exports or help texts change together
 - never changes semantics
 
+### Cartografo de Superficie
+
+Why not permanent:
+- the current Explorador de Superficie already covers safe-area mapping, ownership hints, and blast-radius reduction
+- promoting a second mapper would create naming duplication without new execution power
+
+Allowed narrower use:
+- none beyond the current Explorador role
+
+### Monitor de Observabilidade
+
+Why not permanent:
+- observability is already split across Validador de Fluxo, Auditor, and architecture/regression tests
+- promoting a dedicated monitor now would add a reporting layer without a demonstrated recurring gap
+
+Allowed narrower use:
+- temporary blind-spot review when coverage gaps are suspected but not yet localized
+- never defines acceptance on its own
+
+### Planejador de Experimentos
+
+Why not permanent:
+- experiment design is already a mode inside Estressador and Validador de Fluxo
+- promoting it would separate planning from the people who must reproduce and validate the result
+
+Allowed narrower use:
+- temporary design pass for a one-off stress matrix or real-use validation plan
+- never executes fixes or decides scope
+
 ## Updated Round Cycle
 
 The core cycle remains the same:
@@ -222,17 +297,21 @@ The auxiliary roles enter only at specific points:
 1. Coordenador de Rodada opens the round, assigns ownership, and keeps the sequence intact.
 2. Explorador de Superficie may map the work surface before Estressador when needed.
 3. Estressador produces the concrete attack list.
-4. Guardião filters that list.
-5. Corretor closes the approved block.
-6. Validador de Fluxo may run real-use or subprocess validation before final audit when public behavior changed.
-7. Auditor validates the correction and checks for drift.
-8. Visionário records whether the remainder is point correction, architecture block, or next-layer decision.
-9. Coordenador de Rodada closes the round, updates board and handoffs, and confirms no approved block remains open.
+4. Triador de Casos may deduplicate and group findings when the attack list is noisy or cross-front.
+5. Avaliador de Evidencia may verify whether each finding is actually demonstrated before approval.
+6. Guardião filters the clean, evidenced list.
+7. Corretor closes the approved block.
+8. Validador de Fluxo may run real-use or subprocess validation before final audit when public behavior changed.
+9. Auditor validates the correction and checks for drift.
+10. Visionário records whether the remainder is point correction, architecture block, or next-layer decision.
+11. Coordenador de Rodada closes the round, updates board and handoffs, and confirms no approved block remains open.
 
 ## Rules Of Use
 
 - Keep the permanent role set small.
 - Add an auxiliary role only when it removes a real execution bottleneck.
+- Add a new role only when the current team repeatedly fails to close blocks cleanly without it.
+- Keep a role only if it reduces collision, improves closure rate, or improves observability measurably.
 - If two roles start to overlap heavily, collapse them instead of adding nuance.
 - If a role starts to look smarter or more authoritative than the runtime, it is wrong.
 - If a role needs to decide truth, semantics, or validity of context, stop immediately.

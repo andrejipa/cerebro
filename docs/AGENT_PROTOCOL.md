@@ -15,6 +15,8 @@ Core roles:
 - Visionário
 
 Auxiliary roles:
+- Triador de Casos
+- Avaliador de Evidencia
 - Explorador de Superficie
 - Validador de Fluxo
 - Coordenador de Rodada
@@ -28,11 +30,13 @@ Each round must move through these states in order:
 1. `opened`
 2. `mapped` or `skipped-mapping`
 3. `stressed`
-4. `guarded`
-5. `correcting` or `no-safe-fix`
-6. `validated`
-7. `classified`
-8. `closed`
+4. `triaged` or `skipped-triage`
+5. `evidenced` or `skipped-evidence`
+6. `guarded`
+7. `correcting` or `no-safe-fix`
+8. `validated`
+9. `classified`
+10. `closed`
 
 No round may skip `guarded`, `validated`, or `closed`.
 
@@ -41,12 +45,14 @@ No round may skip `guarded`, `validated`, or `closed`.
 1. Coordenador de Rodada opens the round, records the front, and assigns temporary ownership.
 2. Explorador de Superficie enters only if the surface is broad, unclear, or collision-prone.
 3. Estressador produces a concrete, prioritized list of executable gaps or real friction.
-4. Guardião de Contrato marks each item as `approved`, `blocked`, or `decision-required`.
-5. Corretor acts only on `approved` items and closes each local block fully before switching fronts.
-6. Validador de Fluxo enters only if the approved slice changes public behavior, subprocess flow, real-use flow, or bug reproduction.
-7. Auditor validates the affected suites, checks contract drift, and confirms that the approved slice is actually closed.
-8. Visionário classifies the remainder as `point-fix`, `architecture-block`, or `next-layer-decision`.
-9. Coordenador de Rodada records the outcome in board and handoffs, releases ownership, and closes the round.
+4. Triador de Casos enters only if the finding set is noisy, duplicated, or spread across multiple fronts.
+5. Avaliador de Evidencia enters only if a finding is not yet clearly demonstrated.
+6. Guardião de Contrato marks each item as `approved`, `blocked`, or `decision-required`.
+7. Corretor acts only on `approved` items and closes each local block fully before switching fronts.
+8. Validador de Fluxo enters only if the approved slice changes public behavior, subprocess flow, real-use flow, or bug reproduction.
+9. Auditor validates the affected suites, checks contract drift, and confirms that the approved slice is actually closed.
+10. Visionário classifies the remainder as `point-fix`, `architecture-block`, or `next-layer-decision`.
+11. Coordenador de Rodada records the outcome in board and handoffs, releases ownership, and closes the round.
 
 If `approved` is empty after Guardião review, Corretor does nothing and the round moves directly to validation and classification.
 
@@ -90,6 +96,22 @@ Required fields:
 - expected risk level
 - whether the gap appears external-safe or likely blocked
 
+### Triador de Casos Handoff
+
+Required fields:
+- grouped findings
+- deduplicated queue order
+- affected fronts
+- what was merged as the same case
+
+### Avaliador de Evidencia Handoff
+
+Required fields:
+- evidence status: `demonstrated`, `needs-repro`, or `insufficient-evidence`
+- exact proof used
+- whether a finding is safe to send to Guardião
+- what remains unproven
+
 ### Guardião Handoff
 
 Required fields:
@@ -130,6 +152,16 @@ Explorador de Superficie:
 - ownership hints
 - collision risks
 
+Triador de Casos:
+- merged or split findings
+- queue order
+- duplicate clusters
+
+Avaliador de Evidencia:
+- proof status per finding
+- reproduction quality
+- missing evidence, if any
+
 Validador de Fluxo:
 - exact public flow exercised
 - environment used
@@ -148,6 +180,14 @@ Explorador de Superficie:
 - activate only before edits in an uncertain or broad surface
 - do not activate for a single clear local fix
 
+Triador de Casos:
+- activate only when the finding set is noisy, duplicated, or cross-front
+- do not activate for a single clear issue
+
+Avaliador de Evidencia:
+- activate only when the evidence behind a finding is incomplete, indirect, or disputed
+- do not activate when the issue is already reproducible and well demonstrated
+
 Validador de Fluxo:
 - activate only for subprocess behavior, real-use flow, clean-environment flow, or bug reproduction
 - do not activate for purely local static documentary edits
@@ -158,6 +198,19 @@ Coordenador de Rodada:
 
 Auxiliary roles never create work on their own.
 They support the core cycle and then leave.
+
+## Role Creation And Removal Criteria
+
+Add a new auxiliary role only when all of the following are true:
+- a concrete execution bottleneck recurs across rounds
+- the bottleneck cannot be resolved by tightening an existing role
+- the new role has one clear responsibility and one clear stop condition
+- the new role improves closure, collision control, or observability more than it increases coordination cost
+
+Remove or merge a role when:
+- its outputs duplicate another role's outputs
+- it mostly restates board or handoff data without improving decisions
+- it starts to look like a hidden owner of truth, priority, or semantics
 
 ## Stop Rules
 
