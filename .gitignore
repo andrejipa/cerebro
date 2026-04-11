@@ -1,5 +1,15 @@
 .cerebro/session.local.json
 .cerebro/logs/
+
+_backup_pre_cleanup/
+_legacy/
+_local/
+_sandbox/
+archive/
+biblioteca_fontes/
+cerebro_base/
+quarantine/
+
 __pycache__/
 *.pyc
 *.pyo
