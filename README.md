@@ -28,6 +28,16 @@ This repository tracks only the active v1 product:
 
 Historical material, sandboxes, heavy source libraries, and local backups are intentionally excluded from versioned product scope.
 
+## Documentation Map
+
+Read the repository in this order:
+
+- `README.md`: project scope, entry flow, and daily use
+- `docs/reference/`: stable contracts, runtime specs, and architectural boundaries
+- `docs/operations/`: operational baseline, freeze policy, board, and agent protocol
+- `docs/adr/`: architectural decisions behind the current shape
+- `docs/handoffs/`: transition records, closures, and blocked fronts
+
 ## Re-Clone After History Rewrite
 
 If you cloned the repository before April 11, 2026, discard that clone and create a new one.
