@@ -191,6 +191,45 @@ This MVP does not:
 7. Validate the bridge on repeated audit-style tasks first.
 8. Only consider write-capable rounds after a separate approval-gate design is explicitly approved.
 
+## Validation Status After External Hardening
+
+- Stress-tested scenarios:
+  - invalid project root
+  - empty task text
+  - invalid schema path
+  - invalid schema JSON
+  - run-directory collision
+  - dry-run followed by conflicting real run
+  - missing executor command
+  - missing final output
+  - invalid final output JSON
+  - repeated read-only rounds against real projects
+- External hardening added in the disposable bridge:
+  - explicit run-dir collision failure instead of traceback
+  - schema JSON validation before run creation
+  - final output validation after executor completion
+  - explicit `executor_not_found` and `final_output_invalid` statuses
+  - structured `command.json`
+  - optional explicit passthrough for `--skip-git-repo-check`
+- Real usage validated against:
+  - `D:\projetos_cli\estoque_pioneira`
+  - `D:\projetos_cli\Portal\Resolução Humaita Codex`
+  - `D:\projetos_cli\pessoais\rpg_caminhada`
+- Manual-vs-bridge finding:
+  - the bridge removed the manual prompt assembly and ad hoc log placement loop while preserving explicit task text, explicit context paths, read-only mode, structured result capture, and per-run audit artifacts
+
+## Current Recommendation
+
+- Decision:
+  - recommend future controlled promotion to a more formal external artifact, but do not promote now
+- Why:
+  - the read-only MVP proved mechanically robust enough for repeated local use
+  - it reduced real operator friction materially
+  - it remained non-authoritative and fully external to Cerebro
+- Why not promote immediately:
+  - approval-gated write-capable execution is still intentionally out of scope
+  - the bridge should remain local/disposable until a separate decision defines packaging, ownership, and maintenance outside the product runtime
+
 ## Sources
 
 - Codex SDK:

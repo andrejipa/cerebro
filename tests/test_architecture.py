@@ -482,6 +482,8 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("`codex exec --ephemeral --json --output-schema -o`", handoff)
         self.assertIn("does not register `sources`", handoff)
         self.assertIn("outside tracked product code during incubation", handoff)
+        self.assertIn("recommend future controlled promotion", handoff)
+        self.assertIn("stress-tested the bridge against invalid roots", board)
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))

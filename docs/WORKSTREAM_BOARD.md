@@ -209,21 +209,25 @@ This board tracks the current multi-front execution state with explicit stop con
 ## Automation Bridge
 
 - Objective: reduce manual copy-paste between human coordination and Codex execution without creating runtime authority
-- State: architecture chosen, disposable MVP initialized outside tracked product code
+- State: read-only MVP externally validated and still kept outside tracked product code
 - Executed:
   - compared three candidate architectures for the bridge: Agents SDK plus Codex over MCP, deep app-server integration, and a minimal local orchestrator using `codex exec`
   - selected the minimal local orchestrator as the primary path because it is the smallest auditable replacement for the current manual loop
   - documented the bridge as an `integration` shape only, not a runtime extension and not a new source of truth
+  - disposable MVP initialized outside tracked product code
   - initialized a disposable local MVP under `_local/automation_bridge/` that uses `codex exec --ephemeral --json --output-schema`
+  - stress-tested the bridge against invalid roots, invalid schema JSON, run-dir collisions, missing executors, missing/invalid final output, repeated rounds, and real-project usage
+  - hardened the local tool with explicit collision handling, schema/output validation, command logging, and optional explicit `--skip-git-repo-check` passthrough
+  - compared a direct manual `codex exec` run with the bridge flow and confirmed lower operator friction plus better per-run audit artifacts
 - Pending:
-  - use the disposable bridge on real external rounds and reopen only if repeated friction remains after the MVP
+  - keep the bridge local/disposable until a separate explicit decision defines whether it should be promoted outside the product
 - Blockers:
   - any write-capable or core-sensitive automation still needs explicit human approval and must not be promoted silently
 - Risks:
   - convenience pressure can turn orchestration logs into hidden memory or hidden authority
   - deeper app-server or SDK coupling can arrive too early and create an unnecessary second coordination runtime
 - Next step:
-  - keep the first bridge disposable, read-only by default, and explicitly subordinate to the current brain contract
+  - keep the first bridge disposable, read-only by default, and explicitly subordinate to the current brain contract until a separate promotion decision is approved
 
 ## Next Layer Transition
 
