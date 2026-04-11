@@ -14,6 +14,10 @@ Use the same three external shapes everywhere else in the project:
 - `analysis`: read-only processing of canonical state into a derived output
 - `integration`: orchestration outside the runtime that consumes public commands or exports
 
+Separately, the current project also allows a narrower assistive-discovery shape for initial bootstrap only:
+
+- `assistive discovery`: heuristic shortlist generation over project-tree paths and filenames with no authority over runtime state or canonical context
+
 These are consumer shapes only. None of them may change core authority or become a new source of truth.
 
 ## Allowed Inputs
@@ -24,6 +28,8 @@ Future integrations may consume only:
 - public `core` API exports
 - read-only `StateStore` methods such as `read_snapshot()` and `has_active_session()`
 - read models returned by the public API
+
+Current assistive discovery such as `bootstrap-scan` may additionally inspect project-tree paths and filenames outside the canonical snapshot, but only to suggest candidates for explicit human review.
 
 ## Forbidden Influence
 

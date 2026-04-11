@@ -57,13 +57,13 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             existing_pythonpath = env.get("PYTHONPATH")
             env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
 
-            for command, filename in (
-                ("handoff-export", "handoff.md"),
-                ("impact-export", "impact.md"),
-                ("sources-export", "sources.md"),
-                ("status-export", "status.md"),
-                ("validation-export", "validation.md"),
-                ("return-map-export", "return-map.md"),
+            for command, filename, success_code in (
+                ("handoff-export", "handoff.md", "handoff_exported"),
+                ("impact-export", "impact.md", "impact_exported"),
+                ("sources-export", "sources.md", "sources_exported"),
+                ("status-export", "status.md", "status_exported"),
+                ("validation-export", "validation.md", "validation_exported"),
+                ("return-map-export", "return-map.md", "return_map_exported"),
             ):
                 with self.subTest(command=command):
                     result = subprocess.run(
@@ -75,6 +75,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
                     )
                     self.assertEqual(result.returncode, 0)
                     self.assertTrue((root / filename).exists())
+                    self.assertIn(success_code, result.stdout)
 
             self.assertEqual(before_revision, store.read_snapshot().revision)
             self.assertEqual(before_state, store.state_path.read_text(encoding="utf-8"))
@@ -267,7 +268,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             ):
                 self.assertNotIn("TOP SECRET BODY", output)
 
-    def test_exports_reflect_failed_validation_after_real_analyze_block(self) -> None:
+    def test_exports_reflect_failed_validation_after_real_analyze_block_in_process(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             tracked = root / "tracked.txt"
@@ -321,6 +322,10 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             self.assertIn("- Validation: fail", sources)
             self.assertIn("- Validation: fail", return_map)
             self.assertIn("- Validation: fail", validation)
+            self.assertIn("## Validation Details", impact)
+            self.assertIn("## Validation Details", status)
+            self.assertIn("## Validation Details", return_map)
+            self.assertIn("## Validation Details", validation)
 
     def test_exports_fail_explicitly_when_state_becomes_invalid_json(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

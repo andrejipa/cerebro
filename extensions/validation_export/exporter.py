@@ -42,7 +42,7 @@ def export_validation_markdown(root: str | Path, exported_at: str | None = None)
         [
             f"- Validation details: {len(validation.details)}",
             "",
-            "## Detail Codes",
+            "## Validation Details",
         ]
     )
 

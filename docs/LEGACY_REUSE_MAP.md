@@ -24,7 +24,7 @@ This document records what can be reused from the old system without reintroduci
 
 ## Permanently Prohibited
 
-- bootstrap or validation by heuristic
+- bootstrap or validation by heuristic when the heuristic gains authority, mutates runtime state, or bypasses explicit human confirmation
 - hidden state influencing runtime decisions
 - multiple sources of truth for continuity
 - markdown or local tooling acting as runtime authority

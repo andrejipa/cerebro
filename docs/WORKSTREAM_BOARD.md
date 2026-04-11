@@ -14,6 +14,8 @@ This board tracks the current multi-front execution state with explicit stop con
   - `validation-export` added as a constrained read-only view of the last persisted canonical validation record
   - export outputs now report local session-file presence explicitly instead of implying independent session validity
   - the six exporters now share only narrow support code for snapshot loading, timestamps, runtime-path rejection, and safe Markdown writes
+  - validation-detail headings are now converged across the export family where detail codes are exposed
+  - shared contract coverage now checks wrapper success identifiers instead of only file creation
 - Pending:
   - none inside the current low-risk contract slice
 - Blockers:
@@ -63,6 +65,26 @@ This board tracks the current multi-front execution state with explicit stop con
 - Next step:
   - enforce the baseline wording in tests and ADRs
 
+## Bootstrap Assistive Entry
+
+- Objective: reduce bootstrap friction without giving discovery authority over runtime truth
+- State: stable assistive baseline
+- Executed:
+  - `bootstrap-scan` exists as an assistive-only CLI command outside runtime authority
+  - shortlist classification remains limited to project-tree paths and filenames
+  - real-project validation confirmed the command reduces manual pointing before `import-context`
+  - docs and architecture tests now make the heuristic boundary explicit
+  - noisy-tree hardening now covers historical/acervo paths, false memory signals, and common local environment directories
+  - CLI output now reports heuristic basis, total matched candidates, and returned shortlist size separately
+- Pending:
+  - none inside the current assistive-only slice
+- Blockers:
+  - reading file contents, ranking by semantic interpretation, or treating the shortlist as truth would cross into a new layer
+- Risks:
+  - further optimization pressure can turn assistive discovery into hidden authority
+- Next step:
+  - stop here until a concrete repeated unmet need justifies opening external analysis explicitly
+
 ## Real Use
 
 - Objective: validate real operational flow without changing behavior
@@ -97,6 +119,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - architecture tests now also block process-spawning primitives inside tracked extension packages
   - CLI tests now reject unapproved human aliases and keep the command surface canonical
   - shared contract tests now verify that all current exporters reject runtime paths and remain read-only in sequence
+  - a duplicate contract-test method that silently overrode subprocess blocked-state coverage was removed
   - tracked-file checks now fail if `extensions/` gains forbidden artifact types or non-Python shebang entrypoints
   - Git metadata checks now fail if tracked files in `extensions/` become symlinks or executable entries
   - adversarial runtime tests now cover state corruption, session corruption, blocked `analyze`, and repeated runtime cycles

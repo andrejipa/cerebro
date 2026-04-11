@@ -40,9 +40,14 @@ def export_status_markdown(root: str | Path, exported_at: str | None = None) -> 
         lines.append(f"- Validated at: {validation.validated_at}")
 
     if validation.details:
-        lines.append("- Validation details:")
+        lines.extend(
+            [
+                "",
+                "## Validation Details",
+            ]
+        )
         for detail in validation.details:
-            lines.append(f"  - {detail.code}")
+            lines.append(f"- {detail.code}")
 
     return "\n".join(lines) + "\n"
 

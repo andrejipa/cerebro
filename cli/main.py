@@ -46,14 +46,14 @@ def build_parser() -> argparse.ArgumentParser:
     bootstrap_scan_parser = subparsers.add_parser(
         "bootstrap-scan",
         help="suggest likely bootstrap entry files without changing runtime state",
-        description="Assistive-only scan that suggests candidate entry files; it does not create or modify runtime state.",
+        description="Assistive-only scan that suggests candidate entry files from path and filename signals only; it does not create or modify runtime state.",
     )
     bootstrap_scan_parser.add_argument("--root", help="explicit project root to scan; defaults to the current directory")
     bootstrap_scan_parser.add_argument(
         "--limit",
         type=int,
         default=6,
-        help="maximum number of suggested candidates to print",
+        help="maximum number of suggested candidates to print; must be greater than zero",
     )
     bootstrap_scan_parser.set_defaults(handler=run_bootstrap_scan)
 

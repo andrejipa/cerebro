@@ -30,7 +30,7 @@ When the freeze is broken, growth may proceed only through one minimum safe incr
 That increment must:
 
 - remain fully external to the core
-- operate only on the canonical snapshot or persisted validation metadata already exposed by the public API
+- either operate only on the canonical snapshot or persisted validation metadata already exposed by the public API, or stay in the narrower assistive-discovery slice
 - never revalidate the runtime independently
 - never write inside `.cerebro/`
 - never introduce a new canonical artifact
@@ -39,6 +39,21 @@ That increment must:
 - be validated in a clean environment before it is treated as accepted growth
 
 If a proposal cannot fit inside one such increment, it is not a minimum safe advance and must stop for explicit architecture review.
+
+## Assistive Discovery Carve-Out
+
+An assistive-discovery increment may scan project-tree paths and filenames outside the canonical snapshot only when it remains fully non-authoritative.
+
+It must:
+
+- suggest candidates only
+- avoid reading file contents for classification
+- avoid creating or modifying `.cerebro/`
+- avoid calling `import-context`
+- avoid registering `sources`
+- present heuristics as assistance, never as project truth
+
+If assistive discovery starts deciding canonical context or acting as a gate, it leaves the safe carve-out and must stop.
 
 ## Formal Resume Trigger
 

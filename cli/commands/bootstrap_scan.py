@@ -27,12 +27,14 @@ IGNORED_DIR_NAMES = {
     "coverage",
     "dados_brutos",
     "dist",
+    "env",
     "flash",
     "livros_fontes",
     "node_modules",
     "quarantine",
     "temp",
     "tmp",
+    "venv",
 }
 PENALIZED_PART_TOKENS = {
     "acervo",
@@ -231,7 +233,10 @@ def _iter_project_files(root: Path) -> list[Path]:
     return candidates
 
 
-def scan_bootstrap_candidates(root: Path, limit: int = DEFAULT_LIMIT) -> list[BootstrapCandidate]:
+def scan_bootstrap_candidates(root: Path, limit: int | None = DEFAULT_LIMIT) -> list[BootstrapCandidate]:
+    if limit is not None and limit <= 0:
+        return []
+
     ranked: list[BootstrapCandidate] = []
     for relative_path in _iter_project_files(root):
         candidate = _classify_candidate(relative_path)
@@ -263,7 +268,7 @@ def scan_bootstrap_candidates(root: Path, limit: int = DEFAULT_LIMIT) -> list[Bo
             continue
         shortlist.append(candidate)
         family_counts[candidate.family] += 1
-        if len(shortlist) >= limit:
+        if limit is not None and len(shortlist) >= limit:
             break
 
     return shortlist
@@ -273,6 +278,10 @@ def run_bootstrap_scan(cwd: Path, args: object | None = None) -> int:
     root = cwd if args is None or getattr(args, "root", None) is None else Path(getattr(args, "root")).resolve()
     limit = DEFAULT_LIMIT if args is None else int(getattr(args, "limit", DEFAULT_LIMIT))
 
+    if limit <= 0:
+        print_fail([user_error("scan_limit_invalid", f"shortlist limit must be greater than zero: {limit}")])
+        return 1
+
     if not root.exists():
         print_fail([user_error("scan_root_missing", f"project root does not exist: {root}")])
         return 1
@@ -281,13 +290,16 @@ def run_bootstrap_scan(cwd: Path, args: object | None = None) -> int:
         print_fail([user_error("scan_root_invalid", f"project root is not a directory: {root}")])
         return 1
 
-    shortlist = scan_bootstrap_candidates(root, limit=limit)
+    matched_candidates = scan_bootstrap_candidates(root, limit=None)
+    shortlist = matched_candidates[:limit]
     lines = [
         f"scan_root: {root}",
         "mode: assistive-only",
+        "heuristic_basis: path-and-filename signals only",
         "state_change: none",
         f"shortlist_limit: {limit}",
-        f"candidates_found: {len(shortlist)}",
+        f"candidates_found: {len(matched_candidates)}",
+        f"shortlist_returned: {len(shortlist)}",
         "next_action: review the shortlist and choose explicit files for `cerebro import-context --files ...`",
     ]
 

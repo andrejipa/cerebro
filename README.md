@@ -48,10 +48,10 @@ Do not merge, rebase, or cherry-pick from a pre-rewrite clone without explicitly
 - stores a short operational checkpoint
 - opens a local session through `cerebro analyze`
 
-## What It Does Not Do
+## What The Runtime Does Not Do
 
 - it does not model the whole project
-- it does not scan the repository
+- it does not scan the repository to define truth automatically
 - it does not infer context automatically
 - it does not replace Git, issues, or human communication
 
@@ -78,7 +78,7 @@ Optional assistive step before `import-context` in a new or unknown project:
 cerebro bootstrap-scan --root path\to\project
 ```
 
-`bootstrap-scan` only suggests candidate entry files by path and filename signals. It does not create `.cerebro`, does not register `sources`, and does not bypass the manual `import-context` decision.
+`bootstrap-scan` only suggests candidate entry files by path and filename signals. It is heuristic assistance, not project truth. It does not create `.cerebro`, does not register `sources`, and does not bypass the manual `import-context` decision.
 It is not a resume command, not a truth gate, and not a substitute for the standard runtime entrypoint.
 
 ## Daily Flow

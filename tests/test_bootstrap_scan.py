@@ -71,6 +71,7 @@ class BootstrapScanTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertFalse((root / ".cerebro").exists())
             self.assertIn("mode: assistive-only", output)
+            self.assertIn("heuristic_basis: path-and-filename signals only", output)
             self.assertIn("state_change: none", output)
             self.assertIn("README.md", output)
 
@@ -145,6 +146,41 @@ class BootstrapScanTests(unittest.TestCase):
             self.assertNotIn("node_modules/README.md", paths)
             self.assertNotIn("livros_fontes/README.md", paths)
 
+    def test_scan_ignores_virtual_environment_directories(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            (root / "README.md").write_text("root readme", encoding="utf-8")
+            (root / "venv").mkdir()
+            (root / "venv" / "README.md").write_text("ignore", encoding="utf-8")
+            (root / "env").mkdir()
+            (root / "env" / "README.md").write_text("ignore", encoding="utf-8")
+
+            shortlist = scan_bootstrap_candidates(root, limit=6)
+            paths = [candidate.relative_path.as_posix() for candidate in shortlist]
+
+            self.assertIn("README.md", paths)
+            self.assertNotIn("venv/README.md", paths)
+            self.assertNotIn("env/README.md", paths)
+
+    def test_scan_reports_total_candidates_separately_from_shortlist_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            (root / "README.md").write_text("root readme", encoding="utf-8")
+            (root / "controle").mkdir()
+            (root / "controle" / "CONTEXTO_MESTRE.md").write_text("context", encoding="utf-8")
+            (root / "controle" / "00_ESTADO_ATUAL.md").write_text("state", encoding="utf-8")
+            (root / "package.json").write_text('{"name":"demo"}', encoding="utf-8")
+            stream = io.StringIO()
+            args = type("Args", (), {"root": str(root), "limit": 2})
+
+            with redirect_stdout(stream):
+                exit_code = run_bootstrap_scan(root, args)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 0)
+            self.assertIn("candidates_found: 4", output)
+            self.assertIn("shortlist_returned: 2", output)
+
     def test_bootstrap_scan_help_and_subprocess_smoke(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -158,6 +194,10 @@ class BootstrapScanTests(unittest.TestCase):
             )
             self.assertEqual(help_result.returncode, 0)
             self.assertIn("suggests candidate entry files", help_result.stdout)
+            self.assertIn("path and filename", help_result.stdout)
+            self.assertIn("signals only", help_result.stdout)
+            self.assertIn("does not create or modify runtime state", help_result.stdout)
+            self.assertIn("greater than zero", help_result.stdout)
 
             result = subprocess.run(
                 [sys.executable, "-m", "cli.main", "bootstrap-scan", "--root", str(root), "--limit", "3"],
@@ -167,6 +207,24 @@ class BootstrapScanTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0)
             self.assertIn("mode: assistive-only", result.stdout)
+            self.assertIn("heuristic_basis: path-and-filename signals only", result.stdout)
+            self.assertIn("candidates_found: 1", result.stdout)
+            self.assertIn("shortlist_returned: 1", result.stdout)
             self.assertIn("next_action:", result.stdout)
             self.assertIn("README.md", result.stdout)
             self.assertNotIn("official", result.stdout.lower())
+
+    def test_scan_rejects_non_positive_limit_explicitly(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            (root / "README.md").write_text("root readme", encoding="utf-8")
+            stream = io.StringIO()
+            args = type("Args", (), {"root": str(root), "limit": 0})
+
+            with redirect_stdout(stream):
+                exit_code = run_bootstrap_scan(root, args)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertIn("scan_limit_invalid", output)
+            self.assertFalse((root / ".cerebro").exists())

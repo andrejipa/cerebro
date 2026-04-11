@@ -52,7 +52,7 @@ class ValidationExportTests(unittest.TestCase):
             self.assertIn("- Registered sources: 1", output)
             self.assertIn("- Validated at:", output)
             self.assertIn("- Validation details: 0", output)
-            self.assertIn("## Detail Codes", output)
+        self.assertIn("## Validation Details", output)
 
     def test_export_reports_fail_and_high_risk_for_inconsistent_sources(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -167,7 +167,7 @@ class ValidationExportTests(unittest.TestCase):
             output = stream.getvalue()
             self.assertEqual(exit_code, 0)
             self.assertIn("# Validation", output)
-            self.assertIn("## Detail Codes", output)
+        self.assertIn("## Validation Details", output)
 
     def test_cli_exports_to_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -205,4 +205,4 @@ class ValidationExportTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0)
             self.assertIn("# Validation", result.stdout)
-            self.assertIn("## Detail Codes", result.stdout)
+        self.assertIn("## Validation Details", result.stdout)

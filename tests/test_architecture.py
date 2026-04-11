@@ -281,15 +281,23 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("one minimum safe external increment at a time", readme)
         self.assertIn("`bootstrap-scan` as assistive discovery only", freeze_policy)
         self.assertIn("does not register `sources`", freeze_policy)
+        self.assertIn("Assistive Discovery Carve-Out", freeze_policy)
+        self.assertIn("suggest candidates only", freeze_policy)
 
     def test_bootstrap_scan_docs_keep_it_assistive_only(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_NEXT_LAYER_DECISION.md").read_text(
             encoding="utf-8"
         )
+        bootstrap_handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_BOOTSTRAP_SCAN_STABLE.md").read_text(
+            encoding="utf-8"
+        )
         boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        reuse_map = (REPO_ROOT / "docs" / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
+        integration_surface = (REPO_ROOT / "docs" / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
 
         self.assertIn("bootstrap-scan", readme)
+        self.assertIn("It is heuristic assistance, not project truth", readme)
         self.assertIn("does not create `.cerebro`", readme)
         self.assertIn("does not register `sources`", readme)
         self.assertIn("does not bypass the manual `import-context` decision", readme)
@@ -298,6 +306,11 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("it may not define truth, register `sources`, or bypass `import-context`", boundaries)
         self.assertIn("`bootstrap-scan` as assistive discovery only", handoff)
         self.assertIn("suggests candidates but does not decide canonical context", handoff)
+        self.assertIn("stable assistive baseline", bootstrap_handoff)
+        self.assertIn("it does not read file contents for classification", bootstrap_handoff)
+        self.assertIn("bootstrap or validation by heuristic when the heuristic gains authority", reuse_map)
+        self.assertIn("assistive-discovery shape for initial bootstrap only", integration_surface)
+        self.assertIn("suggest candidates for explicit human review", integration_surface)
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
