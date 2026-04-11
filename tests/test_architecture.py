@@ -41,6 +41,10 @@ def extension_package_dirs() -> list[Path]:
     ]
 
 
+def tracked_extension_files() -> list[Path]:
+    return [path for path in tracked_files() if path.parts and path.parts[0] == "extensions"]
+
+
 def parse_python(path: Path) -> ast.AST:
     return ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
 
@@ -109,7 +113,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         )
         reuse_map = (REPO_ROOT / "docs" / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
 
-        self.assertIn("`alignment-export` is blocked", board)
+        self.assertIn("`alignment-export` is blocked as a separate front", board)
         self.assertIn("- State: blocked", handoff)
         self.assertIn("`alignment-export` remains blocked", reuse_map)
 
@@ -348,6 +352,35 @@ class ArchitectureIsolationTests(unittest.TestCase):
                 missing.append(str(path.relative_to(REPO_ROOT)))
 
         self.assertEqual(missing, [])
+
+    def test_tracked_extension_files_use_only_allowed_shapes(self) -> None:
+        allowed_suffixes = {".py", ".md"}
+        forbidden_suffixes = {".bat", ".cmd", ".com", ".dll", ".exe", ".ps1", ".sh", ".so"}
+        offenders: list[str] = []
+
+        for path in tracked_extension_files():
+            if "__pycache__" in path.parts:
+                offenders.append(str(path))
+                continue
+            if path.name == "README.md":
+                continue
+            suffix = path.suffix.lower()
+            if suffix in forbidden_suffixes or suffix not in allowed_suffixes:
+                offenders.append(str(path))
+
+        self.assertEqual(offenders, [])
+
+    def test_tracked_extension_files_do_not_start_with_non_python_shebang(self) -> None:
+        offenders: list[str] = []
+
+        for relative_path in tracked_extension_files():
+            absolute_path = REPO_ROOT / relative_path
+            if absolute_path.suffix.lower() != ".py":
+                content = absolute_path.read_text(encoding="utf-8")
+                if content.startswith("#!"):
+                    offenders.append(str(relative_path))
+
+        self.assertEqual(offenders, [])
 
     def test_analyze_command_remains_orchestration_only(self) -> None:
         path = REPO_ROOT / "cli" / "commands" / "analyze.py"

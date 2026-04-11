@@ -36,6 +36,11 @@ Safe integration shapes include:
 - synchronization of derived outputs to external systems
 - local bridges that remain disposable and non-authoritative
 
+Current repository convention:
+
+- tracked code under `extensions/` stays limited to Python modules and Markdown documentation
+- wrappers, launchers, and executable helpers stay outside `extensions/` unless the architecture changes explicitly
+
 ## Unsafe Shapes
 
 Unsafe integration shapes include:

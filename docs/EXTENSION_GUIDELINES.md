@@ -34,6 +34,8 @@ These are implementation guidelines that support the mandatory rules.
 - import from `core`, not from `core.*` internals
 - read state through `read_snapshot()`, `read_checkpoint()`, or `read_sources()`
 - use read-only helpers such as `has_active_session()` only when they are explicitly exposed by `StateStore`
+- keep tracked extension packages limited to Python modules and Markdown documentation unless a stronger reason is documented
+- do not add shell wrappers, executable payloads, or non-Python runtime helpers under `extensions/`
 - treat every extension output as derived and disposable
 - reject ambiguous behavior instead of guessing
 - fail explicitly when the canonical state cannot be read safely

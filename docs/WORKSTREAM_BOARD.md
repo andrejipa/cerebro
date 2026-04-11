@@ -13,11 +13,11 @@ This board tracks the current multi-front execution state with explicit stop con
 - Pending:
   - keep output conventions, write-safety, and test coverage convergent across the existing exporters
 - Blockers:
-  - `alignment-export` is blocked because the current contract does not define a canonical alignment artifact
+  - `alignment-export` is blocked as a separate front because the current contract does not define a canonical alignment artifact
 - Risks:
   - inventing alignment semantics would create a second source of truth
 - Next step:
-  - harden the existing read-only exporters and preserve the alignment block unchanged
+  - harden the existing read-only exporters and preserve the separate alignment block unchanged
 
 ## Extension Standardization
 
@@ -28,14 +28,16 @@ This board tracks the current multi-front execution state with explicit stop con
   - package and CLI coverage now include `return-map-export`
   - shared safe extension plumbing now covers snapshot loading, timestamp normalization, and runtime-path rejection
   - shared extension contract tests now verify read-only behavior across all current exporters
+  - extension docs now state the current Python-plus-Markdown-only convention for tracked extension packages
 - Pending:
   - keep the shared support layer narrow and resist turning it into a framework
 - Blockers:
   - none for the current hardening slice
 - Risks:
   - future extensions could drift from packaging or bypass AST checks through dynamic reflection
+  - future contributors could still try to widen `extensions/` with new artifact types without first changing the contract
 - Next step:
-  - expand tests for packaging alignment, documentation alignment, and dynamic evasion patterns
+  - keep shared support utility-only and require any wider extension shape to go through explicit architecture review
 
 ## Governance
 
@@ -63,6 +65,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - clean flow executed on April 11, 2026 with `init -> import-context -> checkpoint -> analyze`
   - after changing `tracked.txt`, a second `analyze` blocked with `analysis_blocked` and `source_hash_mismatch`
   - clean installed flow executed on April 11, 2026 with `analyze -> handoff-export -> status-export -> return-map-export`
+  - contract tests now confirm that exports still reflect canonical failed validation after a real `analyze` block
 - Pending:
   - repeat the same flow whenever the public CLI protocol changes
 - Blockers:
@@ -81,14 +84,15 @@ This board tracks the current multi-front execution state with explicit stop con
   - architecture tests now cover package alignment, extension READMEs, bootstrap-vs-daily-flow wording, and dynamic bypass primitives
   - next hardening slice targets shared extension contracts and more dynamic bypass routes
   - shared contract tests now verify that all current exporters reject runtime paths and remain read-only in sequence
+  - tracked-file checks now fail if `extensions/` gains forbidden artifact types or non-Python shebang entrypoints
 - Pending:
-  - consider whether non-Python executable artifacts under `extensions/` need separate enforcement
+  - decide whether Git mode or symlink-specific checks add enough value beyond the current tracked-file allowlist
 - Blockers:
   - none for the current hardening slice
 - Risks:
   - static checks that are too shallow can be bypassed without obvious breakage
 - Next step:
-  - keep hardening test-only and evaluate whether non-Python extension artifacts need separate coverage
+  - keep hardening test-only and evaluate whether executable-mode or symlink-specific enforcement is worth adding
 
 ## Legacy Mining
 

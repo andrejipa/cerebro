@@ -11,3 +11,10 @@ Current read-only extensions:
 The core does not depend on anything in this directory.
 
 Every extension must consume the stable public core API, remain disposable, and never gain authority over runtime state.
+
+Tracked extension packages stay intentionally narrow:
+
+- Python modules for read-only behavior
+- Markdown documentation for usage and constraints
+
+Shell wrappers, executable helpers, and other non-Python runtime artifacts do not belong here under the current contract.

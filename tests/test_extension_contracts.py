@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +16,8 @@ from extensions.return_map_export.exporter import (
     write_return_map_markdown,
 )
 from extensions.status_export.exporter import StatusExportError, export_status_markdown, write_status_markdown
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReadOnlyExtensionContractTests(unittest.TestCase):
@@ -101,3 +106,52 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
                 export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
             ):
                 self.assertNotIn("TOP SECRET BODY", output)
+
+    def test_exports_reflect_failed_validation_after_real_analyze_block(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            store.update_checkpoint(
+                {
+                    "goal": "Goal",
+                    "summary": "Summary",
+                    "next_step": "Next",
+                    "constraints": [],
+                }
+            )
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+
+            first_analyze = subprocess.run(
+                [sys.executable, "-m", "cli.main", "analyze", "--actor", "alice"],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(first_analyze.returncode, 0)
+
+            tracked.write_text("changed", encoding="utf-8")
+            second_analyze = subprocess.run(
+                [sys.executable, "-m", "cli.main", "analyze", "--actor", "alice"],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(second_analyze.returncode, 1)
+            self.assertIn("analysis_blocked", second_analyze.stdout)
+            self.assertIn("source_hash_mismatch", second_analyze.stdout)
+
+            handoff = export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            return_map = export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            self.assertIn("Validation: fail", handoff)
+            self.assertIn("- Validation: fail", status)
+            self.assertIn("- Validation: fail", return_map)
