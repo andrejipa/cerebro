@@ -166,6 +166,33 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("outside tracked extension packages", extensions_readme)
         self.assertIn("validation_export", extensions_readme)
 
+    def test_agent_role_model_is_explicit_and_contract_safe(self) -> None:
+        roles = (REPO_ROOT / "docs" / "AGENT_ROLES.md").read_text(encoding="utf-8")
+
+        for role in (
+            "Estressador",
+            "Guardião de Contrato",
+            "Corretor",
+            "Auditor",
+            "Visionário",
+            "Explorador de Superficie",
+            "Validador de Fluxo",
+            "Coordenador de Rodada",
+        ):
+            self.assertIn(f"### {role}", roles)
+
+        self.assertIn("Curador de Contexto", roles)
+        self.assertIn("Why not permanent:", roles)
+        self.assertIn("Sintetizador de Saida", roles)
+        self.assertIn("No role may modify the core", roles)
+        self.assertIn("No role may create a new source of truth.", roles)
+        self.assertIn("The core cycle remains the same:", roles)
+        self.assertIn("1. Estressador produces findings.", roles)
+        self.assertIn("2. Guardião approves or blocks the safe slice.", roles)
+        self.assertIn("5. Visionário classifies what remains.", roles)
+        self.assertIn("Validador de Fluxo may run real-use or subprocess validation", roles)
+        self.assertIn("If a role starts to look smarter or more authoritative than the runtime, it is wrong.", roles)
+
     def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_ALIGNMENT_EXPORT_BLOCKED.md").read_text(
