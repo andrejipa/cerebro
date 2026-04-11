@@ -71,14 +71,16 @@ This board tracks the current multi-front execution state with explicit stop con
   - adversarial robustness is now recorded as a permanent baseline and evolution policy
   - external agent roles now have an explicit operational protocol for future rounds without opening the next product layer
   - a single operational baseline now defines bootstrap mode, continuous-work mode, audit/engineering mode, and the rule to operate rather than evolve by default
+  - the repository surface is now frozen as the official visual baseline for human navigation, with a minimal root and purpose-grouped `docs/`
 - Pending:
   - none beyond factual maintenance
 - Blockers:
   - none in the current cycle
 - Risks:
   - wording drift can reintroduce mental-model ambiguity without changing code
+  - visual drift can slowly reintroduce root clutter or mixed-purpose documentation without changing runtime behavior
 - Next step:
-  - enforce the baseline wording in tests and ADRs
+  - keep the surface stable and allow repository-structure changes only for demonstrated navigation gain
 
 ## Bootstrap Assistive Entry
 

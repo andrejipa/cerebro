@@ -114,6 +114,21 @@ class ArchitectureIsolationTests(unittest.TestCase):
         docs_children = {path.name for path in (REPO_ROOT / "docs").iterdir() if path.is_dir()}
         self.assertEqual(docs_children, {"adr", "handoffs", "operations", "reference"})
 
+    def test_repository_surface_baseline_is_explicit_and_not_open_for_style_churn(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        current_layer = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_CURRENT_LAYER_CLOSED.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("official visual baseline for human navigation", readme)
+        self.assertIn("Do not reorganize it for style alone", readme)
+        self.assertIn("fit one of the existing areas or stay in ignored local space", readme)
+        self.assertIn("repository surface is now frozen as the official visual baseline", board)
+        self.assertIn("allow repository-structure changes only for demonstrated navigation gain", board)
+        self.assertIn("repository surface is stabilized as the official visual baseline", current_layer)
+        self.assertIn("reopening repository organization for preference or visual taste alone", current_layer)
+
     def test_primary_docs_converge_on_analyze_as_standard_entrypoint(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
         runtime_spec = (REFERENCE_DOCS / "RUNTIME_SPEC.md").read_text(encoding="utf-8")

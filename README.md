@@ -38,6 +38,9 @@ Read the repository in this order:
 - `docs/adr/`: architectural decisions behind the current shape
 - `docs/handoffs/`: transition records, closures, and blocked fronts
 
+This repository surface is the official visual baseline for human navigation.
+Do not reorganize it for style alone. Change it only if a concrete navigation or operational problem is demonstrated.
+
 ## Re-Clone After History Rewrite
 
 If you cloned the repository before April 11, 2026, discard that clone and create a new one.
@@ -162,3 +165,4 @@ The following do not belong in tracked history:
 - generated artifacts, backups, and machine-local state
 
 Keep auxiliary material outside the tracked product or inside ignored paths under `_local/`.
+Treat the current root layout and `docs/` segmentation as stable. New material must fit one of the existing areas or stay in ignored local space.

@@ -10,6 +10,7 @@
 - the low-risk read-only export family is mature and exhausted in the current contract slice
 - `bootstrap-scan` is stabilized as assistive-only bootstrap discovery
 - adversarial robustness, freeze policy, and next-layer boundaries are documented and enforced by tests
+- the repository surface is stabilized as the official visual baseline for human navigation
 
 ## What Was Revalidated
 
@@ -39,6 +40,7 @@
 - proportional regression coverage after a real public-surface change
 - factual documentation updates tied to real behavior
 - disciplined daily operation through the approved operational baseline
+- concrete navigation fixes when a real repository-surface problem is demonstrated
 
 ## What No Longer Counts As Legitimate Continuation
 
@@ -46,6 +48,7 @@
 - continuing bootstrap hardening without a new concrete gap
 - opening analysis behavior without an explicit next-layer decision
 - growing the interface because the project feels incomplete
+- reopening repository organization for preference or visual taste alone
 
 ## Residual Triage Result
 
