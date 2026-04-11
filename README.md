@@ -2,6 +2,8 @@
 
 Minimal local checkpoint CLI for agent-assisted execution.
 
+Current status: operational infrastructure, not an open-ended build project.
+
 ## Baseline
 
 The repository history was rewritten on April 11, 2026.
@@ -98,6 +100,14 @@ Normal daily flow after the instance already exists:
 `cerebro resume` remains available for compatibility, but it is not the recommended surface.
 Use the canonical CLI command names as documented; do not rely on aliases or synonyms.
 
+## Operating It
+
+Use the approved operational baseline in [docs/OPERATIONS_BASELINE.md](docs/OPERATIONS_BASELINE.md).
+
+- bootstrap mode: `bootstrap-scan` if needed, then `init -> import-context -> checkpoint -> validate`
+- continuous work mode: start with `cerebro analyze`, finish with `cerebro checkpoint`
+- audit / engineering mode: use agents and the automation bridge only as external helpers, then return to Cerebro through `checkpoint` and `analyze`
+
 ## Evolution State
 
 The core runtime and the current read-only export surface are complete for the current demand.
@@ -105,6 +115,7 @@ A final multi-role closure review closed the last safe external gaps and confirm
 
 The project is deliberately frozen for new capability growth until a concrete and repeated use case justifies opening the next layer explicitly.
 Any future growth must enter through one minimum safe external increment at a time, not by automatic continuation.
+In the absence of such a use case, the correct action is to operate the system, not evolve it.
 
 ## Runtime Files
 

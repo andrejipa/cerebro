@@ -62,7 +62,7 @@ This board tracks the current multi-front execution state with explicit stop con
 ## Governance
 
 - Objective: keep contracts, boundaries, ADRs, and checklists consistent
-- State: baselined
+- State: baselined for continuous operational use
 - Executed:
   - README clarified between bootstrap flow and daily `analyze` flow
   - public read-only helper usage was documented
@@ -70,8 +70,9 @@ This board tracks the current multi-front execution state with explicit stop con
   - the alignment block remains recorded in the workstream board, handoff, and reuse map
   - adversarial robustness is now recorded as a permanent baseline and evolution policy
   - external agent roles now have an explicit operational protocol for future rounds without opening the next product layer
+  - a single operational baseline now defines bootstrap mode, continuous-work mode, audit/engineering mode, and the rule to operate rather than evolve by default
 - Pending:
-  - keep future surface-growth docs convergent with the robustness baseline
+  - none beyond factual maintenance
 - Blockers:
   - none in the current cycle
 - Risks:
@@ -252,3 +253,21 @@ This board tracks the current multi-front execution state with explicit stop con
   - false urgency could reopen growth without a concrete repeated unmet use case
 - Next step:
   - keep corrective maintenance only, break the freeze only through the formal trigger and resume protocol, and authorize at most one minimum safe external increment if the trigger is met
+
+## Operating Posture
+
+- Objective: use the system as stable infrastructure
+- State: active
+- Executed:
+  - the daily operational protocol is now explicit and unified across bootstrap, continuous work, and audit/engineering
+  - bridge usage is explicitly subordinate to Cerebro continuity
+  - agent usage is explicitly constrained to external engineering and audit work
+  - the rule of `do not tinker without a repeated unmet use case` is now visible in primary docs
+- Pending:
+  - none beyond day-to-day use and corrective maintenance
+- Blockers:
+  - none
+- Risks:
+  - operator habit can still drift back into treating the system as a project instead of infrastructure
+- Next step:
+  - operate it through the approved baseline and reopen engineering only through the formal freeze-break protocol

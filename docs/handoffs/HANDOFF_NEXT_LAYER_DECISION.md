@@ -152,3 +152,13 @@
 - Do not implement a new layer yet.
 - Keep the project in corrective-maintenance mode only.
 - Require the next proposed expansion to arrive as one concrete use case written against the existing boundary before any code is opened.
+
+## Until Then
+
+Treat the current system as stable operational infrastructure.
+
+The default action is:
+
+- use the runtime
+- use the approved external helpers within their boundaries
+- do not reopen engineering by momentum

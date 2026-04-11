@@ -106,6 +106,33 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("`analyze` is the standard operational entrypoint", core_contract)
         self.assertIn("`cerebro analyze` as the permanent standard entrypoint", adr)
 
+    def test_operations_baseline_is_explicit_and_infrastructure_oriented(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        operations = (REPO_ROOT / "docs" / "OPERATIONS_BASELINE.md").read_text(encoding="utf-8")
+        current_layer = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_CURRENT_LAYER_CLOSED.md").read_text(
+            encoding="utf-8"
+        )
+        next_layer = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_NEXT_LAYER_DECISION.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("operational infrastructure, not an open-ended build project", readme)
+        self.assertIn("Use the approved operational baseline", readme)
+        self.assertIn("# Operations Baseline", operations)
+        self.assertIn("## One Daily Protocol", operations)
+        self.assertIn("## Mode 1: Bootstrap", operations)
+        self.assertIn("## Mode 2: Continuous Work", operations)
+        self.assertIn("## Mode 3: Audit / Engineering", operations)
+        self.assertIn("## Do Not Tinker", operations)
+        self.assertIn("## Onboarding Quick Start", operations)
+        self.assertIn("The default posture is now infrastructure use, not ongoing construction.", freeze_policy)
+        self.assertIn("operate it through the approved daily protocol instead", freeze_policy)
+        self.assertIn("## Operating Posture", board)
+        self.assertIn("operational infrastructure", current_layer)
+        self.assertIn("Treat the current system as stable operational infrastructure.", next_layer)
+
     def test_readme_separates_bootstrap_flow_from_daily_analyze_flow(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 

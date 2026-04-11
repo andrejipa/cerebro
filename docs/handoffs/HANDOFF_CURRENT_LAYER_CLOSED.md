@@ -38,6 +38,7 @@
 - corrective maintenance with a concrete reproduction
 - proportional regression coverage after a real public-surface change
 - factual documentation updates tied to real behavior
+- disciplined daily operation through the approved operational baseline
 
 ## What No Longer Counts As Legitimate Continuation
 
@@ -72,3 +73,13 @@ Remaining work now fits only one of these categories:
 - write one concrete unmet use case against the current `analyze` plus export surface
 - classify it against the freeze policy
 - stop immediately if it needs new runtime truth, new semantics, or a core change
+
+## Operational Conclusion
+
+The system should now be treated as operational infrastructure, not as an always-open engineering project.
+
+Use:
+
+- bootstrap mode for new or uninitialized projects
+- continuous-work mode for normal day-to-day operation
+- audit / engineering mode only when external validation or tooling work is actually needed

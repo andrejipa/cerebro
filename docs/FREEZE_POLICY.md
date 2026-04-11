@@ -11,6 +11,11 @@
 
 This freeze applies to growth, not to corrective maintenance. Bug fixes, proportional regression coverage, and factual documentation updates may continue when needed.
 
+Operational rule:
+
+- when there is no concrete repeated unmet use case, do not evolve the system
+- operate it through the approved daily protocol instead
+
 ## Conservatism Assessment
 
 - Current classification: healthy conservatism, not excessive conservatism.
@@ -125,6 +130,16 @@ Daily-use discipline for the approved automation bridge:
 - if bridge logs start being consulted as the state of the project, stop and treat that as a regression
 
 If that bridge starts acting as hidden memory, hidden routing authority, or automatic runtime control, it leaves the minimum safe slice and must stop.
+
+## Infrastructure Posture
+
+The default posture is now infrastructure use, not ongoing construction.
+
+The system should be treated as:
+
+- stable for daily operation
+- frozen for automatic growth
+- open only to corrective maintenance or formally approved next-layer work
 
 ## Out Of Scope While Frozen
 
