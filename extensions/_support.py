@@ -17,6 +17,11 @@ def exported_timestamp(exported_at: str | None) -> str:
     return exported_at or datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def session_file_presence(store: StateStore) -> str:
+    """Return a compact label for local session-file presence only."""
+    return "present" if store.has_active_session() else "absent"
+
+
 def read_snapshot(root: str | Path, error_type: type[Exception]) -> tuple[StateStore, object]:
     """Load the canonical snapshot through the public API or raise a typed extension error."""
     store = StateStore(root)

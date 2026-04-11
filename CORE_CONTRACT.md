@@ -46,7 +46,9 @@ The stable core API is:
 
 Consumers must use read methods and read models, not raw JSON shape.
 
-Read-only helpers on `StateStore` such as `has_active_session()` are part of the supported extension boundary when they do not mutate runtime state.
+Read-only helpers on `StateStore` such as `has_active_session()` are part of the supported extension boundary when they do not mutate runtime state. `has_active_session()` reports local session-file presence only; it is not a second session-validity gate.
+
+CLI command names are canonical. Do not add aliases or synonyms without an explicit architecture decision.
 
 ## Invariants
 

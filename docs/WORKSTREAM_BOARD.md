@@ -5,22 +5,24 @@ This board tracks the current multi-front execution state with explicit stop con
 ## Extensions Read-Only
 
 - Objective: grow external views without touching core authority
-- State: stable baseline
+- State: safe limit reached
 - Executed:
   - `handoff-export` and `status-export` are active
   - `return-map-export` added as a read-only extension
   - `impact-export` added as a constrained read-only operational surface view
   - `sources-export` added as a constrained read-only inventory of canonical source paths
   - `validation-export` added as a constrained read-only view of the last persisted canonical validation record
+  - export outputs now report local session-file presence explicitly instead of implying independent session validity
   - the six exporters now share only narrow support code for snapshot loading, timestamps, runtime-path rejection, and safe Markdown writes
 - Pending:
-  - add new exporters only when they remain obviously derived and read-only
+  - none inside the current low-risk contract slice
 - Blockers:
   - `alignment-export` is blocked as a separate front because the current contract does not define a canonical alignment artifact
 - Risks:
   - inventing alignment semantics would create a second source of truth
+  - pushing further now would drift into analysis-layer semantics or medium-risk graph interpretation
 - Next step:
-  - preserve the existing export pattern and stop until a concrete new export is justified without changing the core
+  - stop here until a concrete new export is justified without changing the core or crossing into external analysis
 
 ## Extension Standardization
 
@@ -49,6 +51,7 @@ This board tracks the current multi-front execution state with explicit stop con
 - Executed:
   - README clarified between bootstrap flow and daily `analyze` flow
   - public read-only helper usage was documented
+  - canonical CLI command names are now explicitly documented as alias-free unless an architecture decision says otherwise
   - the alignment block remains recorded in the workstream board, handoff, and reuse map
   - adversarial robustness is now recorded as a permanent baseline and evolution policy
 - Pending:
@@ -92,6 +95,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - current architecture tests protect the core-extension boundary
   - architecture tests now cover package alignment, extension READMEs, bootstrap-vs-daily-flow wording, dynamic bypass primitives, and direct filesystem reads from extensions
   - architecture tests now also block process-spawning primitives inside tracked extension packages
+  - CLI tests now reject unapproved human aliases and keep the command surface canonical
   - shared contract tests now verify that all current exporters reject runtime paths and remain read-only in sequence
   - tracked-file checks now fail if `extensions/` gains forbidden artifact types or non-Python shebang entrypoints
   - Git metadata checks now fail if tracked files in `extensions/` become symlinks or executable entries
@@ -108,7 +112,7 @@ This board tracks the current multi-front execution state with explicit stop con
 ## Legacy Mining
 
 - Objective: extract only ideas that fit the new architecture
-- State: active, partially consolidated
+- State: low-risk slice exhausted
 - Executed:
   - `status-export` and `return-map-export` were identified as low-risk descendants
   - `impact-export` was implemented as the next low-risk derived consumer from the legacy impact-view idea
@@ -117,13 +121,14 @@ This board tracks the current multi-front execution state with explicit stop con
   - the reuse map now records safe reuse, reinterpretation, and prohibitions
   - `alignment-export` remains explicitly blocked instead of being interpreted into existence
 - Pending:
-  - continue cataloging medium-risk ideas such as graph views
+  - none inside the current low-risk export slice
 - Blockers:
   - none
 - Risks:
   - legacy language can smuggle old authority patterns back into the product
+  - remaining candidates now tend to require medium-risk derivation rules or analysis-layer choices
 - Next step:
-  - keep all reuse proposals explicitly classified by layer and risk
+  - stop here until a specific medium-risk candidate is promoted for explicit review
 
 ## External Analysis Preparation
 
@@ -143,14 +148,15 @@ This board tracks the current multi-front execution state with explicit stop con
 ## Integration Preparation
 
 - Objective: define safe future integration surface without implementing integrations
-- State: active
+- State: safe limit reached
 - Executed:
   - integration boundary documented
+  - the generic extension template remains sufficient; no dedicated integration template is justified yet
 - Pending:
-  - decide whether a dedicated integration template adds value beyond the current generic template
+  - none without a concrete integration shape
 - Blockers:
   - adding framework-level integration hooks would exceed the current contract
 - Risks:
   - premature hooks can become shadow APIs
 - Next step:
-  - stop before adding any runtime hook that is not already exposed by the core
+  - stop before adding any runtime hook or template that is not justified by a concrete integration use case

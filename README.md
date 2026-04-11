@@ -86,6 +86,7 @@ Normal daily flow after the instance already exists:
 
 `cerebro analyze` is the official runtime entrypoint for human and agent resume flow.
 `cerebro resume` remains available for compatibility, but it is not the recommended surface.
+Use the canonical CLI command names as documented; do not rely on aliases or synonyms.
 
 ## Runtime Files
 

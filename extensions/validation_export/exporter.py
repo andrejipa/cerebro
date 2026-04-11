@@ -7,6 +7,7 @@ from pathlib import Path
 from extensions._support import (
     exported_timestamp,
     read_snapshot,
+    session_file_presence,
     validation_risk_level,
     write_markdown_output,
 )
@@ -22,15 +23,13 @@ def export_validation_markdown(root: str | Path, exported_at: str | None = None)
 
     validation = snapshot.last_validation
     exported_at_value = exported_timestamp(exported_at)
-    session = "active" if store.has_active_session() else "inactive"
-
     lines = [
         "# Validation",
         "",
         f"- Exported at: {exported_at_value}",
         f"- Validation: {validation.result}",
         f"- Risk: {validation_risk_level(validation.result, validation.details)}",
-        f"- Session: {session}",
+        f"- Session file: {session_file_presence(store)}",
         f"- Revision: {snapshot.revision}",
         f"- Updated at: {snapshot.checkpoint.updated_at}",
         f"- Registered sources: {len(snapshot.sources)}",
@@ -60,4 +59,3 @@ def write_validation_markdown(root: str | Path, output_path: str | Path, exporte
     """Write the validation view outside runtime-owned paths."""
     markdown = export_validation_markdown(root, exported_at=exported_at)
     return write_markdown_output(root, output_path, markdown, ValidationExportError)
-

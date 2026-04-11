@@ -40,7 +40,7 @@ class SourcesExportTests(unittest.TestCase):
             self.assertIn("# Sources", output)
             self.assertIn("- Exported at: 2026-04-11T12:00:00+00:00", output)
             self.assertIn("- Validation: ok", output)
-            self.assertIn("- Session: active", output)
+            self.assertIn("- Session file: present", output)
             self.assertIn("- Revision: 1", output)
             self.assertIn("- Registered sources: 2", output)
             self.assertIn("- Primary sources: 1", output)

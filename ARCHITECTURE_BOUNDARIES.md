@@ -57,6 +57,8 @@ Extensions may not:
 
 Extensions are consumers. The core remains the only authority.
 
+When exposed to extensions, `has_active_session()` reports local session-file presence only. It does not validate the session file and does not create a second session gate.
+
 Permitted flow:
 
 ```text
@@ -82,3 +84,4 @@ extension -> core (implicit write)
 - Public-surface changes must add proportional adversarial and regression coverage.
 - Exports and integrations consume canonical state and persisted validation results; they do not become a second validation gate.
 - Additional hardening should stop unless a concrete new evasion path appears or the public surface actually changes.
+- CLI command names stay canonical unless an explicit architecture decision authorizes aliases.

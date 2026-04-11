@@ -59,10 +59,13 @@ Forbidden future `analysis` may not:
 - recommend or decide on behalf of the runtime
 - reopen validation or reinterpret canonical failure states
 
+`has_active_session()` reports session-file presence only. It does not validate session contents and must not be treated as a second runtime gate.
+
 Current repository convention:
 
 - tracked code under `extensions/` stays limited to Python modules and Markdown documentation
 - wrappers, launchers, and executable helpers stay outside `extensions/` unless the architecture changes explicitly
+- CLI command names stay canonical unless an explicit architecture decision authorizes aliases
 
 ## Unsafe Shapes
 

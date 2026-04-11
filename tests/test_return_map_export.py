@@ -46,7 +46,7 @@ class ReturnMapExportTests(unittest.TestCase):
             self.assertIn("# Return Map", output)
             self.assertIn("- Exported at: 2026-04-11T12:00:00+00:00", output)
             self.assertIn("- Validation: ok", output)
-            self.assertIn("- Session: active", output)
+            self.assertIn("- Session file: present", output)
             self.assertIn("- Revision: 2", output)
             self.assertIn("- Goal: Ship fix", output)
             self.assertIn("- Summary: Checkpoint is ready.", output)

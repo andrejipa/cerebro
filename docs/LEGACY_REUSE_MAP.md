@@ -40,3 +40,13 @@ This document records what can be reused from the old system without reintroduci
 6. keep `alignment-export` blocked unless a future architecture decision adds canonical support for it
 7. optional graph views as external consumers
 8. human operational templates that remain outside runtime authority
+
+## Exhaustion Note
+
+The current contract no longer exposes any additional low-risk read-only export that is clearly justified beyond the six already implemented.
+
+What remains is one of:
+
+- medium-risk graph-style views that need stricter derivation rules
+- future external analysis use cases that need a concrete scope decision
+- human templates that stay outside runtime authority

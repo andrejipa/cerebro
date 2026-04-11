@@ -64,6 +64,27 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0)
                 self.assertIn(command, result.stdout)
 
+    def test_cli_rejects_unapproved_human_aliases(self) -> None:
+        for alias in (
+            "gerente",
+            "marcar",
+            "conferir",
+            "faxineiro",
+            "memoria",
+            "caminho",
+            "impacto",
+            "entrega",
+        ):
+            with self.subTest(alias=alias):
+                result = subprocess.run(
+                    [sys.executable, "-m", "cli.main", alias],
+                    cwd=REPO_ROOT,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("invalid choice", result.stderr)
+
     def test_analyze_help_declares_standard_entrypoint(self) -> None:
         result = subprocess.run(
             [sys.executable, "-m", "cli.main", "analyze", "--help"],

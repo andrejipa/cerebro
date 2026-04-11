@@ -1,0 +1,23 @@
+# Handoff: Read-Only Exports Exhausted
+
+- Front: extensions read-only
+- State: stopped at the current safe limit
+- Stop point:
+  - the project now has six constrained read-only exports: `handoff`, `status`, `return-map`, `impact`, `sources`, and `validation`
+  - shared support remains narrow and limited to snapshot loading, timestamps, session-file presence labels, runtime-path rejection, and safe Markdown writes
+- What is already safe:
+  - all exports stay read-only
+  - all exports reject writes inside `.cerebro/`
+  - all exports fail explicitly on invalid state JSON or schema
+  - all exports remain subordinate to persisted validation after a real `analyze` block
+- What was validated:
+  - direct export tests
+  - shared extension contract tests
+  - subprocess export flow with stdout and `--out`
+  - full suite green after convergence
+- Risk that blocks further progress:
+  - the next candidate would either duplicate existing views, drift into external analysis semantics, or require medium-risk graph derivation rules
+- Decision still required:
+  - choose whether the next layer is a concrete external analysis use case or a specifically justified medium-risk graph view
+- First action after release:
+  - take one candidate from the medium-risk backlog and test it against the external-analysis boundary before implementation

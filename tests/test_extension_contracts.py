@@ -31,6 +31,55 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReadOnlyExtensionContractTests(unittest.TestCase):
+    def test_export_commands_write_files_by_subprocess_without_modifying_runtime(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            store.update_checkpoint(
+                {
+                    "goal": "Goal",
+                    "summary": "Summary",
+                    "next_step": "Next",
+                    "constraints": [],
+                }
+            )
+            store.validate_state()
+            store.open_session("alice")
+            before_state = store.state_path.read_text(encoding="utf-8")
+            before_session = store.session_path.read_text(encoding="utf-8")
+            before_revision = store.read_snapshot().revision
+
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+
+            for command, filename in (
+                ("handoff-export", "handoff.md"),
+                ("impact-export", "impact.md"),
+                ("sources-export", "sources.md"),
+                ("status-export", "status.md"),
+                ("validation-export", "validation.md"),
+                ("return-map-export", "return-map.md"),
+            ):
+                with self.subTest(command=command):
+                    result = subprocess.run(
+                        [sys.executable, "-m", "cli.main", command, "--out", filename],
+                        cwd=root,
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 0)
+                    self.assertTrue((root / filename).exists())
+
+            self.assertEqual(before_revision, store.read_snapshot().revision)
+            self.assertEqual(before_state, store.state_path.read_text(encoding="utf-8"))
+            self.assertEqual(before_session, store.session_path.read_text(encoding="utf-8"))
+
     def test_export_commands_reflect_failed_validation_after_real_analyze_block(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -90,6 +139,29 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
                     )
                     self.assertEqual(result.returncode, 0)
                     self.assertIn("Validation: fail", result.stdout)
+
+    def test_exports_report_session_file_presence_when_local_session_file_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            store.validate_state()
+            store.open_session("alice")
+
+            impact = export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            sources = export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            return_map = export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            validation = export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            self.assertIn("- Session file: present", impact)
+            self.assertIn("- Session file: present", status)
+            self.assertIn("- Session file: present", sources)
+            self.assertIn("- Session file: present", return_map)
+            self.assertIn("- Session file: present", validation)
 
     def test_exports_run_in_sequence_without_modifying_runtime(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

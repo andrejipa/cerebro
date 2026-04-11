@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from extensions._support import exported_timestamp, read_snapshot, write_markdown_output
+from extensions._support import exported_timestamp, read_snapshot, session_file_presence, write_markdown_output
 
 
 class SourcesExportError(Exception):
@@ -16,7 +16,6 @@ def export_sources_markdown(root: str | Path, exported_at: str | None = None) ->
     store, snapshot = read_snapshot(root, SourcesExportError)
 
     exported_at_value = exported_timestamp(exported_at)
-    session = "active" if store.has_active_session() else "inactive"
     primary_count = sum(1 for source in snapshot.sources if source.role == "primary")
     reference_count = sum(1 for source in snapshot.sources if source.role == "reference")
 
@@ -25,7 +24,7 @@ def export_sources_markdown(root: str | Path, exported_at: str | None = None) ->
         "",
         f"- Exported at: {exported_at_value}",
         f"- Validation: {snapshot.last_validation.result}",
-        f"- Session: {session}",
+        f"- Session file: {session_file_presence(store)}",
         f"- Revision: {snapshot.revision}",
         f"- Updated at: {snapshot.checkpoint.updated_at}",
         f"- Registered sources: {len(snapshot.sources)}",

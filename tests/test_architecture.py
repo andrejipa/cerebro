@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import argparse
 import ast
 import re
 import subprocess
 import tomllib
 import unittest
 from pathlib import Path
+
+from cli.main import build_parser
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -125,6 +128,19 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("has_active_session()", boundaries)
         self.assertIn("has_active_session()", extension_guidelines)
         self.assertIn("has_active_session()", integration_surface)
+        self.assertIn("session-file presence only", core_contract)
+        self.assertIn("session-file presence only", boundaries)
+        self.assertIn("session-file presence only", extension_guidelines)
+        self.assertIn("session-file presence only", integration_surface)
+
+    def test_primary_docs_reject_cli_alias_proliferation(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+
+        self.assertIn("do not rely on aliases or synonyms", readme)
+        self.assertIn("Do not add aliases or synonyms", core_contract)
+        self.assertIn("CLI command names stay canonical", boundaries)
 
     def test_external_behavior_taxonomy_is_explicit_in_docs(self) -> None:
         extension_guidelines = (REPO_ROOT / "docs" / "EXTENSION_GUIDELINES.md").read_text(encoding="utf-8")
@@ -161,6 +177,34 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("- State: blocked", handoff)
         self.assertIn("`alignment-export` remains blocked", reuse_map)
 
+    def test_read_only_exports_stop_handoff_is_explicit_in_docs(self) -> None:
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_READ_ONLY_EXPORTS_EXHAUSTED.md").read_text(
+            encoding="utf-8"
+        )
+        reuse_map = (REPO_ROOT / "docs" / "LEGACY_REUSE_MAP.md").read_text(encoding="utf-8")
+
+        self.assertIn("## Extensions Read-Only", board)
+        self.assertIn("- State: safe limit reached", board)
+        self.assertIn("- State: stopped at the current safe limit", handoff)
+        self.assertIn("no longer exposes any additional low-risk read-only export", reuse_map)
+
+    def test_legacy_and_integration_stop_handoffs_are_explicit_in_docs(self) -> None:
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        legacy_handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_LEGACY_LOW_RISK_EXHAUSTED.md").read_text(
+            encoding="utf-8"
+        )
+        integration_handoff = (
+            REPO_ROOT / "docs" / "handoffs" / "HANDOFF_INTEGRATION_PREPARATION_STOP.md"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("## Legacy Mining", board)
+        self.assertIn("- State: low-risk slice exhausted", board)
+        self.assertIn("## Integration Preparation", board)
+        self.assertIn("- State: safe limit reached", board)
+        self.assertIn("- State: stopped at the current low-risk limit", legacy_handoff)
+        self.assertIn("- State: stopped at the current safe limit", integration_handoff)
+
     def test_external_analysis_boundary_handoff_is_explicit_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_EXTERNAL_ANALYSIS_BOUNDARY.md").read_text(
@@ -184,6 +228,8 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
         self.assertIn("No critical or moderate failures were found", baseline)
         self.assertIn("exports do not revalidate the runtime by themselves", baseline)
+        self.assertIn("session-file presence only", baseline)
+        self.assertIn("CLI command names remain canonical", baseline)
         self.assertIn("Any change that expands or changes the public surface must add proportional adversarial and regression coverage", baseline)
         self.assertIn("Public-surface changes must add proportional adversarial and regression coverage.", boundaries)
         self.assertIn("add proportional adversarial and regression tests whenever an extension changes the public surface", extension_guidelines)
@@ -544,3 +590,25 @@ class ArchitectureIsolationTests(unittest.TestCase):
                 offenders.append(f"attribute .{node.attr}")
 
         self.assertEqual(offenders, [])
+
+    def test_cli_subcommand_surface_is_canonical_and_alias_free(self) -> None:
+        parser = build_parser()
+        subparsers = next(
+            action for action in parser._actions if isinstance(action, argparse._SubParsersAction)
+        )
+        expected = {
+            "analyze",
+            "init",
+            "import-context",
+            "checkpoint",
+            "resume",
+            "handoff-export",
+            "impact-export",
+            "sources-export",
+            "return-map-export",
+            "status-export",
+            "validation-export",
+            "validate",
+        }
+
+        self.assertEqual(set(subparsers.choices), expected)

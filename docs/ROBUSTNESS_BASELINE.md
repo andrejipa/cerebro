@@ -48,6 +48,7 @@ The baseline below is now part of the expected contract for future evolution.
 - current exports do not leak source file contents
 - current exports remain read-only when executed in sequence
 - current exports reflect the canonical failed validation state after a real `analyze` block
+- current exports report local session-file presence only and do not treat it as a second validity gate
 - tracked extensions do not read runtime JSON directly
 - tracked extensions do not read arbitrary files or enumerate directories directly
 
@@ -65,6 +66,7 @@ The baseline below is now part of the expected contract for future evolution.
 - exports and derived views consume the canonical snapshot and the last persisted validation result
 - exports do not revalidate the runtime by themselves
 - exports do not open a second validation gate and do not attempt runtime repair
+- CLI command names remain canonical; aliases require an explicit architecture decision
 - hardening remains external to the core unless a future concrete gap cannot be stopped by tests and governance
 
 ## Permanent Defense Layers

@@ -136,8 +136,16 @@ class AdversarialRevalidationTests(unittest.TestCase):
             self.assertIn("- Validation: fail", export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
             self.assertIn("- Validation: fail", export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
             self.assertIn("- Validation: fail", export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
+            self.assertIn("- Session file: present", export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
+            self.assertIn("- Session file: present", export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
+            self.assertIn("- Session file: present", export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
+            self.assertIn("- Session file: present", export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
             self.assertIn(
                 "- Validation: fail",
+                export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
+            )
+            self.assertIn(
+                "- Session file: present",
                 export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
             )
 

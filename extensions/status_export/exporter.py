@@ -7,6 +7,7 @@ from pathlib import Path
 from extensions._support import (
     exported_timestamp,
     read_snapshot,
+    session_file_presence,
     validation_risk_level,
     write_markdown_output,
 )
@@ -21,7 +22,6 @@ def export_status_markdown(root: str | Path, exported_at: str | None = None) -> 
     store, snapshot = read_snapshot(root, StatusExportError)
 
     validation = snapshot.last_validation
-    session = "active" if store.has_active_session() else "inactive"
     exported_at_value = exported_timestamp(exported_at)
 
     lines = [
@@ -30,7 +30,7 @@ def export_status_markdown(root: str | Path, exported_at: str | None = None) -> 
         f"- Exported at: {exported_at_value}",
         f"- Validation: {validation.result}",
         f"- Risk: {validation_risk_level(validation.result, validation.details)}",
-        f"- Session: {session}",
+        f"- Session file: {session_file_presence(store)}",
         f"- Sources: {len(snapshot.sources)}",
         f"- Revision: {snapshot.revision}",
         f"- Updated at: {snapshot.checkpoint.updated_at}",

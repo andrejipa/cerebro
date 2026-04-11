@@ -43,7 +43,7 @@ class StatusExportTests(unittest.TestCase):
             self.assertIn("- Exported at: 2026-04-11T12:00:00+00:00", output)
             self.assertIn("- Validation: ok", output)
             self.assertIn("- Risk: low", output)
-            self.assertIn("- Session: active", output)
+            self.assertIn("- Session file: present", output)
             self.assertIn("- Sources: 1", output)
             self.assertIn("- Revision: 2", output)
             self.assertIn("- Updated at:", output)
@@ -66,7 +66,7 @@ class StatusExportTests(unittest.TestCase):
             self.assertIn("- Validation: fail", output)
             self.assertIn("- Risk: high", output)
             self.assertIn("source_hash_mismatch", output)
-            self.assertIn("- Session: inactive", output)
+            self.assertIn("- Session file: absent", output)
 
     def test_export_does_not_include_source_contents(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
