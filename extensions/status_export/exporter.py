@@ -5,7 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 
 from core import StateStore
-from extensions._support import exported_timestamp, read_snapshot, reject_runtime_output_path, resolve_output_target
+from extensions._support import (
+    exported_timestamp,
+    read_snapshot,
+    reject_runtime_output_path,
+    resolve_output_target,
+    validation_risk_level,
+)
 
 
 class StatusExportError(Exception):
@@ -25,7 +31,7 @@ def export_status_markdown(root: str | Path, exported_at: str | None = None) -> 
         "",
         f"- Exported at: {exported_at_value}",
         f"- Validation: {validation.result}",
-        f"- Risk: {_risk_level(validation.result, validation.details)}",
+        f"- Risk: {validation_risk_level(validation.result, validation.details)}",
         f"- Session: {session}",
         f"- Sources: {len(snapshot.sources)}",
         f"- Revision: {snapshot.revision}",
@@ -53,19 +59,3 @@ def write_status_markdown(root: str | Path, output_path: str | Path, exported_at
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(markdown, encoding="utf-8", newline="\n")
     return target
-
-
-def _risk_level(result: str, details: tuple[object, ...]) -> str:
-    """Map canonical validation metadata to a compact operational risk label."""
-    if result == "ok":
-        return "low"
-
-    blocking_source_codes = {
-        "source_hash_mismatch",
-        "source_missing",
-        "source_outside_root",
-    }
-    detail_codes = {detail.code for detail in details}
-    if detail_codes & blocking_source_codes:
-        return "high"
-    return "elevated"

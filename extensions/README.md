@@ -5,6 +5,7 @@ External consumers of the core live here.
 Current read-only extensions:
 
 - `handoff_export`
+- `impact_export`
 - `status_export`
 - `return_map_export`
 

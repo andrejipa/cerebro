@@ -8,6 +8,7 @@ from pathlib import Path
 from cli.commands.analyze import run_analyze
 from cli.commands.checkpoint import run_checkpoint
 from cli.commands.handoff_export import run_handoff_export
+from cli.commands.impact_export import run_impact_export
 from cli.commands.import_context import run_import_context
 from cli.commands.init import run_init
 from cli.commands.return_map_export import run_return_map_export
@@ -78,6 +79,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     handoff_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     handoff_parser.set_defaults(handler=run_handoff_export)
+
+    impact_parser = subparsers.add_parser(
+        "impact-export",
+        help="render a short operational impact view from the current state",
+        description="Export a compact read-only impact view derived from the canonical state.",
+    )
+    impact_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
+    impact_parser.set_defaults(handler=run_impact_export)
 
     return_map_parser = subparsers.add_parser(
         "return-map-export",

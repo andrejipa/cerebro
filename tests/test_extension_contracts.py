@@ -10,6 +10,7 @@ from pathlib import Path
 from cli.commands.init import run_init
 from core.state_store import StateStore
 from extensions.handoff_export.exporter import HandoffExportError, export_handoff_markdown, write_handoff_markdown
+from extensions.impact_export.exporter import ImpactExportError, export_impact_markdown, write_impact_markdown
 from extensions.return_map_export.exporter import (
     ReturnMapExportError,
     export_return_map_markdown,
@@ -44,10 +45,12 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             before_revision = store.read_snapshot().revision
 
             handoff = export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            impact = export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             return_map = export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             self.assertIn("# Handoff", handoff)
+            self.assertIn("# Impact", impact)
             self.assertIn("# Status", status)
             self.assertIn("# Return Map", return_map)
             self.assertEqual(before_revision, store.read_snapshot().revision)
@@ -73,6 +76,9 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             with self.assertRaises(HandoffExportError):
                 write_handoff_markdown(root, ".cerebro/blocked.md")
+
+            with self.assertRaises(ImpactExportError):
+                write_impact_markdown(root, ".cerebro/blocked.md")
 
             with self.assertRaises(StatusExportError):
                 write_status_markdown(root, ".cerebro/blocked.md")
@@ -102,6 +108,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             for output in (
                 export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
+                export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
             ):
@@ -149,10 +156,12 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             self.assertIn("source_hash_mismatch", second_analyze.stdout)
 
             handoff = export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            impact = export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             return_map = export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             self.assertIn("Validation: fail", handoff)
+            self.assertIn("- Validation: fail", impact)
             self.assertIn("- Validation: fail", status)
             self.assertIn("- Validation: fail", return_map)
 
@@ -165,6 +174,9 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             with self.assertRaises(HandoffExportError):
                 export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            with self.assertRaises(ImpactExportError):
+                export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             with self.assertRaises(StatusExportError):
                 export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")

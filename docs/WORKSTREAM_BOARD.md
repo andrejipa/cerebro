@@ -9,7 +9,8 @@ This board tracks the current multi-front execution state with explicit stop con
 - Executed:
   - `handoff-export` and `status-export` are active
   - `return-map-export` added as a read-only extension
-  - the three exporters now share only narrow support code for snapshot loading, timestamps, and runtime-path rejection
+  - `impact-export` added as a constrained read-only operational surface view
+  - the four exporters now share only narrow support code for snapshot loading, timestamps, and runtime-path rejection
 - Pending:
   - keep output conventions, write-safety, and test coverage convergent across the existing exporters
 - Blockers:
@@ -65,6 +66,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - clean flow executed on April 11, 2026 with `init -> import-context -> checkpoint -> analyze`
   - after changing `tracked.txt`, a second `analyze` blocked with `analysis_blocked` and `source_hash_mismatch`
   - clean installed flow executed on April 11, 2026 with `analyze -> handoff-export -> status-export -> return-map-export`
+  - `impact-export` joined the same read-only export family and inherits the same failure semantics
   - contract tests now confirm that exports still reflect canonical failed validation after a real `analyze` block
   - contract tests now confirm that all current exports fail explicitly when the state becomes invalid JSON
 - Pending:
@@ -102,10 +104,11 @@ This board tracks the current multi-front execution state with explicit stop con
 - State: active, partially consolidated
 - Executed:
   - `status-export` and `return-map-export` were identified as low-risk descendants
+  - `impact-export` was implemented as the next low-risk derived consumer from the legacy impact-view idea
   - the reuse map now records safe reuse, reinterpretation, and prohibitions
   - `alignment-export` remains explicitly blocked instead of being interpreted into existence
 - Pending:
-  - continue cataloging medium-risk ideas such as graph and impact views
+  - continue cataloging medium-risk ideas such as graph views
 - Blockers:
   - none
 - Risks:

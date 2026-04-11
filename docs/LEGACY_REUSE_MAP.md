@@ -33,6 +33,7 @@ This document records what can be reused from the old system without reintroduci
 
 1. `status-export`
 2. `return-map-export`
-3. keep `alignment-export` blocked unless a future architecture decision adds canonical support for it
-4. optional graph or impact views as external consumers
-5. human operational templates that remain outside runtime authority
+3. `impact-export` as a constrained read-only view of the current operational surface
+4. keep `alignment-export` blocked unless a future architecture decision adds canonical support for it
+5. optional graph views as external consumers
+6. human operational templates that remain outside runtime authority

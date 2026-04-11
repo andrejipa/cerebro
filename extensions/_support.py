@@ -40,3 +40,19 @@ def reject_runtime_output_path(store: StateStore, target: Path, error_type: type
     """Reject writes to runtime-owned files and directories."""
     if store.is_runtime_path(target):
         raise error_type(f"output path is reserved for runtime files: {target}")
+
+
+def validation_risk_level(result: str, details: tuple[object, ...]) -> str:
+    """Map canonical validation metadata to a compact operational risk label."""
+    if result == "ok":
+        return "low"
+
+    blocking_source_codes = {
+        "source_hash_mismatch",
+        "source_missing",
+        "source_outside_root",
+    }
+    detail_codes = {detail.code for detail in details}
+    if detail_codes & blocking_source_codes:
+        return "high"
+    return "elevated"

@@ -33,6 +33,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertIn("analyze", result.stdout)
         self.assertIn("import-context", result.stdout)
         self.assertIn("handoff-export", result.stdout)
+        self.assertIn("impact-export", result.stdout)
         self.assertIn("return-map-export", result.stdout)
         self.assertIn("status-export", result.stdout)
 
@@ -44,6 +45,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             "checkpoint",
             "resume",
             "handoff-export",
+            "impact-export",
             "return-map-export",
             "status-export",
             "validate",
