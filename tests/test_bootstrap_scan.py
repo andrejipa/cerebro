@@ -269,6 +269,84 @@ class BootstrapScanTests(unittest.TestCase):
         self.assertEqual(missing_root.returncode, 1)
         self.assertIn("scan_root_missing", missing_root.stdout)
 
+    def test_scan_subprocess_rejects_root_that_is_not_a_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            file_path = root / "README.md"
+            file_path.write_text("root readme", encoding="utf-8")
+
+            invalid_root = subprocess.run(
+                [sys.executable, "-m", "cli.main", "bootstrap-scan", "--root", str(file_path)],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(invalid_root.returncode, 1)
+            self.assertIn("scan_root_invalid", invalid_root.stdout)
+
+    def test_scan_subprocess_preserves_existing_runtime_byte_for_byte(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            (root / "README.md").write_text("root readme", encoding="utf-8")
+            tracked = root / "tracked.txt"
+            tracked.write_text("tracked", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            store.update_checkpoint(
+                {
+                    "goal": "Goal",
+                    "summary": "Summary",
+                    "next_step": "Next",
+                    "constraints": [],
+                }
+            )
+            store.validate_state()
+
+            before_runtime = {
+                path.relative_to(root / ".cerebro").as_posix(): path.read_bytes()
+                for path in sorted((root / ".cerebro").rglob("*"))
+                if path.is_file()
+            }
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "bootstrap-scan", "--limit", "4"],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+
+            after_runtime = {
+                path.relative_to(root / ".cerebro").as_posix(): path.read_bytes()
+                for path in sorted((root / ".cerebro").rglob("*"))
+                if path.is_file()
+            }
+
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(before_runtime, after_runtime)
+
+    def test_scan_reports_no_strong_candidates_when_no_entry_signal_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            (root / "notes").mkdir()
+            (root / "notes" / "ideas.txt").write_text("free notes", encoding="utf-8")
+            stream = io.StringIO()
+            args = type("Args", (), {"root": str(root), "limit": 6})
+
+            with redirect_stdout(stream):
+                exit_code = run_bootstrap_scan(root, args)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 0)
+            self.assertIn("candidates_found: 0", output)
+            self.assertIn("shortlist_returned: 0", output)
+            self.assertIn("no_strong_candidates:", output)
+
     def test_assisted_bootstrap_flow_by_subprocess(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)

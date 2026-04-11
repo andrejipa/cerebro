@@ -7,6 +7,7 @@
 - External-analysis preparation reached the safe conceptual limit without implementing analysis behavior.
 - `alignment-export` remains blocked because the contract still has no canonical alignment artifact.
 - The project is deliberately frozen for new capability growth until an explicit resume trigger is met.
+- The current layer is considered complete until a formal next-layer decision says otherwise.
 
 This freeze applies to growth, not to corrective maintenance. Bug fixes, proportional regression coverage, and factual documentation updates may continue when needed.
 

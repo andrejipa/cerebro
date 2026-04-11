@@ -120,6 +120,28 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("read-only validation view", result.stdout)
 
+    def test_export_help_pages_declare_read_only_derived_role(self) -> None:
+        expected_fragments = {
+            "handoff-export": ("Markdown handoff", "canonical", "state"),
+            "impact-export": ("read-only impact view", "canonical", "state"),
+            "sources-export": ("read-only inventory", "canonical", "state"),
+            "return-map-export": ("read-only return map", "canonical", "checkpoint"),
+            "status-export": ("read-only operational status", "canonical", "state"),
+            "validation-export": ("read-only validation view", "persisted", "canonical validation record"),
+        }
+
+        for command, fragments in expected_fragments.items():
+            with self.subTest(command=command):
+                result = subprocess.run(
+                    [sys.executable, "-m", "cli.main", command, "--help"],
+                    cwd=REPO_ROOT,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(result.returncode, 0)
+                for fragment in fragments:
+                    self.assertIn(fragment, result.stdout)
+
     def test_cli_usage_error_returns_exit_code_2(self) -> None:
         result = subprocess.run(
             [sys.executable, "-m", "cli.main", "checkpoint"],

@@ -230,23 +230,30 @@ class ArchitectureIsolationTests(unittest.TestCase):
             encoding="utf-8"
         )
         freeze_policy = (REPO_ROOT / "docs" / "FREEZE_POLICY.md").read_text(encoding="utf-8")
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
 
         self.assertIn("- State: deliberate freeze baselined, current layer consciously closed", board)
         self.assertIn("residual triage confirmed that no additional clearly safe block remains", board)
+        self.assertIn("Final closure review found one last external-safe slice", board)
         self.assertIn("- State: current layer consciously closed", handoff)
         self.assertIn("The current layer is exhausted under the active contract", handoff)
+        self.assertIn("## Final Closure Validation", handoff)
+        self.assertIn("Estressador found only a last small external-safe slice", handoff)
+        self.assertIn("Closure is therefore validated collectively", handoff)
         self.assertIn("future point correction", handoff)
         self.assertIn("real architecture block", handoff)
         self.assertIn("explicit next-layer decision", handoff)
         self.assertIn("Pilot Verdict", handoff)
         self.assertIn("Resume Protocol", handoff)
         self.assertIn("The project is deliberately frozen for new capability growth", freeze_policy)
+        self.assertIn("The current layer is considered complete until a formal next-layer decision says otherwise.", freeze_policy)
         self.assertIn("Current classification: healthy conservatism, not excessive conservatism.", freeze_policy)
         self.assertIn("one minimum safe increment at a time", freeze_policy)
         self.assertIn("The following do not break the freeze:", freeze_policy)
         self.assertIn("a concrete and repeated use case exists", freeze_policy)
         self.assertIn("curiosity", freeze_policy)
         self.assertIn('abstract desire to get "closer to the ideal"', freeze_policy)
+        self.assertIn("A final multi-role closure review closed the last safe external gaps", readme)
 
     def test_external_analysis_boundary_handoff_is_explicit_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
@@ -691,7 +698,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         path = REPO_ROOT / "cli" / "commands" / "bootstrap_scan.py"
         tree = parse_python(path)
         offenders: list[str] = []
-        forbidden_attribute_calls = {"open", "read_bytes", "read_text", "write_bytes", "write_text"}
+        forbidden_attribute_calls = {"fdopen", "open", "read", "read_bytes", "read_text", "write", "write_bytes", "write_text"}
         forbidden_name_calls = {"open", "run_import_context", "run_init"}
         forbidden_attribute_names = {"register_sources", "save_state", "update_checkpoint", "validate_state"}
 

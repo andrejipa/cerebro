@@ -9,6 +9,7 @@ This board tracks the current multi-front execution state with explicit stop con
 - Corretor implemented the approved external fixes and no core changes.
 - Auditor revalidated the affected suites and the full suite after the changes.
 - Visionário confirmed that the current layer is now exhausted under the active contract.
+- Final closure review found one last external-safe slice, closed it completely, and confirmed that no additional safe executable work remains.
 
 ## Extensions Read-Only
 
@@ -210,6 +211,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - the deliberate freeze policy, conservatism assessment, minimum safe advance rule, and resume protocol are now documented as the default operational state
   - `bootstrap-scan` was approved and implemented as one assistive-only minimum safe advance that suggests candidates without touching runtime state
   - residual triage confirmed that no additional clearly safe block remains in the current layer
+  - a final multi-role closure review closed the remaining safe external gaps and confirmed that the rest is limited to point correction, real architecture blocks, or explicit next-layer decisions
 - Pending:
   - none while the deliberate freeze remains in effect
 - Blockers:

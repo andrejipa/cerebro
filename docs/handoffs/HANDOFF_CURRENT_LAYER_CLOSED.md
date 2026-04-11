@@ -17,6 +17,15 @@
 - assisted bootstrap now has subprocess coverage for `bootstrap-scan -> import-context -> checkpoint -> analyze`
 - current exports still remain read-only, reject runtime output paths, and report both success and failure wrapper identifiers predictably
 
+## Final Closure Validation
+
+- Estressador found only a last small external-safe slice in bootstrap guardrails, CLI/help coverage, and subprocess validation.
+- Corretor closed that slice completely without touching the core.
+- Guardião blocked every remaining idea that would require new semantics, runtime authority, or another source of truth.
+- Auditor confirmed that the current suite already covers the remaining stable surface proportionally and that the full suite stays green.
+- Visionário confirmed that the residual sense of incompleteness comes from future-layer possibilities, not from unfinished work in the current layer.
+- Closure is therefore validated collectively, not by individual preference.
+
 ## What Is Blocked
 
 - `alignment-export`
