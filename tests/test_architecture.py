@@ -192,6 +192,40 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("5. Visionário classifies what remains.", roles)
         self.assertIn("Validador de Fluxo may run real-use or subprocess validation", roles)
         self.assertIn("If a role starts to look smarter or more authoritative than the runtime, it is wrong.", roles)
+        self.assertIn("The execution protocol lives in `docs/AGENT_PROTOCOL.md`.", roles)
+
+    def test_agent_protocol_is_explicit_and_does_not_open_next_layer(self) -> None:
+        protocol = (REPO_ROOT / "docs" / "AGENT_PROTOCOL.md").read_text(encoding="utf-8")
+        board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        next_layer_handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_NEXT_LAYER_DECISION.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("It prepares the next layer of engineering coordination.", protocol)
+        self.assertIn("It does not open the next product layer", protocol)
+        self.assertIn("## Base Round Protocol", protocol)
+        self.assertIn("1. Coordenador de Rodada opens the round", protocol)
+        self.assertIn(
+            "4. Guardião de Contrato marks each item as `approved`, `blocked`, or `decision-required`.",
+            protocol,
+        )
+        self.assertIn("## Ownership And Collision Rules", protocol)
+        self.assertIn("one active editor per file at a time", protocol)
+        self.assertIn("## Handoff Format", protocol)
+        self.assertIn("### Estressador Handoff", protocol)
+        self.assertIn("### Guardião Handoff", protocol)
+        self.assertIn("### Corretor Handoff", protocol)
+        self.assertIn("### Auditor Handoff", protocol)
+        self.assertIn("### Visionário Handoff", protocol)
+        self.assertIn("## Auxiliary Activation Policy", protocol)
+        self.assertIn("Auxiliary roles never create work on their own.", protocol)
+        self.assertIn("## Relationship To The Freeze", protocol)
+        self.assertIn("Until such a decision exists, the protocol prepares the next layer but does not initiate it.", protocol)
+        self.assertIn("external agent roles now have an explicit operational protocol", board)
+        self.assertIn(
+            "The external agent protocol is now explicit, but it does not open the next product layer by itself.",
+            next_layer_handoff,
+        )
 
     def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
         board = (REPO_ROOT / "docs" / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")

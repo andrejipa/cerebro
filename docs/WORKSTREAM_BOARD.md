@@ -65,6 +65,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - canonical CLI command names are now explicitly documented as alias-free unless an architecture decision says otherwise
   - the alignment block remains recorded in the workstream board, handoff, and reuse map
   - adversarial robustness is now recorded as a permanent baseline and evolution policy
+  - external agent roles now have an explicit operational protocol for future rounds without opening the next product layer
 - Pending:
   - keep future surface-growth docs convergent with the robustness baseline
 - Blockers:

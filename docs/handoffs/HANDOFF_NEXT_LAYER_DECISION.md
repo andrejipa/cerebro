@@ -8,6 +8,7 @@
 - The boundary between core and extensions is hardened by tests, docs, and repeated adversarial validation.
 - External-analysis preparation reached the safe conceptual limit without implementing analysis behavior.
 - `alignment-export` remains correctly blocked because the contract still has no canonical alignment artifact.
+- The external agent protocol is now explicit, but it does not open the next product layer by itself.
 
 ## What Stays Out Of Scope
 
