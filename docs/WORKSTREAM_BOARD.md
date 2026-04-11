@@ -62,10 +62,10 @@ This board tracks the current multi-front execution state with explicit stop con
 - Objective: validate real operational flow without changing behavior
 - State: validated for the current slice
 - Executed:
-  - regression suite covers `analyze`, `handoff-export`, `status-export`, and `return-map-export`
+  - regression suite covers `analyze`, `handoff-export`, `impact-export`, `status-export`, and `return-map-export`
   - clean flow executed on April 11, 2026 with `init -> import-context -> checkpoint -> analyze`
   - after changing `tracked.txt`, a second `analyze` blocked with `analysis_blocked` and `source_hash_mismatch`
-  - clean installed flow executed on April 11, 2026 with `analyze -> handoff-export -> status-export -> return-map-export`
+  - clean installed flow executed on April 11, 2026 with `analyze -> handoff-export -> impact-export -> status-export -> return-map-export`
   - `impact-export` joined the same read-only export family and inherits the same failure semantics
   - contract tests now confirm that exports still reflect canonical failed validation after a real `analyze` block
   - contract tests now confirm that all current exports fail explicitly when the state becomes invalid JSON

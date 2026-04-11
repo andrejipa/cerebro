@@ -364,6 +364,29 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
         self.assertEqual(offenders, [])
 
+    def test_extensions_do_not_read_files_or_enumerate_directories_directly(self) -> None:
+        forbidden_builtin_calls = {"open"}
+        forbidden_attribute_calls = {"glob", "iterdir", "open", "read_bytes", "read_text", "rglob"}
+        forbidden_os_calls = {"listdir", "scandir", "walk"}
+        offenders: list[str] = []
+
+        for path in extension_python_files():
+            tree = parse_python(path)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in forbidden_builtin_calls:
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} calls {node.func.id}")
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                    if node.func.attr in forbidden_attribute_calls:
+                        offenders.append(f"{path.relative_to(REPO_ROOT)} calls .{node.func.attr}")
+                    if (
+                        isinstance(node.func.value, ast.Name)
+                        and node.func.value.id == "os"
+                        and node.func.attr in forbidden_os_calls
+                    ):
+                        offenders.append(f"{path.relative_to(REPO_ROOT)} calls os.{node.func.attr}")
+
+        self.assertEqual(offenders, [])
+
     def test_extension_packages_are_listed_in_pyproject(self) -> None:
         pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
         declared = set(pyproject["tool"]["setuptools"]["packages"])
