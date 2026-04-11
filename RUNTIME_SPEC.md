@@ -53,7 +53,7 @@ It is not:
 Default entrypoint:
 
 ```text
-analyze the cerebro
+cerebro analyze
 ```
 
 Required flow:

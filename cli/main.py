@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from cli.commands.analyze import run_analyze
 from cli.commands.checkpoint import run_checkpoint
 from cli.commands.handoff_export import run_handoff_export
 from cli.commands.import_context import run_import_context
@@ -20,6 +21,14 @@ def build_parser() -> argparse.ArgumentParser:
         description="Local context checkpoint CLI for agent-assisted execution.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    analyze_parser = subparsers.add_parser(
+        "analyze",
+        help="run the standard continuity protocol for the current project",
+        description="Validate the current state, reconstruct context, and open a local session.",
+    )
+    analyze_parser.add_argument("--actor", help="explicit local actor name")
+    analyze_parser.set_defaults(handler=run_analyze)
 
     init_parser = subparsers.add_parser(
         "init",

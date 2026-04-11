@@ -64,16 +64,16 @@ pip install -e .
 ## Basic Flow
 
 ```powershell
+cerebro analyze
 cerebro init
 cerebro import-context --files path\\to\\file.txt
 cerebro checkpoint --goal "..." --summary "..." --next-step "..."
-cerebro resume
 cerebro validate
 ```
 
 Normal daily flow:
 
-- start with `cerebro resume`
+- start with `cerebro analyze`
 - finish with `cerebro checkpoint`
 
 ## Runtime Files
