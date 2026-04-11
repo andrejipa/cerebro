@@ -10,7 +10,8 @@ This board tracks the current multi-front execution state with explicit stop con
   - `handoff-export` and `status-export` are active
   - `return-map-export` added as a read-only extension
   - `impact-export` added as a constrained read-only operational surface view
-  - the four exporters now share only narrow support code for snapshot loading, timestamps, and runtime-path rejection
+  - `sources-export` added as a constrained read-only inventory of canonical source paths
+  - the five exporters now share only narrow support code for snapshot loading, timestamps, and runtime-path rejection
 - Pending:
   - add new exporters only when they remain obviously derived and read-only
 - Blockers:
@@ -63,11 +64,12 @@ This board tracks the current multi-front execution state with explicit stop con
 - Objective: validate real operational flow without changing behavior
 - State: adversarially revalidated baseline
 - Executed:
-  - regression suite covers `analyze`, `handoff-export`, `impact-export`, `status-export`, and `return-map-export`
+  - regression suite covers `analyze`, `handoff-export`, `impact-export`, `sources-export`, `status-export`, and `return-map-export`
   - clean flow executed on April 11, 2026 with `init -> import-context -> checkpoint -> analyze`
   - after changing `tracked.txt`, a second `analyze` blocked with `analysis_blocked` and `source_hash_mismatch`
-  - clean installed flow executed on April 11, 2026 with `analyze -> handoff-export -> impact-export -> status-export -> return-map-export`
+  - clean installed flow executed on April 11, 2026 with `analyze -> handoff-export -> impact-export -> sources-export -> status-export -> return-map-export`
   - `impact-export` joined the same read-only export family and inherits the same failure semantics
+  - `sources-export` joins the same read-only export family without adding new runtime semantics
   - contract tests now confirm that exports still reflect canonical failed validation after a real `analyze` block
   - contract tests now confirm that all current exports fail explicitly when the state becomes invalid JSON
   - adversarial revalidation completed without critical or moderate failures
@@ -107,6 +109,7 @@ This board tracks the current multi-front execution state with explicit stop con
 - Executed:
   - `status-export` and `return-map-export` were identified as low-risk descendants
   - `impact-export` was implemented as the next low-risk derived consumer from the legacy impact-view idea
+  - `sources-export` was implemented as the lowest-risk descendant of source-inventory and source-coverage views
   - the reuse map now records safe reuse, reinterpretation, and prohibitions
   - `alignment-export` remains explicitly blocked instead of being interpreted into existence
 - Pending:

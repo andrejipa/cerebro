@@ -17,6 +17,7 @@ from core.state_store import StateStore
 from extensions.handoff_export.exporter import export_handoff_markdown
 from extensions.impact_export.exporter import export_impact_markdown
 from extensions.return_map_export.exporter import export_return_map_markdown
+from extensions.sources_export.exporter import export_sources_markdown
 from extensions.status_export.exporter import export_status_markdown
 
 
@@ -131,6 +132,7 @@ class AdversarialRevalidationTests(unittest.TestCase):
             self.assertEqual(snapshot.last_validation.result, "fail")
             self.assertIn("Validation: fail", export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
             self.assertIn("- Validation: fail", export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
+            self.assertIn("- Validation: fail", export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
             self.assertIn("- Validation: fail", export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
             self.assertIn(
                 "- Validation: fail",
@@ -175,6 +177,7 @@ class AdversarialRevalidationTests(unittest.TestCase):
                 self.assertIn("validation: ok", output)
                 self.assertIn("Goal", export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
                 self.assertIn("# Impact", export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
+                self.assertIn("- Registered sources: 1", export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
                 self.assertIn("- Validation: ok", export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
                 self.assertIn(
                     f"- Goal: Goal {iteration}",

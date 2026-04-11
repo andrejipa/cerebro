@@ -19,6 +19,7 @@ from extensions.return_map_export.exporter import (
     export_return_map_markdown,
     write_return_map_markdown,
 )
+from extensions.sources_export.exporter import SourcesExportError, export_sources_markdown, write_sources_markdown
 from extensions.status_export.exporter import StatusExportError, export_status_markdown, write_status_markdown
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -50,11 +51,13 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             handoff = export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             impact = export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            sources = export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             return_map = export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             self.assertIn("# Handoff", handoff)
             self.assertIn("# Impact", impact)
             self.assertIn("# Status", status)
+            self.assertIn("# Sources", sources)
             self.assertIn("# Return Map", return_map)
             self.assertEqual(before_revision, store.read_snapshot().revision)
             self.assertEqual(before_state, store.state_path.read_text(encoding="utf-8"))
@@ -86,6 +89,9 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             with self.assertRaises(StatusExportError):
                 write_status_markdown(root, ".cerebro/blocked.md")
 
+            with self.assertRaises(SourcesExportError):
+                write_sources_markdown(root, ".cerebro/blocked.md")
+
             with self.assertRaises(ReturnMapExportError):
                 write_return_map_markdown(root, ".cerebro/blocked.md")
 
@@ -113,6 +119,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
                 export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
+                export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
             ):
                 self.assertNotIn("TOP SECRET BODY", output)
@@ -161,11 +168,13 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             handoff = export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             impact = export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            sources = export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             return_map = export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             self.assertIn("Validation: fail", handoff)
             self.assertIn("- Validation: fail", impact)
             self.assertIn("- Validation: fail", status)
+            self.assertIn("- Validation: fail", sources)
             self.assertIn("- Validation: fail", return_map)
 
     def test_exports_fail_explicitly_when_state_becomes_invalid_json(self) -> None:
@@ -183,6 +192,9 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             with self.assertRaises(StatusExportError):
                 export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            with self.assertRaises(SourcesExportError):
+                export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             with self.assertRaises(ReturnMapExportError):
                 export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
@@ -204,6 +216,9 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             with self.assertRaises(StatusExportError):
                 export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            with self.assertRaises(SourcesExportError):
+                export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             with self.assertRaises(ReturnMapExportError):
                 export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")

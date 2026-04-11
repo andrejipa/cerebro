@@ -35,6 +35,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertIn("handoff-export", result.stdout)
         self.assertIn("impact-export", result.stdout)
         self.assertIn("return-map-export", result.stdout)
+        self.assertIn("sources-export", result.stdout)
         self.assertIn("status-export", result.stdout)
 
     def test_subcommand_help_pages(self) -> None:
@@ -47,6 +48,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             "handoff-export",
             "impact-export",
             "return-map-export",
+            "sources-export",
             "status-export",
             "validate",
         ):

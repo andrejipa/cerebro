@@ -13,6 +13,7 @@ from cli.commands.import_context import run_import_context
 from cli.commands.init import run_init
 from cli.commands.return_map_export import run_return_map_export
 from cli.commands.resume import run_resume
+from cli.commands.sources_export import run_sources_export
 from cli.commands.status_export import run_status_export
 from cli.commands.validate import run_validate
 from cli.output import print_fail, user_error
@@ -87,6 +88,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     impact_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     impact_parser.set_defaults(handler=run_impact_export)
+
+    sources_parser = subparsers.add_parser(
+        "sources-export",
+        help="render a short inventory of registered sources from the current state",
+        description="Export a compact read-only inventory of registered source paths from the canonical state.",
+    )
+    sources_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
+    sources_parser.set_defaults(handler=run_sources_export)
 
     return_map_parser = subparsers.add_parser(
         "return-map-export",

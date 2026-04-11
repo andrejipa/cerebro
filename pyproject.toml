@@ -13,4 +13,4 @@ dependencies = []
 cerebro = "cli.main:main"
 
 [tool.setuptools]
-packages = ["cli", "cli.commands", "core", "extensions", "extensions.handoff_export", "extensions.impact_export", "extensions.return_map_export", "extensions.status_export"]
+packages = ["cli", "cli.commands", "core", "extensions", "extensions.handoff_export", "extensions.impact_export", "extensions.return_map_export", "extensions.sources_export", "extensions.status_export"]

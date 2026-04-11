@@ -12,6 +12,7 @@ This document records what can be reused from the old system without reintroduci
 
 - `alignment` as a human checklist only; `alignment-export` remains blocked until the contract defines a canonical artifact for it
 - `vigilante de contexto` as a disposable external view, never as canonical truth
+- source inventory or source-coverage views only when they stay limited to registered paths and canonical metadata
 - graph and impact views as optional external visualizations
 - agent modes as human playbooks, never as runtime semantics
 
@@ -34,6 +35,7 @@ This document records what can be reused from the old system without reintroduci
 1. `status-export`
 2. `return-map-export`
 3. `impact-export` as a constrained read-only view of the current operational surface
-4. keep `alignment-export` blocked unless a future architecture decision adds canonical support for it
-5. optional graph views as external consumers
-6. human operational templates that remain outside runtime authority
+4. `sources-export` as a constrained read-only inventory of registered paths
+5. keep `alignment-export` blocked unless a future architecture decision adds canonical support for it
+6. optional graph views as external consumers
+7. human operational templates that remain outside runtime authority

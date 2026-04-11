@@ -7,6 +7,7 @@ Current read-only extensions:
 - `handoff_export`
 - `impact_export`
 - `status_export`
+- `sources_export`
 - `return_map_export`
 
 The core does not depend on anything in this directory.
