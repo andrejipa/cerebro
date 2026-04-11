@@ -115,6 +115,8 @@ This board tracks the current multi-front execution state with explicit stop con
   - contract tests now confirm that all current exports fail explicitly when the state becomes invalid JSON
   - automated subprocess coverage now proves the assisted entry protocol `bootstrap-scan -> import-context -> checkpoint -> analyze`
   - adversarial revalidation completed without critical or moderate failures
+  - three real projects were operated through `bootstrap-scan`, explicit source selection, `import-context`, `checkpoint`, `analyze`, and the full export family
+  - a second operational cycle confirmed stable interruption and resumed analysis across project switches
 - Pending:
   - rerun proportionally whenever the public surface changes
 - Blockers:
