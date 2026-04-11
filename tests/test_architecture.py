@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import re
 import subprocess
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -26,6 +27,17 @@ def extension_python_files() -> list[Path]:
         path
         for path in sorted((REPO_ROOT / "extensions").rglob("*.py"))
         if "__pycache__" not in path.parts
+    ]
+
+
+def extension_package_dirs() -> list[Path]:
+    return [
+        path
+        for path in sorted((REPO_ROOT / "extensions").iterdir())
+        if path.is_dir()
+        and not path.name.startswith("_")
+        and "__pycache__" not in path.parts
+        and (path / "__init__.py").exists()
     ]
 
 
@@ -66,6 +78,20 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("official operational entrypoint", runtime_spec)
         self.assertIn("`analyze` is the standard operational entrypoint", core_contract)
         self.assertIn("`cerebro analyze` as the permanent standard entrypoint", adr)
+
+    def test_readme_separates_bootstrap_flow_from_daily_analyze_flow(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("Bootstrap a new instance once with `init`, `import-context`, `checkpoint`, and `validate`.", readme)
+        self.assertIn("Normal daily flow after the instance already exists:", readme)
+        self.assertIn("- start with `cerebro analyze`", readme)
+
+    def test_core_contract_documents_public_read_only_session_helper(self) -> None:
+        core_contract = (REPO_ROOT / "CORE_CONTRACT.md").read_text(encoding="utf-8")
+        boundaries = (REPO_ROOT / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+
+        self.assertIn("has_active_session()", core_contract)
+        self.assertIn("has_active_session()", boundaries)
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
@@ -233,6 +259,38 @@ class ArchitectureIsolationTests(unittest.TestCase):
                     offenders.append(f"{path.relative_to(REPO_ROOT)} uses .{node.attr}")
 
         self.assertEqual(offenders, [])
+
+    def test_extensions_do_not_use_dynamic_runtime_bypass_primitives(self) -> None:
+        forbidden_calls = {"__import__", "delattr", "eval", "exec", "getattr", "hasattr", "setattr", "vars"}
+        forbidden_literals = {"__dict__", "__getattribute__", "__setattr__", "__import__"}
+        offenders: list[str] = []
+
+        for path in extension_python_files():
+            tree = parse_python(path)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in forbidden_calls:
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} calls {node.func.id}")
+            for literal in string_literals_without_docstrings(tree):
+                if literal in forbidden_literals:
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} contains {literal!r}")
+
+        self.assertEqual(offenders, [])
+
+    def test_extension_packages_are_listed_in_pyproject(self) -> None:
+        pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        declared = set(pyproject["tool"]["setuptools"]["packages"])
+        expected = {"extensions"} | {f"extensions.{path.name}" for path in extension_package_dirs()}
+
+        self.assertEqual(declared, {"cli", "cli.commands", "core", *sorted(expected)})
+
+    def test_extension_packages_include_readme(self) -> None:
+        missing = [
+            str(path.relative_to(REPO_ROOT))
+            for path in extension_package_dirs()
+            if not (path / "README.md").exists()
+        ]
+
+        self.assertEqual(missing, [])
 
     def test_analyze_command_remains_orchestration_only(self) -> None:
         path = REPO_ROOT / "cli" / "commands" / "analyze.py"

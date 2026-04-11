@@ -22,6 +22,7 @@ Extensions may not:
 
 - write `.cerebro/state.json` directly
 - write `.cerebro/session.local.json` directly
+- write inside `.cerebro/` in any form
 - mutate state automatically on external events
 - infer or register sources without explicit user action
 - treat logs as authority
@@ -30,4 +31,4 @@ Extensions may not:
 
 - core is the only authority over runtime state
 - extensions are consumers only
-- any future write-capable adapter must still call core APIs, not bypass them
+- if future product behavior needs state mutation, it belongs in a core or CLI contract change, not in an extension

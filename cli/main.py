@@ -10,6 +10,7 @@ from cli.commands.checkpoint import run_checkpoint
 from cli.commands.handoff_export import run_handoff_export
 from cli.commands.import_context import run_import_context
 from cli.commands.init import run_init
+from cli.commands.return_map_export import run_return_map_export
 from cli.commands.resume import run_resume
 from cli.commands.status_export import run_status_export
 from cli.commands.validate import run_validate
@@ -77,6 +78,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     handoff_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     handoff_parser.set_defaults(handler=run_handoff_export)
+
+    return_map_parser = subparsers.add_parser(
+        "return-map-export",
+        help="render a short point-of-return view from the current checkpoint",
+        description="Export a compact read-only return map derived from the canonical checkpoint.",
+    )
+    return_map_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
+    return_map_parser.set_defaults(handler=run_return_map_export)
 
     status_parser = subparsers.add_parser(
         "status-export",

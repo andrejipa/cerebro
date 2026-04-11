@@ -76,7 +76,7 @@ def _risk_level(result: str, details: tuple[object, ...]) -> str:
         "source_missing",
         "source_outside_root",
     }
-    detail_codes = {getattr(detail, "code", "") for detail in details}
+    detail_codes = {detail.code for detail in details}
     if detail_codes & blocking_source_codes:
         return "high"
     return "elevated"

@@ -42,6 +42,7 @@ Extensions may:
 
 - read canonical state through the public `core` API
 - render derived outputs from `read_snapshot()`, `read_checkpoint()`, or `read_sources()`
+- use read-only helpers such as `has_active_session()` when exposed by `StateStore`
 - consume validation results already present in the canonical snapshot
 - expose disposable export, analysis, or integration interfaces on top of the core
 

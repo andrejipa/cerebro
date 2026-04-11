@@ -45,6 +45,8 @@ The stable core API is:
 
 Consumers must use read methods and read models, not raw JSON shape.
 
+Read-only helpers on `StateStore` such as `has_active_session()` are part of the supported extension boundary when they do not mutate runtime state.
+
 ## Invariants
 
 - `state.json` is always schema-valid when persisted by the core
