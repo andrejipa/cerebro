@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import re
 import subprocess
 import unittest
@@ -18,6 +19,37 @@ def tracked_files() -> list[Path]:
         text=True,
     )
     return [Path(path) for path in result.stdout.split("\0") if path]
+
+
+def extension_python_files() -> list[Path]:
+    return [
+        path
+        for path in sorted((REPO_ROOT / "extensions").rglob("*.py"))
+        if "__pycache__" not in path.parts
+    ]
+
+
+def parse_python(path: Path) -> ast.AST:
+    return ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+
+
+def string_literals_without_docstrings(tree: ast.AST) -> list[str]:
+    docstring_nodes: set[ast.AST] = set()
+
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        if not node.body:
+            continue
+        first = node.body[0]
+        if isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant) and isinstance(first.value.value, str):
+            docstring_nodes.add(first.value)
+
+    literals: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) and node not in docstring_nodes:
+            literals.append(node.value)
+    return literals
 
 
 class ArchitectureIsolationTests(unittest.TestCase):
@@ -112,5 +144,78 @@ class ArchitectureIsolationTests(unittest.TestCase):
             absolute_path = REPO_ROOT / relative_path
             if absolute_path.stat().st_size > max_size_bytes:
                 offenders.append(f"{relative_path} ({absolute_path.stat().st_size} bytes)")
+
+        self.assertEqual(offenders, [])
+
+    def test_extensions_import_only_public_core_api(self) -> None:
+        offenders: list[str] = []
+
+        for path in extension_python_files():
+            tree = parse_python(path)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith("core."):
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} imports {node.module}")
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        if alias.name.startswith("core."):
+                            offenders.append(f"{path.relative_to(REPO_ROOT)} imports {alias.name}")
+
+        self.assertEqual(offenders, [])
+
+    def test_extensions_do_not_reference_runtime_path_literals(self) -> None:
+        forbidden_literals = (".cerebro", "state.json", "session.local.json", "core/", "core\\")
+        offenders: list[str] = []
+
+        for path in extension_python_files():
+            tree = parse_python(path)
+            for literal in string_literals_without_docstrings(tree):
+                if any(fragment in literal for fragment in forbidden_literals):
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} contains {literal!r}")
+
+        self.assertEqual(offenders, [])
+
+    def test_extensions_do_not_import_json_or_use_runtime_json_calls(self) -> None:
+        offenders: list[str] = []
+
+        for path in extension_python_files():
+            tree = parse_python(path)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        if alias.name == "json":
+                            offenders.append(f"{path.relative_to(REPO_ROOT)} imports json")
+                if isinstance(node, ast.ImportFrom) and node.module == "json":
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} imports from json")
+                if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "json":
+                    if node.attr in {"load", "loads", "dump", "dumps"}:
+                        offenders.append(f"{path.relative_to(REPO_ROOT)} uses json.{node.attr}")
+
+        self.assertEqual(offenders, [])
+
+    def test_extensions_do_not_call_internal_state_store_operations(self) -> None:
+        forbidden_attributes = {
+            "cerebro_dir",
+            "close_session",
+            "compute_sha256",
+            "events_path",
+            "initialize",
+            "load_state",
+            "logs_dir",
+            "open_session",
+            "prepare_sources",
+            "register_sources",
+            "save_state",
+            "session_path",
+            "state_path",
+            "update_checkpoint",
+            "validate_state",
+        }
+        offenders: list[str] = []
+
+        for path in extension_python_files():
+            tree = parse_python(path)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Attribute) and node.attr in forbidden_attributes:
+                    offenders.append(f"{path.relative_to(REPO_ROOT)} uses .{node.attr}")
 
         self.assertEqual(offenders, [])

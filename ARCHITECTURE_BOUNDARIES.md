@@ -38,21 +38,35 @@ No other file may change runtime behavior unless it is explicitly registered in 
 
 ## Extension Boundary
 
-Future extensions may:
+Extensions may:
 
-- read `state.json`
-- render views from `state.json`
-- consume validation results
-- expose other interfaces on top of the core
+- read canonical state through the public `core` API
+- render derived outputs from `read_snapshot()`, `read_checkpoint()`, or `read_sources()`
+- consume validation results already present in the canonical snapshot
+- expose disposable export, analysis, or integration interfaces on top of the core
 
-Future extensions may not:
+Extensions may not:
 
+- read runtime JSON directly
+- write anywhere inside `.cerebro/`
 - mutate state behind the back of `StateStore`
-- write to `.cerebro/state.json` directly
+- create a second source of truth
 - infer sources automatically
-- interpret external content inside the core
+- execute business decisions on behalf of the core
 
 Extensions are consumers. The core remains the only authority.
+
+Permitted flow:
+
+```text
+core -> extension (read)
+```
+
+Forbidden flow:
+
+```text
+extension -> core (implicit write)
+```
 
 ## Isolation Rules
 
@@ -60,3 +74,4 @@ Extensions are consumers. The core remains the only authority.
 - JSON serialization for runtime files belongs in `StateStore`.
 - CLI commands may orchestrate calls, but may not manage state files directly.
 - Tests may manipulate files directly only to simulate corruption and failure conditions.
+- When an extension design is ambiguous, the correct fallback is to not implement it until the boundary is explicit.

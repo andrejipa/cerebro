@@ -108,6 +108,19 @@ class StateStore:
         """Return the current sources via the stable read interface."""
         return self.read_snapshot().sources
 
+    def is_runtime_path(self, path: str | Path) -> bool:
+        """Return whether a path falls under the runtime-owned directory."""
+        candidate = Path(path)
+        if not candidate.is_absolute():
+            candidate = self.root / candidate
+
+        resolved_path = candidate.resolve()
+        try:
+            resolved_path.relative_to(self.cerebro_dir)
+        except ValueError:
+            return False
+        return True
+
     def save_state(self, state: dict) -> None:
         """Validate and atomically persist the state."""
         errors = validate_state_data(state)
