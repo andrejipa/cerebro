@@ -219,6 +219,7 @@ This board tracks the current multi-front execution state with explicit stop con
   - stress-tested the bridge against invalid roots, invalid schema JSON, run-dir collisions, missing executors, missing/invalid final output, repeated rounds, and real-project usage
   - hardened the local tool with explicit collision handling, schema/output validation, command logging, and optional explicit `--skip-git-repo-check` passthrough
   - compared a direct manual `codex exec` run with the bridge flow and confirmed lower operator friction plus better per-run audit artifacts
+  - formalized daily-use discipline, non-authority rules, run-dir hygiene, and the required return path back to Cerebro through `checkpoint` and `analyze`
 - Pending:
   - keep the bridge local/disposable until a separate explicit decision defines whether it should be promoted outside the product
 - Blockers:

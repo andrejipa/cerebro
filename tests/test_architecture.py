@@ -484,6 +484,12 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("outside tracked product code during incubation", handoff)
         self.assertIn("recommend future controlled promotion", handoff)
         self.assertIn("stress-tested the bridge against invalid roots", board)
+        self.assertIn("Daily-use rule for automation bridges", integration_surface)
+        self.assertIn("always return to Cerebro through `checkpoint` and `analyze`", freeze_policy)
+        self.assertIn("## Daily-Use Protocol", handoff)
+        self.assertIn("## Non-Authority Contract", handoff)
+        self.assertIn("## Operational Hygiene", handoff)
+        self.assertIn("## Alert Trigger", handoff)
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))

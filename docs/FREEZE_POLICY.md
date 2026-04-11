@@ -116,6 +116,14 @@ The approved automation bridge remains inside the freeze policy because it:
 - does not register `sources`, call `import-context`, or alter `state.json`
 - keeps write-capable or core-sensitive work behind explicit human approval
 
+Daily-use discipline for the approved automation bridge:
+
+- use it only for mechanical execution, repeated audit work, and structured external logging
+- do not use it to choose context, classify project importance, or substitute any canonical runtime step
+- always return to Cerebro through `checkpoint` and `analyze` for real continuity decisions
+- treat accumulated run directories as disposable operational residue, not as project memory
+- if bridge logs start being consulted as the state of the project, stop and treat that as a regression
+
 If that bridge starts acting as hidden memory, hidden routing authority, or automatic runtime control, it leaves the minimum safe slice and must stop.
 
 ## Out Of Scope While Frozen

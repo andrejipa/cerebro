@@ -71,6 +71,13 @@ Automation bridges must not:
 - treat executor logs as canonical project state
 - bypass `analyze`, `validate`, or the existing runtime entrypoints
 
+Daily-use rule for automation bridges:
+
+- use them only for mechanical execution, repeated audit runs, and explicit external task packaging
+- do not use them to decide canonical context, select `sources`, interpret project truth, or reopen runtime decisions
+- after every meaningful round, return to Cerebro through the normal `checkpoint` and `analyze` flow before treating anything as operational continuity
+- treat every bridge output as disposable, non-canonical execution residue
+
 Disposable automation-bridge implementations should stay outside tracked product code while the workflow is still evolving. `_local/` is the default incubation area for that kind of bridge.
 
 Allowed future `analysis` outside the runtime may:

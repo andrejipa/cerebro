@@ -230,6 +230,60 @@ This MVP does not:
   - approval-gated write-capable execution is still intentionally out of scope
   - the bridge should remain local/disposable until a separate decision defines packaging, ownership, and maintenance outside the product runtime
 
+## Daily-Use Protocol
+
+- Use the bridge only when the value is mechanical:
+  - repeated read-only audits
+  - explicit external execution packaging
+  - command and log capture that would otherwise be assembled manually
+- Do not use the bridge for:
+  - deciding canonical context
+  - choosing `sources`
+  - replacing `import-context`
+  - replacing `checkpoint` or `analyze`
+  - interpreting the project on behalf of the operator
+
+## Non-Authority Contract
+
+- Every bridge output is disposable and non-canonical.
+- Bridge logs, summaries, and final JSON are execution artifacts only.
+- Real project continuity must always return to Cerebro through the normal runtime flow.
+- If a bridge result matters operationally, the operator must re-anchor that outcome through explicit project work and then return to `checkpoint` and `analyze`.
+
+## Operational Hygiene
+
+- Run directories under `_local/automation_bridge/runs/` are disposable.
+- They must not accumulate into pseudo-history or be treated as a continuity archive.
+- If an operator starts consulting old bridge runs to understand project state, that is a misuse signal.
+- Periodic cleanup is expected and safe because the bridge is not a source of truth.
+
+## Correct Combined Flow
+
+1. Use Cerebro or explicit human coordination to define the task.
+2. Use the bridge only to package and execute the external read-only round.
+3. Review the bridge output as disposable execution evidence.
+4. If the result matters for project continuity, return to Cerebro explicitly through `checkpoint` and `analyze`.
+
+The bridge may support the work. It may not drive the work.
+
+## Alert Trigger
+
+Treat bridge usage as an immediate architectural regression if it starts to:
+
+- decide what is important in the project
+- substitute `import-context`
+- influence `sources` directly
+- become a reference for current project state
+- accumulate logic beyond execution packaging and logging
+
+At that point, stop usage and reopen the question only through explicit architecture review.
+
+## Stable Status
+
+- The bridge is stabilized as a local productivity tool.
+- Its use is permitted only inside the limits above.
+- Its evolution remains frozen until a separate formal promotion decision is approved.
+
 ## Sources
 
 - Codex SDK:
