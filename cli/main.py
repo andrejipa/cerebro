@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 import sys
 
+from cli.project_dashboard import render_open_dashboard
 from cli.project_registry import ProjectRegistryError, load_projects, register_or_update_project
 from cli.commands.analyze import run_analyze
 from cli.commands.approve import run_approve
@@ -390,12 +391,15 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     try:
         effective_argv = list(sys.argv[1:] if argv is None else argv)
+        opened_without_args = not effective_argv
         dispatched_argv = _dispatch_context_menu(effective_argv)
         if dispatched_argv is None:
             return 1
         parser = build_parser()
         args = parser.parse_args(dispatched_argv)
         root = Path(args.project_root).resolve() if getattr(args, "project_root", None) else Path.cwd()
+        if opened_without_args and args.command == "analyze":
+            print(render_open_dashboard(root))
         return args.handler(root, args)
     except KeyboardInterrupt:
         print_fail([user_error("interrupted", "command interrupted by user")])

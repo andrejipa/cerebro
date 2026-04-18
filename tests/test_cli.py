@@ -13,6 +13,7 @@ from pathlib import Path
 from unittest import mock
 
 import cli.main as cli_main_module
+import cli.project_dashboard as project_dashboard_module
 import cli.project_registry as project_registry_module
 from cli.commands.init import run_init
 from cli.commands.resume import run_resume
@@ -299,6 +300,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
 
             def fake_analyze(handler_root: Path, _args: object) -> int:
                 observed.append(handler_root)
+                print("ANALYZE_CALLED")
                 return 0
 
             previous_cwd = Path.cwd()
@@ -307,9 +309,10 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 with mock.patch("pathlib.Path.home", return_value=fake_home_root):
                     with mock.patch("sys.stdin.isatty", return_value=True):
                         with mock.patch("builtins.input", side_effect=["1"]):
-                            with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
-                                with redirect_stdout(stream):
-                                    exit_code = cli_main_module.main([])
+                            with mock.patch.object(cli_main_module, "render_open_dashboard", return_value="DASHBOARD\nestado_projeto: state_absent"):
+                                with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
+                                    with redirect_stdout(stream):
+                                        exit_code = cli_main_module.main([])
             finally:
                 os.chdir(previous_cwd)
 
@@ -319,6 +322,8 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             self.assertIn("CEREBRO", output)
             self.assertIn("(1) Desenvolvimento", output)
             self.assertIn("(2) Gerenciar projeto", output)
+            self.assertIn("DASHBOARD", output)
+            self.assertLess(output.index("DASHBOARD"), output.index("ANALYZE_CALLED"))
             self.assertFalse((fake_home_root / ".cerebro" / "projects.toml").exists())
 
     def test_main_none_uses_process_argv_for_context_menu_dispatch(self) -> None:
@@ -350,9 +355,11 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             other_root = Path(other_dir).resolve()
             fake_home_root = Path(fake_home).resolve()
             observed: list[Path] = []
+            stream = io.StringIO()
 
             def fake_analyze(handler_root: Path, _args: object) -> int:
                 observed.append(handler_root)
+                print("ANALYZE_CALLED")
                 return 0
 
             previous_cwd = Path.cwd()
@@ -361,14 +368,19 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 with mock.patch("pathlib.Path.home", return_value=fake_home_root):
                     with mock.patch("sys.stdin.isatty", return_value=True):
                         with mock.patch("builtins.input", side_effect=["2", str(project_root)]):
-                            with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
-                                exit_code = cli_main_module.main([])
+                            with mock.patch.object(cli_main_module, "render_open_dashboard", return_value="DASHBOARD\nestado_projeto: state_absent"):
+                                with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
+                                    with redirect_stdout(stream):
+                                        exit_code = cli_main_module.main([])
             finally:
                 os.chdir(previous_cwd)
 
+            output = stream.getvalue()
             registry_path = fake_home_root / ".cerebro" / "projects.toml"
             self.assertEqual(exit_code, 0)
             self.assertEqual(observed, [project_root])
+            self.assertIn("DASHBOARD", output)
+            self.assertLess(output.index("DASHBOARD"), output.index("ANALYZE_CALLED"))
             self.assertTrue(registry_path.exists())
             registry = tomllib.loads(registry_path.read_text(encoding="utf-8"))
             self.assertEqual(registry["projects"][0]["name"], project_root.name)
@@ -537,6 +549,139 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             self.assertFalse(first.is_alive())
             self.assertFalse(second.is_alive())
             self.assertEqual(paths, {project_a, project_b})
+
+    def test_explicit_analyze_does_not_render_open_dashboard(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir).resolve()
+            observed: list[Path] = []
+
+            def fake_analyze(handler_root: Path, _args: object) -> int:
+                observed.append(handler_root)
+                return 0
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(root)
+                with mock.patch.object(cli_main_module, "render_open_dashboard", side_effect=AssertionError("dashboard should not render")):
+                    with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
+                        exit_code = cli_main_module.main(["analyze"])
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(observed, [root])
+
+    def test_render_open_dashboard_reads_operational_summary_and_initialized_project_state(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir, tempfile.TemporaryDirectory() as project_dir:
+            repo_root = Path(repo_dir).resolve()
+            project_root = Path(project_dir).resolve()
+            operations_dir = repo_root / "docs" / "operations"
+            operations_dir.mkdir(parents=True, exist_ok=True)
+            (operations_dir / "WEAKNESS_REPORT.md").write_text(
+                "\n".join(
+                    [
+                        "### CRÍTICO",
+                        "- Nenhum item `CRÍTICO` aberto.",
+                        "",
+                        "### ALTO",
+                        "- item alfa",
+                        "  Status atual: Grupo 6",
+                        "- item beta",
+                        "  Status atual: Grupo 6",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (operations_dir / "IMPLEMENTATION_STATUS.md").write_text(
+                "\n".join(
+                    [
+                        "## Próxima fatia",
+                        "- Qual é: `FATIA 4 — Dashboard de estado ao abrir`",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            run_init(project_root)
+
+            with mock.patch.object(
+                project_dashboard_module,
+                "_read_latest_iteration",
+                return_value=("impl-fatia-4: dashboard de estado - 617 testes", "617"),
+            ):
+                output = project_dashboard_module.render_open_dashboard(project_root, repo_root=repo_root)
+
+            self.assertIn("DASHBOARD", output)
+            self.assertIn(f"project_root: {project_root}", output)
+            self.assertIn("testes: 617", output)
+            self.assertIn("criticos_abertos: 0", output)
+            self.assertIn("altos_abertos: 2", output)
+            self.assertIn("ultima_iteracao: impl-fatia-4: dashboard de estado - 617 testes", output)
+            self.assertIn("proximo_item: FATIA 4 — Dashboard de estado ao abrir", output)
+            self.assertIn("estado_projeto: initialized", output)
+            self.assertIn("revisao: 0", output)
+            self.assertIn("validacao:", output)
+
+    def test_render_open_dashboard_reports_not_initialized_when_project_has_no_state(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir, tempfile.TemporaryDirectory() as project_dir:
+            repo_root = Path(repo_dir).resolve()
+            project_root = Path(project_dir).resolve()
+            operations_dir = repo_root / "docs" / "operations"
+            operations_dir.mkdir(parents=True, exist_ok=True)
+            (operations_dir / "WEAKNESS_REPORT.md").write_text(
+                "\n".join(
+                    [
+                        "### CRÍTICO",
+                        "- Nenhum item `CRÍTICO` aberto.",
+                        "",
+                        "### ALTO",
+                        "- item alfa",
+                        "  Status atual: Grupo 6",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (operations_dir / "IMPLEMENTATION_STATUS.md").write_text(
+                "\n".join(
+                    [
+                        "## Próxima fatia",
+                        "- Qual é: `FATIA 4 — Dashboard de estado ao abrir`",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            with mock.patch.object(
+                project_dashboard_module,
+                "_read_latest_iteration",
+                return_value=("impl-fatia-4: dashboard de estado - 617 testes", "617"),
+            ):
+                output = project_dashboard_module.render_open_dashboard(project_root, repo_root=repo_root)
+
+            self.assertIn("estado_projeto: state_absent", output)
+            self.assertNotIn("revisao:", output)
+
+    def test_render_open_dashboard_treats_invalid_doc_encoding_as_unknown(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir, tempfile.TemporaryDirectory() as project_dir:
+            repo_root = Path(repo_dir).resolve()
+            project_root = Path(project_dir).resolve()
+            operations_dir = repo_root / "docs" / "operations"
+            operations_dir.mkdir(parents=True, exist_ok=True)
+            (operations_dir / "WEAKNESS_REPORT.md").write_bytes(b"\xff\xfe\xfd")
+            (operations_dir / "IMPLEMENTATION_STATUS.md").write_bytes(b"\xff\xfe\xfd")
+
+            with mock.patch.object(
+                project_dashboard_module,
+                "_read_latest_iteration",
+                return_value=("unknown", "unknown"),
+            ):
+                output = project_dashboard_module.render_open_dashboard(project_root, repo_root=repo_root)
+
+            self.assertIn("testes: unknown", output)
+            self.assertIn("criticos_abertos: unknown", output)
+            self.assertIn("altos_abertos: unknown", output)
+            self.assertIn("proximo_item: unknown", output)
+            self.assertIn("estado_projeto: state_absent", output)
 
     def test_plan_uses_explicit_project_root_for_relative_input_file(self) -> None:
         with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as other_dir:

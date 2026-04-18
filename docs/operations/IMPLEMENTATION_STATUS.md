@@ -49,18 +49,35 @@
     - `tests.test_cli.CliHelpAndExitCodeTests.test_project_registry_serializes_concurrent_updates`
   - Critério de pronto: `sim`
 
+- Fatia 4: `Dashboard de estado ao abrir`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `cli/project_dashboard.py:1-143`
+    - `cli/main.py:391-403`
+    - `tests/test_cli.py:293-326`
+    - `tests/test_cli.py:355-383`
+    - `tests/test_cli.py:553-683`
+    - `docs/operations/MIGRATION_PLAN.md:1-137`
+  - Testes adicionados:
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_explicit_analyze_does_not_render_open_dashboard`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_render_open_dashboard_reads_operational_summary_and_initialized_project_state`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_render_open_dashboard_reports_not_initialized_when_project_has_no_state`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_render_open_dashboard_treats_invalid_doc_encoding_as_unknown`
+  - Critério de pronto: `sim`
+
 ## Fatia atual
 
-- Qual é: `FATIA 3 — Registro de projetos`
+- Qual é: `FATIA 4 — Dashboard de estado ao abrir`
 - Estado: `concluída`
 
 ## Próxima fatia
 
-- Qual é: `FATIA 4 — Dashboard de estado ao abrir`
+- Qual é: `FATIA 5 — cerebro doctor`
 - Dependências:
   - `FATIA 1` concluída com `cwd` default preservado
   - `FATIA 2` concluída com menu fino reaproveitando `analyze` e `--project-root`
   - `FATIA 3` concluída com registry opcional e não-autoritativo em `~/.cerebro/projects.toml`
+  - `FATIA 4` concluída com dashboard read-only no caminho `main([]) -> analyze`
   - memória externa alinhada em `MIGRATION_PLAN.md`
 
 ## Itens em Grupo 6

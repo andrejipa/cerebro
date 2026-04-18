@@ -13,8 +13,12 @@
   - `cli/project_registry.py` introduz o catálogo opcional em `~/.cerebro/projects.toml`, com leitura normalizada, escrita atômica e serialização explícita de writers concorrentes via lock irmão do arquivo.
   - `cli/main.py` agora lista projetos registrados, permite selecionar entrada existente ou registrar root novo e sempre materializa o resultado como `--project-root ... analyze`.
   - Cobertura do fluxo adicionada em `tests/test_cli.py:345-541`, incluindo registro inicial, seleção de projeto já registrado, falha fechada com TOML inválido e concorrência entre writers do registry.
-- Próxima fatia canônica: `FATIA 4 — Dashboard de estado ao abrir`.
-- Pendências ainda não iniciadas nesta trilha: `FATIA 4` a `FATIA 6`.
+- `FATIA 4 — Dashboard de estado ao abrir`: concluída em `2026-04-18`.
+  - `cli/project_dashboard.py` introduz um helper read-only de abertura que agrega resumo operacional do Cerebro (`WEAKNESS_REPORT`, `IMPLEMENTATION_STATUS`, `git log`) e resumo do projeto selecionado via `StateStore.read_snapshot()`.
+  - `cli/main.py` agora imprime o dashboard apenas no caminho `main([]) -> analyze`, preservando `cerebro analyze` explícito sem preâmbulo.
+  - Cobertura adicionada em `tests/test_cli.py:293-326`, `tests/test_cli.py:355-383`, `tests/test_cli.py:553-683`, incluindo ordem `dashboard -> analyze`, ausência do dashboard em `cerebro analyze` explícito, projeto inicializado, projeto sem estado e docs com encoding inválido.
+- Próxima fatia canônica: `FATIA 5 — cerebro doctor`.
+- Pendências ainda não iniciadas nesta trilha: `FATIA 5` a `FATIA 6`.
 
 ## Estado atual confirmado
 
@@ -75,11 +79,20 @@ Ordenado por esforço, menor primeiro.
      - selecionar projeto existente apenas rematerializa `--project-root`, sem transferir autoridade para fora do dispatcher;
      - writes concorrentes no registry são serializados para não perder atualização silenciosamente.
 
-6. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
+6. Concluído — adicionar dashboard de estado ao abrir.
+   - Evidência implementada: `cli/project_dashboard.py:1-143`, `cli/main.py:391-403`, `tests/test_cli.py:553-683`.
+   - Resultado:
+     - abrir o Cerebro sem `argv` continua usando o mesmo menu `(1)/(2)`;
+     - depois que o root já está decidido, o CLI imprime um dashboard read-only antes do `analyze`;
+     - o dashboard mostra `testes`, `CRÍTICO/ALTO` abertos, `última iteração`, `próxima fatia` e o estado do projeto selecionado;
+     - `cerebro analyze` explícito continua sem dashboard;
+     - ausência de estado ou docs inválidos degrada para `state_absent` / `unknown`, sem bloquear o dispatch.
+
+7. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
    - Evidência: `cli/main.py:61`, `cli/main.py:238`, `cli/output.py:42`, `cli/output.py:48`.
    - Implementação: trocar wording para “project root” quando o root vier de argumento; manter a semântica atual quando não vier.
 
-7. Separar claramente instruções de engenharia vs operação.
+8. Separar claramente instruções de engenharia vs operação.
    - Evidência: `AGENTS.md:3-8`, `AGENTS.md:34-50`, `AGENTS.md:136-187`.
    - Implementação: manter `AGENTS.md` do Cerebro e criar template mínimo de `AGENTS.md` para projetos gerenciados.
 
@@ -121,6 +134,9 @@ Por severidade.
 - Baixo — drift de help e mensagens se o patch parar cedo.
   - O código aceitaria root explícito, mas a UX continuaria dizendo “current directory”.
   - Evidência: `cli/main.py:61`, `cli/main.py:238`, `cli/output.py:42`, `cli/output.py:48`.
+
+- Baixo — o dashboard de abertura depende de docs Markdown e `git log`, então os campos operacionais são advisory-only e podem degradar para `unknown` quando o formato/documento não estiver disponível.
+  - Evidência: `cli/project_dashboard.py:15-17`, `cli/project_dashboard.py:65-118`, `tests/test_cli.py:663-683`.
 
 ## Riscos descartados
 
