@@ -9,7 +9,7 @@ from unittest import mock
 
 import cli.commands.doctor as doctor_module
 from cli.commands.init import run_init
-from core.state_store import StateStore
+from core.state_store import StateStore, StateStoreError, StateValidationError
 
 
 class DoctorCommandTests(unittest.TestCase):
@@ -169,3 +169,108 @@ class DoctorCommandTests(unittest.TestCase):
             self.assertEqual(exit_code, 1)
             self.assertTrue(output.startswith("FAIL"))
             self.assertIn("- session: CRITICO - session registry and local sidecar are inconsistent", output)
+
+    def test_state_check_reports_invalid_canonical_state(self) -> None:
+        with tempfile.TemporaryDirectory() as project_dir:
+            project_root = Path(project_dir).resolve()
+            run_init(project_root)
+            store = StateStore(project_root)
+
+            with mock.patch.object(
+                StateStore,
+                "read_snapshot_and_runtime",
+                side_effect=StateValidationError([{"code": "state_invalid"}]),
+            ):
+                state_check, runtime = doctor_module._state_check(store)
+
+            self.assertIsNone(runtime)
+            self.assertEqual(state_check["status"], doctor_module.STATUS_CRITICAL)
+            self.assertIn("canonical state is invalid (state_invalid)", state_check["message"])
+
+    def test_state_check_reports_state_store_read_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as project_dir:
+            project_root = Path(project_dir).resolve()
+            run_init(project_root)
+            store = StateStore(project_root)
+
+            with mock.patch.object(
+                StateStore,
+                "read_snapshot_and_runtime",
+                side_effect=StateStoreError("failed to read canonical state"),
+            ):
+                state_check, runtime = doctor_module._state_check(store)
+
+            self.assertIsNone(runtime)
+            self.assertEqual(state_check["status"], doctor_module.STATUS_CRITICAL)
+            self.assertIn("failed to read canonical state", state_check["message"])
+
+    def test_session_check_reports_sidecar_present_when_state_cannot_be_inspected(self) -> None:
+        with tempfile.TemporaryDirectory() as project_dir:
+            project_root = Path(project_dir).resolve()
+            run_init(project_root)
+            store = StateStore(project_root)
+            store.session_path.write_text("{}", encoding="utf-8")
+
+            result = doctor_module._session_check(store, None)
+
+            self.assertEqual(result["status"], doctor_module.STATUS_CRITICAL)
+            self.assertIn("local session sidecar exists but state could not be inspected", result["message"])
+
+    def test_session_check_reports_healthy_when_registry_and_sidecar_are_present(self) -> None:
+        with tempfile.TemporaryDirectory() as project_dir:
+            project_root = Path(project_dir).resolve()
+            run_init(project_root)
+            store = StateStore(project_root)
+            store.session_path.write_text("{}", encoding="utf-8")
+
+            result = doctor_module._session_check(
+                store,
+                {"audit": {"active_session_id": "session-123", "active_session_claim_id": "claim-123"}},
+            )
+
+            self.assertEqual(result["status"], doctor_module.STATUS_HEALTHY)
+            self.assertIn("active session registered (session-123)", result["message"])
+
+    def test_weakness_check_warns_when_report_cannot_be_read(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir:
+            repo_root = Path(repo_dir).resolve()
+
+            with mock.patch("pathlib.Path.read_text", side_effect=OSError("read failed")):
+                result = doctor_module._weakness_check(repo_root)
+
+            self.assertEqual(result["status"], doctor_module.STATUS_WARNING)
+            self.assertIn("unable to read weakness report", result["message"])
+
+    def test_weakness_check_warns_when_open_items_cannot_be_classified(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir:
+            repo_root = Path(repo_dir).resolve()
+            operations_dir = repo_root / "docs" / "operations"
+            operations_dir.mkdir(parents=True, exist_ok=True)
+            (operations_dir / "WEAKNESS_REPORT.md").write_text("no structured headings here", encoding="utf-8")
+
+            result = doctor_module._weakness_check(repo_root)
+
+            self.assertEqual(result["status"], doctor_module.STATUS_WARNING)
+            self.assertIn("unable to classify open CRITICO/ALTO items", result["message"])
+
+    def test_freeze_check_warns_when_policy_cannot_be_read(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir:
+            repo_root = Path(repo_dir).resolve()
+
+            with mock.patch("pathlib.Path.read_text", side_effect=OSError("read failed")):
+                result = doctor_module._freeze_check(repo_root)
+
+            self.assertEqual(result["status"], doctor_module.STATUS_WARNING)
+            self.assertIn("unable to read freeze policy", result["message"])
+
+    def test_freeze_check_warns_when_carve_out_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir:
+            repo_root = Path(repo_dir).resolve()
+            operations_dir = repo_root / "docs" / "operations"
+            operations_dir.mkdir(parents=True, exist_ok=True)
+            (operations_dir / "FREEZE_POLICY.md").write_text("growth is frozen\n", encoding="utf-8")
+
+            result = doctor_module._freeze_check(repo_root)
+
+            self.assertEqual(result["status"], doctor_module.STATUS_WARNING)
+            self.assertIn("corrective-maintenance carve-out was not confirmed", result["message"])
