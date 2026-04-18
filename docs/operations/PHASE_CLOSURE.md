@@ -207,8 +207,8 @@ O protocolo de referencia para essa reabertura continua sendo o `Formal Resume T
 ### Contagem de testes da trilha
 
 - Início da trilha: `595`
-- Fim da trilha: `633`
-- Delta: `+38`
+- Fim da trilha: `634`
+- Delta: `+39`
 
 ### Fatias concluídas
 
@@ -241,6 +241,6 @@ O protocolo de referencia para essa reabertura continua sendo o `Formal Resume T
 
 ### Prova final
 
-- `python -m unittest discover -s tests -v` verde com `633` testes e `6` skips.
+- `python -m unittest discover -s tests -v` verde com `634` testes e `6` skips.
 - `python -m unittest tests.test_architecture -v` verde com `51` testes.
 - O modelo externo agora fecha a trilha canônica `FATIAS 1-6` sem pendências abertas nesta fila.
