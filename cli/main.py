@@ -19,6 +19,7 @@ from cli.commands.handoff_export import run_handoff_export
 from cli.commands.impact_export import run_impact_export
 from cli.commands.import_context import run_import_context
 from cli.commands.init import run_init
+from cli.commands.iteration_commit import run_iteration_commit
 from cli.commands.plan import run_plan
 from cli.commands.return_map_export import run_return_map_export
 from cli.commands.resume import run_resume
@@ -298,6 +299,19 @@ def build_parser() -> argparse.ArgumentParser:
         description="Render a read-only diagnostic report for Python, the repo test suite, canonical state, session presence, weakness backlog, and freeze posture. This command does not open continuity and does not mutate runtime state.",
     )
     doctor_parser.set_defaults(handler=run_doctor)
+
+    iteration_commit_parser = add_command_parser(
+        "iteration-commit",
+        help="stage selected repo paths and create one generated iteration commit",
+        description="Generate an iteration commit message from IMPLEMENTATION_STATUS, rerun the required repo test gates, stage only the selected repository paths, and create one git commit. This command is explicit automation for Cerebro engineering work; it does not mutate the managed project runtime state.",
+    )
+    iteration_commit_parser.add_argument(
+        "--path",
+        action="append",
+        required=True,
+        help="repository-relative path to stage for this iteration commit; may be repeated",
+    )
+    iteration_commit_parser.set_defaults(handler=run_iteration_commit)
 
     resume_parser = add_command_parser(
         "resume",

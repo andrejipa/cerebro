@@ -22,8 +22,13 @@
   - A leitura da suíte agora falha fechado quando a própria suíte do repo não está disponível, para não devolver verde global sem o check principal.
   - `cli/main.py` registra `doctor` como subcomando explícito, mantendo `analyze` como entrypoint canônico e preservando o caminho automático `main([]) -> analyze`.
   - Cobertura adicionada em `tests/test_cli.py`, `tests/test_doctor.py` e `tests/test_architecture.py`, incluindo help/dispatch, ausência de alias implícito para `analyze`, read-only sobre o projeto e guard arquitetural contra `validate_state()`/`open_session()`.
-- Próxima fatia canônica: `FATIA 6 — Commit automático por iteração`.
-- Pendências ainda não iniciadas nesta trilha: `FATIA 6`.
+- `FATIA 6 — Commit automático por iteração`: concluída em `2026-04-18`.
+  - `cli/commands/iteration_commit.py` introduz uma automação explícita de commit para a trilha de engenharia do próprio Cerebro: gera a mensagem a partir de `IMPLEMENTATION_STATUS.md`, reroda a suíte completa e `tests.test_architecture`, stageia apenas os `--path` selecionados e cria um único commit git.
+  - O comando falha fechado se o index já estiver sujo, se algum `--path` escapar do repositório, se a suíte não estiver verde ou se o commit falhar; no caso de falha pós-`git add`, ele ainda desfaz o stage por `git reset HEAD -- ...` para não deixar seleção armada silenciosamente.
+  - `cli/main.py` registra `iteration-commit` como subcomando explícito, preservando `analyze` como entrypoint canônico e evitando side effect implícito em comandos de operação.
+  - Cobertura adicionada em `tests/test_iteration_commit.py`, `tests/test_cli.py` e `tests/test_architecture.py`, incluindo geração da mensagem, fail-closed com index já staged, compensação após falha de commit, help/dispatch e guarda da superfície canônica de subcomandos.
+- Trilha canônica `FATIAS 1-6` concluída em `2026-04-18`.
+- Pendências ainda não iniciadas nesta trilha: nenhuma.
 
 ## Estado atual confirmado
 
@@ -96,17 +101,28 @@ Ordenado por esforço, menor primeiro.
 7. Concluído — adicionar `cerebro doctor` como diagnóstico read-only.
    - Evidência implementada: `cli/commands/doctor.py`, `cli/main.py`, `tests/test_doctor.py`, `tests/test_architecture.py`.
    - Resultado:
-     - `doctor` roda explicitamente sobre `cwd` ou `--project-root`;
+      - `doctor` roda explicitamente sobre `cwd` ou `--project-root`;
      - verifica Python, suíte do repo, estado canônico, sessão local, `WEAKNESS_REPORT` e `FREEZE_POLICY`;
-     - falha fechado se a suíte do próprio repo estiver indisponível;
-     - não abre sessão, não revalida estado e não grava nada em `.cerebro`;
-     - o fluxo automático continua preso a `analyze`.
+      - falha fechado se a suíte do próprio repo estiver indisponível;
+      - não abre sessão, não revalida estado e não grava nada em `.cerebro`;
+      - o fluxo automático continua preso a `analyze`.
 
-8. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
+8. Concluído — adicionar `iteration-commit` explícito para fechar a iteração do repo.
+   - Evidência implementada: `cli/commands/iteration_commit.py`, `cli/main.py`, `tests/test_iteration_commit.py`, `tests/test_cli.py`, `tests/test_architecture.py`.
+   - Resultado:
+     - o commit automático da trilha de engenharia agora existe como comando explícito, não como side effect implícito;
+     - a mensagem segue o formato `iter-N: [item] — N testes`, derivado de `IMPLEMENTATION_STATUS.md` e da suíte verde mais recente;
+     - o comando só stageia os `--path` pedidos;
+     - o comando falha fechado com index já armado, path fora do repositório, suíte vermelha ou commit bloqueado;
+     - falha depois do stage dispara compensação por `git reset HEAD -- ...`.
+
+Os itens abaixo ficam como follow-up documental fora da trilha canônica `FATIAS 1-6`.
+
+9. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
    - Evidência: `cli/main.py:61`, `cli/main.py:238`, `cli/output.py:42`, `cli/output.py:48`.
    - Implementação: trocar wording para “project root” quando o root vier de argumento; manter a semântica atual quando não vier.
 
-9. Separar claramente instruções de engenharia vs operação.
+10. Separar claramente instruções de engenharia vs operação.
    - Evidência: `AGENTS.md:3-8`, `AGENTS.md:34-50`, `AGENTS.md:136-187`.
    - Implementação: manter `AGENTS.md` do Cerebro e criar template mínimo de `AGENTS.md` para projetos gerenciados.
 

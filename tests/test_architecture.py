@@ -1574,6 +1574,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
             "bootstrap-scan",
             "context-index-export",
             "doctor",
+            "iteration-commit",
             "init",
             "import-context",
             "checkpoint",

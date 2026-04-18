@@ -58,6 +58,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertIn("bootstrap-scan", result.stdout)
         self.assertIn("context-index-export", result.stdout)
         self.assertIn("doctor", result.stdout)
+        self.assertIn("iteration-commit", result.stdout)
         self.assertIn("import-context", result.stdout)
         self.assertIn("handoff-export", result.stdout)
         self.assertIn("impact-export", result.stdout)
@@ -78,6 +79,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             "bootstrap-scan",
             "context-index-export",
             "doctor",
+            "iteration-commit",
             "init",
             "import-context",
             "checkpoint",
@@ -160,6 +162,18 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertIn("read-only diagnostic report", result.stdout)
         self.assertIn("does not open continuity", result.stdout)
         self.assertIn("does not mutate runtime state", result.stdout)
+
+    def test_iteration_commit_help_declares_generated_commit_role(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "-m", "cli.main", "iteration-commit", "--help"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("Generate an iteration commit message", result.stdout)
+        self.assertIn("selected repository paths", result.stdout)
 
     def test_session_discard_help_declares_explicit_reopen_boundary(self) -> None:
         result = subprocess.run(
@@ -341,6 +355,49 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 os.chdir(other_root)
                 with mock.patch.object(cli_main_module, "run_doctor", side_effect=fake_doctor):
                     exit_code = cli_main_module.main(["doctor", "--project-root", str(project_root)])
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(observed, [project_root])
+
+    def test_main_dispatches_current_working_directory_to_iteration_commit_handler(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir).resolve()
+            observed: list[Path] = []
+
+            def fake_iteration_commit(handler_root: Path, _args: object) -> int:
+                observed.append(handler_root)
+                return 0
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(root)
+                with mock.patch.object(cli_main_module, "run_iteration_commit", side_effect=fake_iteration_commit):
+                    exit_code = cli_main_module.main(["iteration-commit", "--path", "docs/operations/IMPLEMENTATION_STATUS.md"])
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(observed, [root])
+
+    def test_main_dispatches_explicit_project_root_to_iteration_commit_handler(self) -> None:
+        with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as other_dir:
+            project_root = Path(project_dir).resolve()
+            other_root = Path(other_dir).resolve()
+            observed: list[Path] = []
+
+            def fake_iteration_commit(handler_root: Path, _args: object) -> int:
+                observed.append(handler_root)
+                return 0
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(other_root)
+                with mock.patch.object(cli_main_module, "run_iteration_commit", side_effect=fake_iteration_commit):
+                    exit_code = cli_main_module.main(
+                        ["iteration-commit", "--project-root", str(project_root), "--path", "docs/operations/IMPLEMENTATION_STATUS.md"]
+                    )
             finally:
                 os.chdir(previous_cwd)
 

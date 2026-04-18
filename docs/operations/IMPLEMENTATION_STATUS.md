@@ -86,20 +86,38 @@
     - `tests.test_architecture.ArchitectureIsolationTests.test_doctor_command_remains_read_only`
   - Critério de pronto: `sim`
 
+- Fatia 6: `Commit automático por iteração`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `cli/commands/iteration_commit.py`
+    - `cli/main.py`
+    - `tests/test_iteration_commit.py`
+    - `tests/test_cli.py`
+    - `tests/test_architecture.py`
+    - `docs/operations/MIGRATION_PLAN.md`
+  - Testes adicionados:
+    - `tests.test_iteration_commit.IterationCommitCommandTests.test_run_iteration_commit_generates_commit_with_documented_message`
+    - `tests.test_iteration_commit.IterationCommitCommandTests.test_run_iteration_commit_fails_closed_when_index_is_not_clean`
+    - `tests.test_iteration_commit.IterationCommitCommandTests.test_run_iteration_commit_unstages_selection_when_commit_fails`
+    - `tests.test_iteration_commit.IterationCommitCommandTests.test_build_iteration_commit_rejects_paths_outside_repo`
+    - `tests.test_iteration_commit.IterationCommitCommandTests.test_build_commit_message_falls_back_to_last_completed_fatia`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_iteration_commit_help_declares_generated_commit_role`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_dispatches_current_working_directory_to_iteration_commit_handler`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_dispatches_explicit_project_root_to_iteration_commit_handler`
+  - Critério de pronto: `sim`
+
 ## Fatia atual
 
-- Qual é: `FATIA 5 — cerebro doctor`
+- Qual é: `FATIA 6 — Commit automático por iteração`
 - Estado: `concluída`
 
 ## Próxima fatia
 
-- Qual é: `FATIA 6 — Commit automático por iteração`
+- Qual é: `nenhuma — prova de parada e encerramento formal`
 - Dependências:
-  - `FATIA 1` concluída com `cwd` default preservado
-  - `FATIA 2` concluída com menu fino reaproveitando `analyze` e `--project-root`
-  - `FATIA 3` concluída com registry opcional e não-autoritativo em `~/.cerebro/projects.toml`
-  - `FATIA 4` concluída com dashboard read-only no caminho `main([]) -> analyze`
-  - `FATIA 5` concluída com `doctor` explícito e read-only
+  - `FATIAS 1-6` concluídas
+  - suíte completa verde
+  - `tests.test_architecture` verde
   - memória externa alinhada em `MIGRATION_PLAN.md`
 
 ## Itens em Grupo 6
