@@ -616,6 +616,92 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("project_registry_invalid", output)
 
+    def test_main_without_argv_fails_closed_for_invalid_registered_project_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as other_dir, tempfile.TemporaryDirectory() as fake_home:
+            project_root = Path(project_dir).resolve()
+            other_root = Path(other_dir).resolve()
+            fake_home_root = Path(fake_home).resolve()
+            registry_dir = fake_home_root / ".cerebro"
+            registry_dir.mkdir(parents=True, exist_ok=True)
+            (registry_dir / "projects.toml").write_text(
+                "\n".join(
+                    [
+                        "version = 1",
+                        "",
+                        "[[projects]]",
+                        'name = "alpha"',
+                        f'path = "{_toml_escape(str(project_root))}"',
+                        'last_used = "2026-04-17T10:00:00+00:00"',
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            stream = io.StringIO()
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(other_root)
+                with mock.patch("pathlib.Path.home", return_value=fake_home_root):
+                    with mock.patch("sys.stdin.isatty", return_value=True):
+                        with mock.patch("builtins.input", side_effect=["2", "9"]):
+                            with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
+                                with redirect_stdout(stream):
+                                    exit_code = cli_main_module.main([])
+            finally:
+                os.chdir(previous_cwd)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertIn("project_registry_selection_invalid", output)
+
+    def test_main_without_argv_fails_closed_when_managed_project_root_does_not_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as other_dir, tempfile.TemporaryDirectory() as fake_home:
+            other_root = Path(other_dir).resolve()
+            fake_home_root = Path(fake_home).resolve()
+            missing_root = other_root / "missing-project"
+            stream = io.StringIO()
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(other_root)
+                with mock.patch("pathlib.Path.home", return_value=fake_home_root):
+                    with mock.patch("sys.stdin.isatty", return_value=True):
+                        with mock.patch("builtins.input", side_effect=["2", str(missing_root)]):
+                            with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
+                                with redirect_stdout(stream):
+                                    exit_code = cli_main_module.main([])
+            finally:
+                os.chdir(previous_cwd)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertIn("project_root_not_found", output)
+
+    def test_main_without_argv_fails_closed_when_managed_project_root_is_not_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as other_dir, tempfile.TemporaryDirectory() as fake_home:
+            other_root = Path(other_dir).resolve()
+            fake_home_root = Path(fake_home).resolve()
+            invalid_root = other_root / "not-a-directory.txt"
+            invalid_root.write_text("content", encoding="utf-8")
+            stream = io.StringIO()
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(other_root)
+                with mock.patch("pathlib.Path.home", return_value=fake_home_root):
+                    with mock.patch("sys.stdin.isatty", return_value=True):
+                        with mock.patch("builtins.input", side_effect=["2", str(invalid_root)]):
+                            with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
+                                with redirect_stdout(stream):
+                                    exit_code = cli_main_module.main([])
+            finally:
+                os.chdir(previous_cwd)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertIn("project_root_invalid", output)
+
     def test_project_registry_serializes_concurrent_updates(self) -> None:
         with tempfile.TemporaryDirectory() as fake_home, tempfile.TemporaryDirectory() as project_a_dir, tempfile.TemporaryDirectory() as project_b_dir:
             fake_home_root = Path(fake_home).resolve()
@@ -789,6 +875,42 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
 
             self.assertIn("estado_projeto: state_absent", output)
             self.assertNotIn("revisao:", output)
+
+    def test_render_open_dashboard_reports_state_unavailable_when_state_is_invalid(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir, tempfile.TemporaryDirectory() as project_dir:
+            repo_root = Path(repo_dir).resolve()
+            project_root = Path(project_dir).resolve()
+            operations_dir = repo_root / "docs" / "operations"
+            operations_dir.mkdir(parents=True, exist_ok=True)
+            (operations_dir / "WEAKNESS_REPORT.md").write_text(
+                "\n".join(
+                    [
+                        "### CRÍTICO",
+                        "- Nenhum item `CRÍTICO` aberto.",
+                        "",
+                        "### ALTO",
+                        "- item alfa",
+                        "  Status atual: Grupo 6",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (operations_dir / "IMPLEMENTATION_STATUS.md").write_text(
+                "\n".join(
+                    [
+                        "## Próxima fatia",
+                        "- Qual é: `nenhuma — prova de parada e encerramento formal`",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            state_dir = project_root / ".cerebro"
+            state_dir.mkdir(parents=True, exist_ok=True)
+            (state_dir / "state.json").write_text("{invalid", encoding="utf-8")
+
+            output = project_dashboard_module.render_open_dashboard(project_root, repo_root=repo_root)
+
+            self.assertIn("estado_projeto: state_unavailable", output)
 
     def test_render_open_dashboard_treats_invalid_doc_encoding_as_unknown(self) -> None:
         with tempfile.TemporaryDirectory() as repo_dir, tempfile.TemporaryDirectory() as project_dir:

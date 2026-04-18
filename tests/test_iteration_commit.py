@@ -203,3 +203,126 @@ class IterationCommitCommandTests(unittest.TestCase):
             message = iteration_commit_module._build_commit_message(status_path, 626)
 
             self.assertEqual(message, "iter-6: Commit automático por iteração — 626 testes")
+
+    def test_run_iteration_commit_fails_closed_when_full_suite_is_red(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir:
+            repo_root = Path(repo_dir).resolve()
+            status_path = self._write_status(repo_root)
+
+            def fake_run(command: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+                self.assertEqual(cwd, repo_root)
+                command_tuple = tuple(command)
+                if command_tuple == ("git", "rev-parse", "--show-toplevel"):
+                    return subprocess.CompletedProcess(command, 0, stdout=f"{repo_root}\n", stderr="")
+                if command_tuple == (iteration_commit_module.sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"):
+                    return subprocess.CompletedProcess(command, 1, stdout="Ran 634 tests in 1.000s\nFAILED (failures=1)\n", stderr="")
+                raise AssertionError(f"unexpected command: {command_tuple}")
+
+            args = mock.Mock(path=["docs/operations/IMPLEMENTATION_STATUS.md"])
+            stream = io.StringIO()
+            with mock.patch.object(iteration_commit_module, "REPO_ROOT", repo_root):
+                with mock.patch.object(iteration_commit_module, "IMPLEMENTATION_STATUS_PATH", status_path):
+                    with mock.patch.object(iteration_commit_module, "_run_command", side_effect=fake_run):
+                        with redirect_stdout(stream):
+                            exit_code = iteration_commit_module.run_iteration_commit(repo_root, args)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertTrue(output.startswith("FAIL"))
+            self.assertIn("full test suite is not green", output)
+
+    def test_run_iteration_commit_fails_closed_when_suite_count_is_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir:
+            repo_root = Path(repo_dir).resolve()
+            status_path = self._write_status(repo_root)
+
+            def fake_run(command: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+                self.assertEqual(cwd, repo_root)
+                command_tuple = tuple(command)
+                if command_tuple == ("git", "rev-parse", "--show-toplevel"):
+                    return subprocess.CompletedProcess(command, 0, stdout=f"{repo_root}\n", stderr="")
+                if command_tuple == (iteration_commit_module.sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"):
+                    return subprocess.CompletedProcess(command, 0, stdout="OK\n", stderr="")
+                raise AssertionError(f"unexpected command: {command_tuple}")
+
+            args = mock.Mock(path=["docs/operations/IMPLEMENTATION_STATUS.md"])
+            stream = io.StringIO()
+            with mock.patch.object(iteration_commit_module, "REPO_ROOT", repo_root):
+                with mock.patch.object(iteration_commit_module, "IMPLEMENTATION_STATUS_PATH", status_path):
+                    with mock.patch.object(iteration_commit_module, "_run_command", side_effect=fake_run):
+                        with redirect_stdout(stream):
+                            exit_code = iteration_commit_module.run_iteration_commit(repo_root, args)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertTrue(output.startswith("FAIL"))
+            self.assertIn("test count could not be determined", output)
+
+    def test_run_iteration_commit_fails_closed_when_architecture_suite_is_red(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir:
+            repo_root = Path(repo_dir).resolve()
+            status_path = self._write_status(repo_root)
+
+            def fake_run(command: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+                self.assertEqual(cwd, repo_root)
+                command_tuple = tuple(command)
+                if command_tuple == ("git", "rev-parse", "--show-toplevel"):
+                    return subprocess.CompletedProcess(command, 0, stdout=f"{repo_root}\n", stderr="")
+                if command_tuple == (iteration_commit_module.sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"):
+                    return subprocess.CompletedProcess(command, 0, stdout="Ran 634 tests in 1.000s\nOK\n", stderr="")
+                if command_tuple == (iteration_commit_module.sys.executable, "-m", "unittest", "tests.test_architecture", "-v"):
+                    return subprocess.CompletedProcess(command, 1, stdout="Ran 51 tests in 0.500s\nFAILED (failures=1)\n", stderr="")
+                raise AssertionError(f"unexpected command: {command_tuple}")
+
+            args = mock.Mock(path=["docs/operations/IMPLEMENTATION_STATUS.md"])
+            stream = io.StringIO()
+            with mock.patch.object(iteration_commit_module, "REPO_ROOT", repo_root):
+                with mock.patch.object(iteration_commit_module, "IMPLEMENTATION_STATUS_PATH", status_path):
+                    with mock.patch.object(iteration_commit_module, "_run_command", side_effect=fake_run):
+                        with redirect_stdout(stream):
+                            exit_code = iteration_commit_module.run_iteration_commit(repo_root, args)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertTrue(output.startswith("FAIL"))
+            self.assertIn("architecture test suite is not green", output)
+
+    def test_run_iteration_commit_fails_closed_when_selected_paths_stage_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir:
+            repo_root = Path(repo_dir).resolve()
+            status_path = self._write_status(repo_root)
+            calls: list[tuple[str, ...]] = []
+
+            def fake_run(command: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
+                self.assertEqual(cwd, repo_root)
+                command_tuple = tuple(command)
+                calls.append(command_tuple)
+                if command_tuple == ("git", "rev-parse", "--show-toplevel"):
+                    return subprocess.CompletedProcess(command, 0, stdout=f"{repo_root}\n", stderr="")
+                if command_tuple == (iteration_commit_module.sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"):
+                    return subprocess.CompletedProcess(command, 0, stdout="Ran 634 tests in 1.000s\nOK\n", stderr="")
+                if command_tuple == (iteration_commit_module.sys.executable, "-m", "unittest", "tests.test_architecture", "-v"):
+                    return subprocess.CompletedProcess(command, 0, stdout="Ran 51 tests in 0.500s\nOK\n", stderr="")
+                if command_tuple == ("git", "diff", "--cached", "--name-only"):
+                    return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+                if command_tuple == ("git", "add", "--", "docs/operations/IMPLEMENTATION_STATUS.md"):
+                    return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+                if command_tuple == ("git", "diff", "--cached", "--name-only", "--", "docs/operations/IMPLEMENTATION_STATUS.md"):
+                    return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+                if command_tuple == ("git", "reset", "HEAD", "--", "docs/operations/IMPLEMENTATION_STATUS.md"):
+                    return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+                raise AssertionError(f"unexpected command: {command_tuple}")
+
+            args = mock.Mock(path=["docs/operations/IMPLEMENTATION_STATUS.md"])
+            stream = io.StringIO()
+            with mock.patch.object(iteration_commit_module, "REPO_ROOT", repo_root):
+                with mock.patch.object(iteration_commit_module, "IMPLEMENTATION_STATUS_PATH", status_path):
+                    with mock.patch.object(iteration_commit_module, "_run_command", side_effect=fake_run):
+                        with redirect_stdout(stream):
+                            exit_code = iteration_commit_module.run_iteration_commit(repo_root, args)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertTrue(output.startswith("FAIL"))
+            self.assertIn("selected paths produced no staged changes", output)
+            self.assertIn(("git", "reset", "HEAD", "--", "docs/operations/IMPLEMENTATION_STATUS.md"), calls)

@@ -137,3 +137,35 @@ class DoctorCommandTests(unittest.TestCase):
             self.assertEqual(exit_code, 1)
             self.assertTrue(output.startswith("FAIL"))
             self.assertIn("- suite: CRITICO - test suite not available under", output)
+
+    def test_run_doctor_reports_inconsistent_session_registry_without_local_sidecar(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir, tempfile.TemporaryDirectory() as project_dir:
+            repo_root = Path(repo_dir).resolve()
+            project_root = Path(project_dir).resolve()
+            self._seed_repo_docs(repo_root)
+            run_init(project_root)
+            store = StateStore(project_root)
+            state = store.load_state()
+            state["agent_runtime"]["audit"]["active_session_id"] = "session-123"
+            state["agent_runtime"]["audit"]["active_session_claim_id"] = "claim-123"
+            store.save_state(state, expected_revision=state["revision"])
+            self.assertFalse(store.session_path.exists())
+
+            stream = io.StringIO()
+            with mock.patch.object(doctor_module, "REPO_ROOT", repo_root):
+                with mock.patch.object(
+                    doctor_module,
+                    "_suite_check",
+                    return_value={
+                        "name": "suite",
+                        "status": doctor_module.STATUS_HEALTHY,
+                        "message": "Ran 634 tests in 1.000s; OK (skipped=6)",
+                    },
+                ):
+                    with redirect_stdout(stream):
+                        exit_code = doctor_module.run_doctor(project_root)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertTrue(output.startswith("FAIL"))
+            self.assertIn("- session: CRITICO - session registry and local sidecar are inconsistent", output)
