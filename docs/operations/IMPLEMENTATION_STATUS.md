@@ -82,6 +82,7 @@
     - `tests.test_doctor.DoctorCommandTests.test_run_doctor_reports_initialized_project_without_mutating_state`
     - `tests.test_doctor.DoctorCommandTests.test_run_doctor_reports_missing_state_without_creating_runtime_files`
     - `tests.test_doctor.DoctorCommandTests.test_run_doctor_returns_non_zero_when_a_critical_check_fails`
+    - `tests.test_doctor.DoctorCommandTests.test_run_doctor_fails_closed_when_repo_suite_is_unavailable`
     - `tests.test_architecture.ArchitectureIsolationTests.test_doctor_command_remains_read_only`
   - Critério de pronto: `sim`
 

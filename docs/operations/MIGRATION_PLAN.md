@@ -19,6 +19,7 @@
   - Cobertura adicionada em `tests/test_cli.py:293-326`, `tests/test_cli.py:355-383`, `tests/test_cli.py:553-683`, incluindo ordem `dashboard -> analyze`, ausência do dashboard em `cerebro analyze` explícito, projeto inicializado, projeto sem estado e docs com encoding inválido.
 - `FATIA 5 — cerebro doctor`: concluída em `2026-04-18`.
   - `cli/commands/doctor.py` introduz um diagnóstico explícito read-only que verifica Python, suíte do repositório, estado canônico, presença de sessão, backlog `CRÍTICO/ALTO` e postura de freeze sem abrir continuidade nem escrever em `.cerebro`.
+  - A leitura da suíte agora falha fechado quando a própria suíte do repo não está disponível, para não devolver verde global sem o check principal.
   - `cli/main.py` registra `doctor` como subcomando explícito, mantendo `analyze` como entrypoint canônico e preservando o caminho automático `main([]) -> analyze`.
   - Cobertura adicionada em `tests/test_cli.py`, `tests/test_doctor.py` e `tests/test_architecture.py`, incluindo help/dispatch, ausência de alias implícito para `analyze`, read-only sobre o projeto e guard arquitetural contra `validate_state()`/`open_session()`.
 - Próxima fatia canônica: `FATIA 6 — Commit automático por iteração`.
@@ -97,6 +98,7 @@ Ordenado por esforço, menor primeiro.
    - Resultado:
      - `doctor` roda explicitamente sobre `cwd` ou `--project-root`;
      - verifica Python, suíte do repo, estado canônico, sessão local, `WEAKNESS_REPORT` e `FREEZE_POLICY`;
+     - falha fechado se a suíte do próprio repo estiver indisponível;
      - não abre sessão, não revalida estado e não grava nada em `.cerebro`;
      - o fluxo automático continua preso a `analyze`.
 

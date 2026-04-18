@@ -120,3 +120,20 @@ class DoctorCommandTests(unittest.TestCase):
             self.assertEqual(exit_code, 1)
             self.assertTrue(output.startswith("FAIL"))
             self.assertIn("- suite: CRITICO - Ran 617 tests in 1.000s; FAILED (failures=1)", output)
+
+    def test_run_doctor_fails_closed_when_repo_suite_is_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as repo_dir, tempfile.TemporaryDirectory() as project_dir:
+            repo_root = Path(repo_dir).resolve()
+            project_root = Path(project_dir).resolve()
+            self._seed_repo_docs(repo_root)
+            run_init(project_root)
+
+            stream = io.StringIO()
+            with mock.patch.object(doctor_module, "REPO_ROOT", repo_root):
+                with redirect_stdout(stream):
+                    exit_code = doctor_module.run_doctor(project_root)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 1)
+            self.assertTrue(output.startswith("FAIL"))
+            self.assertIn("- suite: CRITICO - test suite not available under", output)

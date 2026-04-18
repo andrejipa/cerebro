@@ -64,7 +64,7 @@ def _suite_check(repo_root: Path) -> dict[str, str]:
     if not tests_dir.exists():
         return {
             "name": "suite",
-            "status": STATUS_WARNING,
+            "status": STATUS_CRITICAL,
             "message": f"test suite not available under {tests_dir}",
         }
 
