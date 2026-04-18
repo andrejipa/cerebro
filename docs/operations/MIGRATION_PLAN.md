@@ -17,8 +17,12 @@
   - `cli/project_dashboard.py` introduz um helper read-only de abertura que agrega resumo operacional do Cerebro (`WEAKNESS_REPORT`, `IMPLEMENTATION_STATUS`, `git log`) e resumo do projeto selecionado via `StateStore.read_snapshot()`.
   - `cli/main.py` agora imprime o dashboard apenas no caminho `main([]) -> analyze`, preservando `cerebro analyze` explícito sem preâmbulo.
   - Cobertura adicionada em `tests/test_cli.py:293-326`, `tests/test_cli.py:355-383`, `tests/test_cli.py:553-683`, incluindo ordem `dashboard -> analyze`, ausência do dashboard em `cerebro analyze` explícito, projeto inicializado, projeto sem estado e docs com encoding inválido.
-- Próxima fatia canônica: `FATIA 5 — cerebro doctor`.
-- Pendências ainda não iniciadas nesta trilha: `FATIA 5` a `FATIA 6`.
+- `FATIA 5 — cerebro doctor`: concluída em `2026-04-18`.
+  - `cli/commands/doctor.py` introduz um diagnóstico explícito read-only que verifica Python, suíte do repositório, estado canônico, presença de sessão, backlog `CRÍTICO/ALTO` e postura de freeze sem abrir continuidade nem escrever em `.cerebro`.
+  - `cli/main.py` registra `doctor` como subcomando explícito, mantendo `analyze` como entrypoint canônico e preservando o caminho automático `main([]) -> analyze`.
+  - Cobertura adicionada em `tests/test_cli.py`, `tests/test_doctor.py` e `tests/test_architecture.py`, incluindo help/dispatch, ausência de alias implícito para `analyze`, read-only sobre o projeto e guard arquitetural contra `validate_state()`/`open_session()`.
+- Próxima fatia canônica: `FATIA 6 — Commit automático por iteração`.
+- Pendências ainda não iniciadas nesta trilha: `FATIA 6`.
 
 ## Estado atual confirmado
 
@@ -88,11 +92,19 @@ Ordenado por esforço, menor primeiro.
      - `cerebro analyze` explícito continua sem dashboard;
      - ausência de estado ou docs inválidos degrada para `state_absent` / `unknown`, sem bloquear o dispatch.
 
-7. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
+7. Concluído — adicionar `cerebro doctor` como diagnóstico read-only.
+   - Evidência implementada: `cli/commands/doctor.py`, `cli/main.py`, `tests/test_doctor.py`, `tests/test_architecture.py`.
+   - Resultado:
+     - `doctor` roda explicitamente sobre `cwd` ou `--project-root`;
+     - verifica Python, suíte do repo, estado canônico, sessão local, `WEAKNESS_REPORT` e `FREEZE_POLICY`;
+     - não abre sessão, não revalida estado e não grava nada em `.cerebro`;
+     - o fluxo automático continua preso a `analyze`.
+
+8. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
    - Evidência: `cli/main.py:61`, `cli/main.py:238`, `cli/output.py:42`, `cli/output.py:48`.
    - Implementação: trocar wording para “project root” quando o root vier de argumento; manter a semântica atual quando não vier.
 
-8. Separar claramente instruções de engenharia vs operação.
+9. Separar claramente instruções de engenharia vs operação.
    - Evidência: `AGENTS.md:3-8`, `AGENTS.md:34-50`, `AGENTS.md:136-187`.
    - Implementação: manter `AGENTS.md` do Cerebro e criar template mínimo de `AGENTS.md` para projetos gerenciados.
 

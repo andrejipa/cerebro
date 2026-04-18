@@ -65,19 +65,40 @@
     - `tests.test_cli.CliHelpAndExitCodeTests.test_render_open_dashboard_treats_invalid_doc_encoding_as_unknown`
   - Critério de pronto: `sim`
 
+- Fatia 5: `cerebro doctor`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `cli/commands/doctor.py:1-246`
+    - `cli/main.py`
+    - `tests/test_cli.py`
+    - `tests/test_doctor.py:1-115`
+    - `tests/test_architecture.py`
+    - `docs/operations/MIGRATION_PLAN.md`
+  - Testes adicionados:
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_doctor_help_declares_read_only_diagnostic_role`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_dispatches_current_working_directory_to_doctor_by_default`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_dispatches_explicit_project_root_to_doctor_handler`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_explicit_doctor_does_not_dispatch_analyze`
+    - `tests.test_doctor.DoctorCommandTests.test_run_doctor_reports_initialized_project_without_mutating_state`
+    - `tests.test_doctor.DoctorCommandTests.test_run_doctor_reports_missing_state_without_creating_runtime_files`
+    - `tests.test_doctor.DoctorCommandTests.test_run_doctor_returns_non_zero_when_a_critical_check_fails`
+    - `tests.test_architecture.ArchitectureIsolationTests.test_doctor_command_remains_read_only`
+  - Critério de pronto: `sim`
+
 ## Fatia atual
 
-- Qual é: `FATIA 4 — Dashboard de estado ao abrir`
+- Qual é: `FATIA 5 — cerebro doctor`
 - Estado: `concluída`
 
 ## Próxima fatia
 
-- Qual é: `FATIA 5 — cerebro doctor`
+- Qual é: `FATIA 6 — Commit automático por iteração`
 - Dependências:
   - `FATIA 1` concluída com `cwd` default preservado
   - `FATIA 2` concluída com menu fino reaproveitando `analyze` e `--project-root`
   - `FATIA 3` concluída com registry opcional e não-autoritativo em `~/.cerebro/projects.toml`
   - `FATIA 4` concluída com dashboard read-only no caminho `main([]) -> analyze`
+  - `FATIA 5` concluída com `doctor` explícito e read-only
   - memória externa alinhada em `MIGRATION_PLAN.md`
 
 ## Itens em Grupo 6

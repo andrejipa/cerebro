@@ -57,6 +57,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertIn("apply", result.stdout)
         self.assertIn("bootstrap-scan", result.stdout)
         self.assertIn("context-index-export", result.stdout)
+        self.assertIn("doctor", result.stdout)
         self.assertIn("import-context", result.stdout)
         self.assertIn("handoff-export", result.stdout)
         self.assertIn("impact-export", result.stdout)
@@ -76,6 +77,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             "apply",
             "bootstrap-scan",
             "context-index-export",
+            "doctor",
             "init",
             "import-context",
             "checkpoint",
@@ -145,6 +147,19 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0)
         self.assertIn("Compatibility command", result.stdout)
+
+    def test_doctor_help_declares_read_only_diagnostic_role(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "-m", "cli.main", "doctor", "--help"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("read-only diagnostic report", result.stdout)
+        self.assertIn("does not open continuity", result.stdout)
+        self.assertIn("does not mutate runtime state", result.stdout)
 
     def test_session_discard_help_declares_explicit_reopen_boundary(self) -> None:
         result = subprocess.run(
@@ -285,6 +300,47 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 os.chdir(other_root)
                 with mock.patch.object(cli_main_module, "run_validate", side_effect=fake_validate):
                     exit_code = cli_main_module.main(["validate", "--project-root", str(project_root)])
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(observed, [project_root])
+
+    def test_main_dispatches_current_working_directory_to_doctor_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir).resolve()
+            observed: list[Path] = []
+
+            def fake_doctor(handler_root: Path, _args: object) -> int:
+                observed.append(handler_root)
+                return 0
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(root)
+                with mock.patch.object(cli_main_module, "run_doctor", side_effect=fake_doctor):
+                    exit_code = cli_main_module.main(["doctor"])
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(observed, [root])
+
+    def test_main_dispatches_explicit_project_root_to_doctor_handler(self) -> None:
+        with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as other_dir:
+            project_root = Path(project_dir).resolve()
+            other_root = Path(other_dir).resolve()
+            observed: list[Path] = []
+
+            def fake_doctor(handler_root: Path, _args: object) -> int:
+                observed.append(handler_root)
+                return 0
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(other_root)
+                with mock.patch.object(cli_main_module, "run_doctor", side_effect=fake_doctor):
+                    exit_code = cli_main_module.main(["doctor", "--project-root", str(project_root)])
             finally:
                 os.chdir(previous_cwd)
 
@@ -570,6 +626,22 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
 
             self.assertEqual(exit_code, 0)
             self.assertEqual(observed, [root])
+
+    def test_explicit_doctor_does_not_dispatch_analyze(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir).resolve()
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(root)
+                with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
+                    with mock.patch.object(cli_main_module, "run_doctor", return_value=0) as fake_doctor:
+                        exit_code = cli_main_module.main(["doctor"])
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(exit_code, 0)
+            fake_doctor.assert_called_once()
 
     def test_render_open_dashboard_reads_operational_summary_and_initialized_project_state(self) -> None:
         with tempfile.TemporaryDirectory() as repo_dir, tempfile.TemporaryDirectory() as project_dir:

@@ -14,6 +14,7 @@ from cli.commands.apply import run_apply
 from cli.commands.bootstrap_scan import run_bootstrap_scan
 from cli.commands.checkpoint import run_checkpoint
 from cli.commands.context_index_export import run_context_index_export
+from cli.commands.doctor import run_doctor
 from cli.commands.handoff_export import run_handoff_export
 from cli.commands.impact_export import run_impact_export
 from cli.commands.import_context import run_import_context
@@ -290,6 +291,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="emit the one live session capability token in command output for external capture; omitted by default to avoid accidental leakage",
     )
     analyze_parser.set_defaults(handler=run_analyze)
+
+    doctor_parser = add_command_parser(
+        "doctor",
+        help="run a read-only diagnostic report for the current project and runtime",
+        description="Render a read-only diagnostic report for Python, the repo test suite, canonical state, session presence, weakness backlog, and freeze posture. This command does not open continuity and does not mutate runtime state.",
+    )
+    doctor_parser.set_defaults(handler=run_doctor)
 
     resume_parser = add_command_parser(
         "resume",

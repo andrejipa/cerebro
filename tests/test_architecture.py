@@ -10,6 +10,7 @@ import tomllib
 import unittest
 from pathlib import Path
 
+import extensions.external_freshness_verifier as external_freshness_module
 from cli.main import build_parser
 
 
@@ -72,6 +73,37 @@ def tracked_extension_git_entries() -> list[tuple[str, Path]]:
 
 def parse_python(path: Path) -> ast.AST:
     return ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+
+
+def extract_public_api_inventory_categories(
+    text: str,
+    start_marker: str,
+    end_markers: tuple[str, ...],
+) -> dict[str, set[str]]:
+    start = text.index(start_marker) + len(start_marker)
+    end = len(text)
+    for marker in end_markers:
+        position = text.find(marker, start)
+        if position != -1:
+            end = min(end, position)
+
+    inventory_section = text[start:end]
+    categories: dict[str, set[str]] = {}
+    current_category: str | None = None
+
+    for raw_line in inventory_section.splitlines():
+        line = raw_line.rstrip()
+        if line.startswith("- ") and line.endswith(":"):
+            current_category = line[2:-1]
+            categories[current_category] = set()
+            continue
+        if current_category is None:
+            continue
+        stripped = line.strip()
+        if stripped.startswith("- `") and stripped.endswith("`"):
+            categories[current_category].add(stripped[3:-1].removesuffix("()"))
+
+    return categories
 
 
 def string_literals_without_docstrings(tree: ast.AST) -> list[str]:
@@ -162,11 +194,28 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("## Mode 1: Bootstrap", operations)
         self.assertIn("## Mode 2: Continuous Work", operations)
         self.assertIn("## Mode 3: Audit / Engineering", operations)
+        self.assertIn("## Minimum Execution Protocol", operations)
+        self.assertIn("Treat any deviation from this flow as a protocol mismatch.", operations)
+        self.assertIn(
+            "This flow defines operational discipline for the round; it is not enforced by the CLI as a runtime gate.",
+            operations,
+        )
+        self.assertIn(
+            "`status-export` and the audit trail are expected closure artifacts for external rounds as part of operational discipline, not CLI enforcement",
+            operations,
+        )
+        self.assertIn("parallel comparison is allowed only for independent approaches with an explicit join point", operations)
+        self.assertIn(
+            "successful prior decisions may be reused as success memory, and may slightly reinforce later scoring only as a documented heuristic",
+            operations,
+        )
         self.assertIn("## Do Not Tinker", operations)
+        self.assertIn("current approved operational surface", operations)
         self.assertIn("## Onboarding Quick Start", operations)
         self.assertIn("The default posture is now infrastructure use, not ongoing construction.", freeze_policy)
         self.assertIn("operate it through the approved daily protocol instead", freeze_policy)
-        self.assertIn("## Operating Posture", board)
+        self.assertIn("Follow-up documentation alignment updated the active onboarding surface", board)
+        self.assertIn("Current canonical operational names are the seven roles defined in `AGENT_ROLES.md`", board)
         self.assertIn("operational infrastructure", current_layer)
         self.assertIn("Treat the current system as stable operational infrastructure.", next_layer)
 
@@ -181,6 +230,29 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertNotIn("cerebro analyze", bootstrap_section)
         self.assertIn("cerebro analyze", daily_section)
         self.assertIn("- start with `cerebro analyze`", daily_section)
+        self.assertIn("- answer first whether the work is in `cerebro` or in a `caso`", daily_section)
+        self.assertIn("- submit any risky slice to the approval boundary when policy requires it", daily_section)
+        self.assertIn("- execute only the approved and properly scoped slice", daily_section)
+        self.assertIn("Any daily use that skips this flow is operationally invalid.", daily_section)
+
+    def test_readme_documents_supported_install_path_and_first_source_selection(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        installer = OPERATIONS_DOCS / "install-cerebro.ps1"
+
+        self.assertTrue(installer.exists())
+        self.assertIn(r".\docs\operations\install-cerebro.ps1", readme)
+        self.assertIn("Cerebro repository root", readme)
+        self.assertIn("target project root", readme)
+        self.assertIn("If you only read one thing, read this:", readme)
+        self.assertIn("Python 3.11 or newer", readme)
+        self.assertIn("creates a local `venv\\`", readme)
+        self.assertIn("ignore exports and advanced operational docs until this sequence succeeds once", readme)
+        self.assertIn("Read it as two steps:", readme)
+        self.assertIn("cerebro analyze", readme)
+        self.assertIn("the next command is `cerebro import-context --files ...`", readme)
+        self.assertIn("choose a small explicit set of human-maintained files", readme)
+        self.assertIn("one project-definition file", readme)
+        self.assertIn("never generated files, exports, logs, caches, backups", readme)
 
     def test_core_contract_documents_public_read_only_session_helper(self) -> None:
         core_contract = (REFERENCE_DOCS / "CORE_CONTRACT.md").read_text(encoding="utf-8")
@@ -230,47 +302,52 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("outside tracked extension packages", extensions_readme)
         self.assertIn("validation_export", extensions_readme)
 
+    def test_extension_model_and_template_block_overwriting_registered_sources(self) -> None:
+        extension_model = (REFERENCE_DOCS / "EXTENSION_MODEL.md").read_text(encoding="utf-8")
+        template_readme = (REPO_ROOT / "extensions" / "_template" / "README.md").read_text(encoding="utf-8")
+        template_code = (REPO_ROOT / "extensions" / "_template" / "extension.py").read_text(encoding="utf-8")
+
+        self.assertIn("overwrite registered source files through explicit output paths", extension_model)
+        self.assertIn("never overwrite registered source files through output paths", template_readme)
+        self.assertIn("registered source files", template_code)
+
     def test_agent_role_model_is_explicit_and_contract_safe(self) -> None:
         roles = (OPERATIONS_DOCS / "AGENT_ROLES.md").read_text(encoding="utf-8")
 
         for role in (
-            "Estressador",
-            "Guardião de Contrato",
-            "Corretor",
-            "Auditor",
-            "Visionário",
-            "Triador de Casos",
-            "Avaliador de Evidencia",
-            "Explorador de Superficie",
-            "Validador de Fluxo",
-            "Coordenador de Rodada",
+            "Orchestrator",
+            "Planner",
+            "Implementer",
+            "Reviewer",
+            "Verifier",
+            "Researcher",
+            "Documenter",
         ):
-            self.assertIn(f"### {role}", roles)
+            self.assertIn(f"## {role}", roles)
 
-        self.assertIn("Curador de Contexto", roles)
-        self.assertIn("Why not permanent:", roles)
-        self.assertIn("Sintetizador de Saida", roles)
-        self.assertIn("Cartografo de Superficie", roles)
-        self.assertIn("Monitor de Observabilidade", roles)
-        self.assertIn("Planejador de Experimentos", roles)
         self.assertIn("No role may modify the core", roles)
+        self.assertIn("No role may decide canonical context on its own.", roles)
+        self.assertIn("No external tool may compete with `analyze` as the operational entrypoint.", roles)
         self.assertIn("No role may create a new source of truth.", roles)
         self.assertIn("official operational baseline", roles)
-        self.assertIn("The core role set is closed for the current layer.", roles)
-        self.assertIn("The auxiliary role set below is the official baseline for continued operation.", roles)
-        self.assertIn("Do not add or promote auxiliary roles unless a repeated real bottleneck proves the current team insufficient.", roles)
-        self.assertIn("The core cycle remains the same:", roles)
-        self.assertIn("1. Estressador produces findings.", roles)
-        self.assertIn("2. Guardião approves or blocks the safe slice.", roles)
-        self.assertIn("5. Visionário classifies what remains.", roles)
-        self.assertIn("Triador de Casos may deduplicate and group findings", roles)
-        self.assertIn("Avaliador de Evidencia may verify whether each finding is actually demonstrated", roles)
-        self.assertIn("keep this role only while repeated rounds show real gains in deduplication", roles)
-        self.assertIn("keep this role only while repeated rounds show real gains in proof quality", roles)
-        self.assertIn("Validador de Fluxo may run real-use or subprocess validation", roles)
-        self.assertIn("If a role starts to look smarter or more authoritative than the runtime, it is wrong.", roles)
-        self.assertIn("Treat the current team shape as frozen unless a repeated real bottleneck proves it insufficient.", roles)
+        self.assertIn("The role set is intentionally lean and composable.", roles)
+        self.assertIn("Risk review remains a conditional activity inside the canonical roles.", roles)
+        self.assertIn("Tool-provided nicknames, UI aliases, or auto-generated labels are never canonical role names.", roles)
+        self.assertIn("Operationally, every agent must be identified by its function name from this role set only.", roles)
+        self.assertIn(
+            "The runtime does not assign these roles automatically; they are external functional labels applied around the canonical state.",
+            roles,
+        )
+        self.assertIn("1. Orchestrator defines context and blocks ambiguity.", roles)
+        self.assertIn("3. Planner turns that evidence into a plan-backed slice.", roles)
+        self.assertIn("7. Documenter records the closure artifacts.", roles)
+        self.assertIn("No agent may decide canonical context and no external tool may compete with `analyze`.", roles)
+        self.assertIn("If the round does not produce structured tracing", roles)
         self.assertIn("The execution protocol lives in `docs/operations/AGENT_PROTOCOL.md`.", roles)
+        self.assertIn("## Historical Compatibility Map", roles)
+        self.assertIn("### Orquestrador", roles)
+        self.assertIn("### Avaliador de Risco", roles)
+        self.assertIn("### Guardião", roles)
 
     def test_agent_protocol_is_explicit_and_does_not_open_next_layer(self) -> None:
         protocol = (OPERATIONS_DOCS / "AGENT_PROTOCOL.md").read_text(encoding="utf-8")
@@ -279,47 +356,67 @@ class ArchitectureIsolationTests(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertIn("It prepares the next layer of engineering coordination.", protocol)
-        self.assertIn("It does not open the next product layer", protocol)
-        self.assertIn("## Base Round Protocol", protocol)
-        self.assertIn("1. Coordenador de Rodada opens the round", protocol)
+        self.assertIn("It is descriptive, not aspirational.", protocol)
         self.assertIn(
-            "4. Triador de Casos enters only if the finding set is noisy, duplicated, or spread across multiple fronts.",
+            "It does not introduce a built-in multi-agent scheduler, a second source of truth, or a new authority above the canonical state.",
             protocol,
         )
+        self.assertIn("## Canonical Role Set", protocol)
+        self.assertIn("## Context Gate", protocol)
+        self.assertIn("Orchestrator asks: `estamos no cerebro ou em um caso?`", protocol)
+        self.assertIn("If the answer is ambiguous, the round becomes `blocked-context`.", protocol)
+        self.assertIn("## Minimum Operational Flow", protocol)
+        self.assertIn("`READ -> ANALYZE -> PLAN -> DELEGATE -> ACT -> VERIFY -> RECORD`", protocol)
+        self.assertIn("Any deviation from this sequence is a protocol mismatch.", protocol)
         self.assertIn(
-            "5. Avaliador de Evidencia enters only if a finding is not yet clearly demonstrated.",
+            "This sequence defines operational discipline for the round; it is not enforced by the CLI as a runtime gate.",
             protocol,
         )
-        self.assertIn(
-            "6. Guardião de Contrato marks each item as `approved`, `blocked`, or `decision-required`.",
-            protocol,
-        )
+        self.assertIn("### READ", protocol)
+        self.assertIn("### ANALYZE", protocol)
+        self.assertIn("### PLAN", protocol)
+        self.assertIn("### DELEGATE", protocol)
+        self.assertIn("### ACT", protocol)
+        self.assertIn("### VERIFY", protocol)
+        self.assertIn("### RECORD", protocol)
+        self.assertIn("## Scope Definition", protocol)
+        self.assertIn("Before deeper analysis, the round must define scope explicitly:", protocol)
+        self.assertIn("what will be analyzed now", protocol)
+        self.assertIn("what is out of scope for now", protocol)
+        self.assertIn("what should be analyzed later", protocol)
+        self.assertIn("in what order the analysis should proceed", protocol)
+        self.assertIn("## Decision Discipline", protocol)
+        self.assertIn("If the evidence is weak, stop.", protocol)
+        self.assertIn("If the DAG is invalid or cyclic, stop.", protocol)
+        self.assertIn("If the action is blocked by approval, stop until approval is explicit.", protocol)
+        self.assertIn("## Current Runtime Facts That Matter Operationally", protocol)
+        self.assertIn("- `light` / `state_only`", protocol)
+        self.assertIn("- `moderate` / `structured_state`", protocol)
+        self.assertIn("- `heavy` / `governed_execution`", protocol)
+        self.assertIn("a new `plan_updated` generation resets active approvals", protocol)
+        self.assertIn("verification without pending delta is blocked", protocol)
+        self.assertIn("## Success Memory And Limited Reinforcement", protocol)
+        self.assertIn("success memory supports tie-breaking and prioritization", protocol)
+        self.assertIn("## Parallel Delegation Rules", protocol)
+        self.assertIn("Parallel delegation is a controlled optimization.", protocol)
+        self.assertIn("## Consolidation Protocol", protocol)
+        self.assertIn("The formal consolidation record lives in the append-only audit trail.", protocol)
+        self.assertIn("## Approval, Rollback, And Verify", protocol)
+        self.assertIn("## Stop Rules", protocol)
+        self.assertIn("## Round States", protocol)
+        self.assertIn("`awaiting-human-approval`", protocol)
+        self.assertIn("Tool nicknames, UI aliases, and historical labels are non-canonical.", protocol)
         self.assertIn("## Ownership And Collision Rules", protocol)
         self.assertIn("one active editor per file at a time", protocol)
         self.assertIn("## Handoff Format", protocol)
-        self.assertIn("### Estressador Handoff", protocol)
-        self.assertIn("### Triador de Casos Handoff", protocol)
-        self.assertIn("### Avaliador de Evidencia Handoff", protocol)
-        self.assertIn("### Guardião Handoff", protocol)
-        self.assertIn("### Corretor Handoff", protocol)
-        self.assertIn("### Auditor Handoff", protocol)
-        self.assertIn("### Visionário Handoff", protocol)
-        self.assertIn("## Auxiliary Activation Policy", protocol)
-        self.assertIn("Triador de Casos:", protocol)
-        self.assertIn("Avaliador de Evidencia:", protocol)
-        self.assertIn("## Role Creation And Removal Criteria", protocol)
-        self.assertIn("Auxiliary roles never create work on their own.", protocol)
-        self.assertIn("official stable baseline for continuous use", protocol)
-        self.assertIn(
-            "No auxiliary role should be added, promoted, or kept by default unless repeated real rounds demonstrate a concrete unresolved bottleneck.",
-            protocol,
-        )
-        self.assertIn("Treat the current role roster as closed for ordinary operation.", protocol)
-        self.assertIn("the current team remains frozen as the operational baseline", protocol)
-        self.assertIn("## Relationship To The Freeze", protocol)
-        self.assertIn("Until such a decision exists, the protocol prepares the next layer but does not initiate it.", protocol)
-        self.assertIn("external agent roles now have an explicit operational protocol", board)
+        self.assertIn("`Papel funcional: <role>`", protocol)
+        self.assertIn("## Record Requirements", protocol)
+        self.assertIn("Without that record, closure is incomplete.", protocol)
+        self.assertNotIn("## Debate Interno Simulado", protocol)
+        self.assertNotIn("Revalidacao Adversarial", protocol)
+        self.assertNotIn("## Minimum Mandatory Flow", protocol)
+        self.assertIn("Follow-up documentation alignment updated the active onboarding surface", board)
+        self.assertIn("The revised external protocol is now the official operational baseline", board)
         self.assertIn(
             "The external agent protocol is now explicit, but it does not open the next product layer by itself.",
             next_layer_handoff,
@@ -332,20 +429,46 @@ class ArchitectureIsolationTests(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertIn("Triador de Casos reduced that noisy set to three cases", board)
-        self.assertIn("Avaliador de Evidencia marked the first two cases as demonstrated", board)
-        self.assertIn("the refined team now has operational proof", board)
+        self.assertIn("Orquestrador opened the round by making the context explicit", board)
+        self.assertIn("Quebrador found protocol drift", board)
+        self.assertIn("Guardião permitted only the documentation-and-test slice needed to publish the revised protocol", board)
+        self.assertIn("The revised external protocol is now the official operational baseline", board)
         self.assertIn("the official operational baseline and remains frozen", board)
-        self.assertIn("Team-shape discussion is closed until a formal role-layer trigger is documented against repeated real rounds.", board)
-        self.assertIn("## Refined Agent Team Validation", report)
-        self.assertIn("`Triador de Casos` reduced five raw findings to three cases", report)
-        self.assertIn("`Avaliador de Evidencia` then marked two cases as demonstrated", report)
+        self.assertIn("Team-shape discussion remains closed until a formal role-layer trigger is documented against repeated real rounds.", board)
+        self.assertIn("## Revised Operational Model Validation", report)
+        self.assertIn("no mandatory explicit context gate between `cerebro` and `caso`", report)
+        self.assertIn("`Avaliador de Risco` is justified as a conditional role, especially in fiscal cases like `Portal`", report)
         self.assertIn("no further permanent role is justified by this validation round", report)
-        self.assertIn("- State: refined team validated in a real round", handoff)
-        self.assertIn("a noisy set of five raw findings was reduced to two demonstrated executable cases", handoff)
-        self.assertIn("a new auxiliary role now requires a fresh, repeated bottleneck", handoff)
-        self.assertIn("treat the current team shape as the frozen operational baseline", handoff)
-        self.assertIn("role-shape experimentation is closed for the current layer", handoff)
+        self.assertIn("- State: revised protocol baselined in a documented round", handoff)
+        self.assertIn("Orquestrador made the context explicit as `cerebro`, not a live `caso`", handoff)
+        self.assertIn("`Guardião` now has the explicit states `permitido`, `permitido com aprovacao humana`, and `bloqueado`", handoff)
+        self.assertIn("fiscal cases like `Portal` still require explicit human approval before materially altering EFD behavior", handoff)
+        self.assertIn("keep `analyze` as the only canonical operational entrypoint", handoff)
+
+    def test_active_doc_surfaces_require_explicit_context_for_legacy_authority_language(self) -> None:
+        legacy_labels = ("Orquestrador", "Comprovador", "Avaliador de Risco", "Guardião")
+        clean_surfaces = {
+            "README.md": (REPO_ROOT / "README.md").read_text(encoding="utf-8"),
+            "docs/operations/AGENT_PROTOCOL.md": (OPERATIONS_DOCS / "AGENT_PROTOCOL.md").read_text(encoding="utf-8"),
+            "docs/operations/OPERATIONS_BASELINE.md": (OPERATIONS_DOCS / "OPERATIONS_BASELINE.md").read_text(
+                encoding="utf-8"
+            ),
+            "docs/reference/INTEGRATION_SURFACE.md": (REFERENCE_DOCS / "INTEGRATION_SURFACE.md").read_text(
+                encoding="utf-8"
+            ),
+            "docs/reference/EXTERNAL_FRESHNESS_VERIFIER.md": (
+                REFERENCE_DOCS / "EXTERNAL_FRESHNESS_VERIFIER.md"
+            ).read_text(encoding="utf-8"),
+        }
+
+        for surface_name, text in clean_surfaces.items():
+            for legacy_label in legacy_labels:
+                with self.subTest(surface=surface_name, legacy_label=legacy_label):
+                    self.assertNotIn(legacy_label, text)
+
+        board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
+        self.assertIn("historical round evidence", board)
+        self.assertIn("Current canonical operational names are the seven roles defined in `AGENT_ROLES.md`", board)
 
     def test_alignment_export_remains_explicitly_blocked_in_docs(self) -> None:
         board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
@@ -368,7 +491,15 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("## Extensions Read-Only", board)
         self.assertIn("- State: safe limit reached", board)
         self.assertIn("- State: stopped at the current safe limit", handoff)
-        self.assertIn("no longer exposes any additional low-risk read-only export", reuse_map)
+        self.assertIn("seven constrained read-only exports", handoff)
+        self.assertIn(
+            "reopen this front only if a concrete and repeated unmet use case is documented",
+            handoff,
+        )
+        self.assertIn("current approved operational surface", handoff)
+        self.assertIn("require the formal freeze-break protocol", handoff)
+        self.assertIn("seven already implemented", reuse_map)
+        self.assertIn("additional external analysis use cases", reuse_map)
 
     def test_legacy_and_integration_stop_handoffs_are_explicit_in_docs(self) -> None:
         board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
@@ -384,6 +515,12 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("## Integration Preparation", board)
         self.assertIn("- State: safe limit reached", board)
         self.assertIn("- State: stopped at the current low-risk limit", legacy_handoff)
+        self.assertIn(
+            "`handoff`, `status`, `return-map`, `impact`, `sources`, `validation`, and `context-index`",
+            legacy_handoff,
+        )
+        self.assertIn("seven now implemented", legacy_handoff)
+        self.assertIn("additional external analysis use case", legacy_handoff)
         self.assertIn("- State: stopped at the current safe limit", integration_handoff)
 
     def test_next_layer_transition_handoff_is_explicit_in_docs(self) -> None:
@@ -396,14 +533,46 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("## Next Layer Transition", board)
         self.assertIn("- State: deliberate freeze baselined", board)
         self.assertIn("break the freeze only through the formal trigger and resume protocol", board)
+        self.assertIn(
+            "the external-analysis boundary is documented and implemented up to the current classifier-only limit",
+            board,
+        )
         self.assertIn("- State: deliberate freeze approved and baselined", handoff)
-        self.assertIn("Option 1: First Concrete External Analysis", handoff)
+        self.assertIn("Option 1: Additional Concrete External Analysis", handoff)
         self.assertIn("Option 2: Medium-Risk Graph View", handoff)
         self.assertIn("Option 3: Deliberate Freeze", handoff)
         self.assertIn("Recommended option now:", handoff)
-        self.assertIn("Option 3, deliberate freeze", handoff)
+        self.assertIn("Option 3, deliberate freeze after the first minimum external-analysis increment", handoff)
+        self.assertIn("current approved operational surface", handoff)
+        self.assertIn(
+            "a concrete and repeated use case exists that the current approved operational surface cannot satisfy cleanly",
+            handoff,
+        )
+        self.assertIn(
+            "Record why the current approved operational surface does not satisfy it cleanly.",
+            handoff,
+        )
         self.assertIn("Approved Freeze Trigger", handoff)
         self.assertIn("Minimum Safe Advance Rule", handoff)
+        self.assertIn(
+            "no repeated unmet use case is currently documented against the current approved operational surface",
+            handoff,
+        )
+        self.assertIn("the low-risk export slice was exhausted explicitly", handoff)
+        self.assertIn(
+            "One minimum read-only external-analysis classifier was implemented without contaminating the runtime, and live acquisition remains blocked.",
+            handoff,
+        )
+        self.assertIn(
+            "one narrowly defined additional external-analysis read-only increment beyond the current classifier",
+            handoff,
+        )
+        self.assertIn("Approved pilots that remain inside the freeze:", handoff)
+        self.assertIn("local automation bridge MVP as `integration` only", handoff)
+        self.assertIn(
+            "one narrowly defined additional external-analysis read-only increment beyond the current classifier",
+            freeze_policy,
+        )
 
     def test_current_layer_closure_handoff_is_explicit_in_docs(self) -> None:
         board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
@@ -415,36 +584,412 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
         self.assertIn("- State: deliberate freeze baselined, current layer consciously closed", board)
         self.assertIn("residual triage confirmed that no additional clearly safe block remains", board)
-        self.assertIn("Final closure review found one last external-safe slice", board)
+        self.assertIn("a final multi-role closure review closed the remaining safe external gaps", board)
         self.assertIn("- State: current layer consciously closed", handoff)
         self.assertIn("The current layer is exhausted under the active contract", handoff)
         self.assertIn("## Final Closure Validation", handoff)
-        self.assertIn("Estressador found only a last small external-safe slice", handoff)
+        self.assertIn("Quebrador found only a last small external-safe slice", handoff)
         self.assertIn("Closure is therefore validated collectively", handoff)
         self.assertIn("future point correction", handoff)
         self.assertIn("real architecture block", handoff)
         self.assertIn("explicit next-layer decision", handoff)
         self.assertIn("Pilot Verdict", handoff)
         self.assertIn("Resume Protocol", handoff)
+        self.assertIn("current approved operational surface", handoff)
+        self.assertIn("additional external-analysis behavior beyond the current classifier", handoff)
+        self.assertIn("local automation bridge remains the only approved integration pilot", handoff)
         self.assertIn("The project is deliberately frozen for new capability growth", freeze_policy)
         self.assertIn("The current layer is considered complete until a formal next-layer decision says otherwise.", freeze_policy)
         self.assertIn("Current classification: healthy conservatism, not excessive conservatism.", freeze_policy)
+        self.assertIn("current approved operational surface", freeze_policy)
+        self.assertIn(
+            "a concrete and repeated use case exists that the current approved operational surface cannot satisfy cleanly",
+            freeze_policy,
+        )
+        self.assertIn(
+            "Record why the current approved operational surface does not satisfy it cleanly.",
+            freeze_policy,
+        )
         self.assertIn("one minimum safe increment at a time", freeze_policy)
         self.assertIn("The following do not break the freeze:", freeze_policy)
         self.assertIn("a concrete and repeated use case exists", freeze_policy)
         self.assertIn("curiosity", freeze_policy)
         self.assertIn('abstract desire to get "closer to the ideal"', freeze_policy)
         self.assertIn("A final multi-role closure review closed the last safe external gaps", readme)
+        self.assertIn("current approved operational surface is complete for the current demand", readme)
+        self.assertIn("runtime, the seven read-only exports, and the currently approved external helpers", readme)
+
+    def test_phase_closure_revalidation_is_explicit_in_docs(self) -> None:
+        phase_closure = (OPERATIONS_DOCS / "PHASE_CLOSURE.md").read_text(encoding="utf-8")
+        opportunity_map = (OPERATIONS_DOCS / "OPPORTUNITY_MAP.md").read_text(encoding="utf-8")
+
+        self.assertIn("- Estado final da fase: `closed`", phase_closure)
+        self.assertIn("- Suite final: `548` testes passando, `6` skips", phase_closure)
+        self.assertIn("## Revalidacao Documental De Encerramento", phase_closure)
+        self.assertIn(
+            "A revalidacao formal de encerramento agora esta coberta por guardas explicitas em `tests/test_doc_governance.py` e `tests/test_architecture.py`.",
+            phase_closure,
+        )
+        self.assertIn(
+            "`PHASE_CLOSURE.md` agora faz parte do perimetro automatizado de prova documental.",
+            phase_closure,
+        )
+        self.assertIn("### DOC-002 — Proof Of Stop And Formal Re-Closure", opportunity_map)
+        self.assertIn("- Status: `done`", opportunity_map)
+        self.assertIn("documenter queue exhausted; await Formal Resume Trigger", opportunity_map)
 
     def test_external_analysis_boundary_handoff_is_explicit_in_docs(self) -> None:
         board = (OPERATIONS_DOCS / "WORKSTREAM_BOARD.md").read_text(encoding="utf-8")
         handoff = (REPO_ROOT / "docs" / "handoffs" / "HANDOFF_EXTERNAL_ANALYSIS_BOUNDARY.md").read_text(
             encoding="utf-8"
         )
+        reference_doc = (REFERENCE_DOCS / "EXTERNAL_FRESHNESS_VERIFIER.md").read_text(encoding="utf-8")
+        integration_surface = (REFERENCE_DOCS / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
 
         self.assertIn("## External Analysis Preparation", board)
-        self.assertIn("- State: stopped at the safe conceptual boundary", handoff)
-        self.assertIn("no analysis module was implemented", handoff)
+        self.assertIn("minimum read-only external analysis classifier implemented", board)
+        self.assertIn("- State: first concrete external `analysis` increment implemented as a read-only classifier; source acquisition still external", handoff)
+        self.assertIn("live source acquisition, source selection, and web querying still remain outside the tracked package", handoff)
+        self.assertIn("`Verificador de Atualidade Externa`", handoff)
+        self.assertIn("The canonical component name is:", reference_doc)
+        self.assertIn("`Verificador de Atualidade Externa`", reference_doc)
+        self.assertIn("## Current Minimum Implementation", reference_doc)
+        self.assertIn("The tracked minimum increment is now implemented as a read-only classifier over supplied external evidence", reference_doc)
+        self.assertIn("normalizes one supplied external bundle through `Normalizador de Bundle Externo` before classification", reference_doc)
+        self.assertIn("enforces `search_scope` as a technical domain allowlist over supplied source URLs", reference_doc)
+        self.assertIn("collapses equivalent resource URLs into one canonical bundle source before scoring", reference_doc)
+        self.assertIn("binds the derived report to the canonical snapshot revision and validation result it actually read", reference_doc)
+        self.assertIn("publishes versioned serializable request/report contracts under `external_freshness_contract.v1`", reference_doc)
+        self.assertIn("publishes reusable v1 fixture builders and serialized payload fixtures for integration and regression coverage", reference_doc)
+        self.assertIn("public schema accessors return defensive snapshots so callers cannot mutate validation state through a shared reference", reference_doc)
+        self.assertIn("emits `bundle_identity_scope=report_scoped` in the final report", reference_doc)
+        self.assertIn("carries citation and provenance metadata such as normalized domain, locator, acquisition method, trace id", reference_doc)
+        self.assertIn("it does not fetch URLs by itself", reference_doc)
+        self.assertIn("it does not browse the internet by itself", reference_doc)
+        self.assertIn("Live source acquisition remains external to this package.", reference_doc)
+        self.assertIn("It is not:", reference_doc)
+        self.assertIn("part of the fixed agent role set", reference_doc)
+        self.assertIn("Typical position:", reference_doc)
+        self.assertIn("explicit evidence review against canonical context", reference_doc)
+        self.assertIn("conditional risk review (if needed)", reference_doc)
+        self.assertIn("round-specific pre-execution approval boundary", reference_doc)
+        self.assertIn("Legacy role labels in this flow are historical aliases only and do not expand the canonical role set.", reference_doc)
+        self.assertNotIn("Comprovador", reference_doc)
+        self.assertNotIn("Avaliador de Risco", reference_doc)
+        self.assertNotIn("Guardião", reference_doc)
+        self.assertIn("Inside this component, every external finding starts as `provavel`.", reference_doc)
+        self.assertNotIn("classify external findings initially as `provavel` or `hipotese`", reference_doc)
+        self.assertIn("It may never be emitted by this component as `comprovado`.", reference_doc)
+        self.assertIn("Allowed `allowed_source_classes` values:", reference_doc)
+        self.assertIn("`descartada` is output-only and may never appear in this input field.", reference_doc)
+        self.assertIn("`search_scope` is not descriptive only.", reference_doc)
+        self.assertIn("it is enforced against each supplied source URL after hostname normalization", reference_doc)
+        self.assertIn("`internal_proven_items` is not free text.", reference_doc)
+        self.assertIn("The standalone public request validator can only prove payload-local binding for these handles.", reference_doc)
+        self.assertIn(
+            "Canonical snapshot membership for `internal_proven_items` remains a runtime, snapshot-aware check performed by the verifier itself.",
+            reference_doc,
+        )
+        self.assertIn("`canonical_context_relevant` is not a payload field in the tracked contract.", reference_doc)
+        self.assertIn("`source:<registered-path>`", reference_doc)
+        self.assertIn("`checkpoint.goal`", reference_doc)
+        self.assertIn("`sources`: supplied external source metadata already collected outside the package", reference_doc)
+        self.assertIn("`findings`: supplied claim descriptors that point to those sources", reference_doc)
+        self.assertIn("both must be non-empty tuples before the component may run", reference_doc)
+        self.assertIn("`time_sensitivity_context`", reference_doc)
+        self.assertIn("`bundle_identity_scope`", reference_doc)
+        self.assertIn("`source_date`", reference_doc)
+        self.assertIn("`collected_at`", reference_doc)
+        self.assertIn("`freshness_status`", reference_doc)
+        self.assertIn("Required output shape:", reference_doc)
+        self.assertIn("`snapshot_revision`", reference_doc)
+        self.assertIn("`snapshot_validation_result`", reference_doc)
+        self.assertIn("`source_aliases`", reference_doc)
+        self.assertIn("`source_register[]` entries must include:", reference_doc)
+        self.assertIn("`bundle_source_key`", reference_doc)
+        self.assertIn("`bundle_identity_scope`", reference_doc)
+        self.assertIn("`normalized_domain`", reference_doc)
+        self.assertIn("`content_hash`", reference_doc)
+        self.assertIn("`acquisition_method`", reference_doc)
+        self.assertIn("`acquisition_trace_id`", reference_doc)
+        self.assertIn("in the serialized payload, these keys are structurally required even when the source does not provide a semantic value", reference_doc)
+        self.assertIn("when a semantic value is unavailable, the serialized field remains present and carries the empty-string placeholder used by the contract", reference_doc)
+        self.assertIn("`claim_id`", reference_doc)
+        self.assertIn("`citation_refs`", reference_doc)
+        self.assertIn("`citation_refs` derived from `bundle_source_key`", reference_doc)
+        self.assertIn("`claim_time_sensitivity_context`", reference_doc)
+        self.assertIn("`promotion_status`", reference_doc)
+        self.assertIn("Allowed `promotion_status` values:", reference_doc)
+        self.assertIn("Allowed `promotion_basis` values:", reference_doc)
+        self.assertIn("Allowed `conflict_type` values:", reference_doc)
+        self.assertIn(
+            "`autoridade_divergente` is also the fallback bucket for unresolved contradictory claims when attribution collapses to the same canonical source",
+            reference_doc,
+        )
+        self.assertIn("Allowed `resolution_status` values:", reference_doc)
+        self.assertIn("the shipping verifier currently emits only `encaminhado_ao_comprovador`", reference_doc)
+        self.assertIn("Allowed `required_source_class` values:", reference_doc)
+        self.assertIn("the shipping verifier currently emits only `primaria_normativa` or `primaria_tecnica` in `lacunas`", reference_doc)
+        self.assertIn("Allowed `acquisition_method` values:", reference_doc)
+        self.assertIn("Allowed `bundle_identity_scope` values:", reference_doc)
+        self.assertIn("`downgrade_reasons`", reference_doc)
+        self.assertIn("Allowed `temporal_risk` values:", reference_doc)
+        self.assertIn("`source_aliases[]` entries must include:", reference_doc)
+        self.assertIn("`source_register` is the normalized inventory of sources supplied for the run, not only the subset referenced by surviving claims", reference_doc)
+        self.assertIn("normalized orphan sources may still appear there when they were supplied in the bundle", reference_doc)
+        self.assertIn("the normalized entry may retain richer audit metadata such as `citation_locator`, `source_title`, `acquisition_query`, `acquisition_trace_id`, and `notes` from any surviving alias", reference_doc)
+        self.assertIn("Markdown exports may mark source entries as `usage=referenced` or `usage=orphan` for readability", reference_doc)
+        self.assertIn("Markdown `usage=referenced` must be derived from all normalized findings for the round, including findings that later become `lacunas`", reference_doc)
+        self.assertIn("Markdown exports must state that `source_register.freshness_status` and `source_register.temporal_risk` are aggregated per source, while claim sections remain claim-local", reference_doc)
+        self.assertIn("`baixo`", reference_doc)
+        self.assertIn("`medio`", reference_doc)
+        self.assertIn("`alto`", reference_doc)
+        self.assertIn("`recente`", reference_doc)
+        self.assertIn("`intermediaria`", reference_doc)
+        self.assertIn("`possivelmente_desatualizada`", reference_doc)
+        self.assertIn("missing `source_date` must reduce confidence in time-sensitive contexts", reference_doc)
+        self.assertIn("older information in a high-sensitivity context must lose weight automatically", reference_doc)
+        self.assertIn("conflict with a more recent trustworthy source must reduce the older item's weight automatically", reference_doc)
+        self.assertIn("reject supplied source URLs outside the normalized `search_scope`", reference_doc)
+        self.assertIn("reject duplicate `source_ids` inside a single finding", reference_doc)
+        self.assertIn("record citation and provenance metadata when it is available from the external acquisition step", reference_doc)
+        self.assertIn("keep `internal_proven_items` bound to canonical snapshot references instead of caller-defined arbitrary strings", reference_doc)
+        self.assertIn("preserve the query string in the current canonical resource URL when no stronger equivalence proof exists", reference_doc)
+        self.assertIn("allow query variants to collapse only when a stronger equivalence proof such as matching `content_hash` is already present", reference_doc)
+        self.assertIn("keep `content_hash`-based collapse scoped to the same normalized resource family", reference_doc)
+        self.assertIn("keep non-empty canonical audit fields authoritative; alias data may backfill only fields that the canonical source leaves empty", reference_doc)
+        self.assertIn("## Public Contract", reference_doc)
+        self.assertIn("`external_freshness_contract.v1`", reference_doc)
+        self.assertIn("schemas use JSON Schema draft `2020-12`", reference_doc)
+        self.assertIn("each payload carries `schema_version`", reference_doc)
+        self.assertIn("contract payloads are strict and reject unsupported top-level keys", reference_doc)
+        self.assertIn("`get_external_freshness_contract_schemas()` is the canonical public schema surface for integrations", reference_doc)
+        self.assertIn("`get_external_freshness_contract_fixture_payloads_v1()` is the canonical public fixture-payload surface for integrations", reference_doc)
+        self.assertIn("`serialize_*` and `validate_*` define the canonical programmatic wire-contract surface for integrations", reference_doc)
+        self.assertIn("serialized request/report payloads keep `content_hash` structurally present as a string field", reference_doc)
+        self.assertIn("the contract uses the empty-string placeholder instead of omitting the key", reference_doc)
+        self.assertIn(
+            "`validate_external_freshness_request_payload()` and `validate_external_freshness_report_payload()` enforce minimum operational semantics beyond raw shape",
+            reference_doc,
+        )
+        self.assertIn("`validate_external_bundle_normalization_report_payload()` is intentionally shape-only", reference_doc)
+        self.assertIn("does not prove semantic coherence between `source_aliases` and `normalized_request`", reference_doc)
+        self.assertIn("exported `EXTERNAL_*_SCHEMA_V1` values are compatibility snapshots only and do not define validation authority", reference_doc)
+        self.assertIn("exported `build_external_*_fixture_v1()` helpers are Python convenience fixtures and do not define canonical integration payloads", reference_doc)
+        self.assertIn("exported `External*` dataclasses are Python composition types and do not define canonical wire payloads", reference_doc)
+        self.assertIn("exported `Verified*` dataclasses are Python composition/output types and do not define canonical wire payloads", reference_doc)
+        self.assertIn("## Public API Inventory", reference_doc)
+        self.assertIn("The package-root public API is intentionally grouped into four categories:", reference_doc)
+        self.assertIn("`ExternalFreshnessVerifierError`", reference_doc)
+        self.assertIn("`normalize_external_bundle()`", reference_doc)
+        self.assertIn("`verify_external_freshness()`", reference_doc)
+        self.assertIn("`render_external_freshness_markdown()`", reference_doc)
+        self.assertIn("`write_external_freshness_markdown()`", reference_doc)
+        self.assertIn("Markdown rendering is a derived operational summary, not a second wire contract.", reference_doc)
+        self.assertIn("it must still preserve audit-critical fields such as `url`, `citation_locator`, `why_classified`, `temporal_basis`, `downgrade_reasons`, and citation chains", reference_doc)
+        self.assertIn("Embedded newlines in free-text fields must be normalized to escaped `\\n`", reference_doc)
+        self.assertIn("Only the canonical integration surface defines wire payload semantics for integrations.", reference_doc)
+        self.assertIn("The validator split is deliberate:", reference_doc)
+        self.assertIn("`validate_external_freshness_request_payload()` and `validate_external_freshness_report_payload()` are not shape-only", reference_doc)
+        self.assertIn("they enforce the minimum operational semantics already required by the shipping runtime", reference_doc)
+        self.assertIn("source references that resolve inside the same payload", reference_doc)
+        self.assertIn("`citation_refs` that resolve to known `bundle_source_key` values", reference_doc)
+        self.assertIn("`citation_refs` with no duplicates and no empty trailing locator after `@`", reference_doc)
+        self.assertIn("claim explanations whose `why_classified` and `temporal_basis` remain non-empty", reference_doc)
+        self.assertIn(
+            "report claims whose attributed `source_ids` still include at least one non-`descartada` source in `source_register`",
+            reference_doc,
+        )
+        self.assertIn(
+            "`promotion_candidate` claims whose `promotion_basis` is explicit, not `nenhuma`, and still backed by at least one attributed `primaria_normativa` source",
+            reference_doc,
+        )
+        self.assertIn("non-promotable claims whose `promotion_basis` remains `nenhuma`", reference_doc)
+        self.assertIn("`source_aliases` whose `canonical_source_id` and `canonical_resource_url` resolve to the same canonical source emitted in `source_register`", reference_doc)
+        self.assertIn("`conflitos[].claim_id` values that resolve to claims emitted in `provavel` or `hipotese`", reference_doc)
+        self.assertIn("the final report carries `bundle_identity_scope=report_scoped`", reference_doc)
+        self.assertIn("the local validator for this package intentionally supports only the subset used by `v1`", reference_doc)
+        self.assertIn("schema growth beyond that subset stays blocked until an explicit architecture decision opens it", reference_doc)
+        self.assertIn("reusable request/report fixture builders and serialized payload fixtures for v1", reference_doc)
+        self.assertIn(
+            "Serialized fixture payloads remain contract-valid reusable samples, not a guaranteed one-to-one transcript of a single runtime emission path.",
+            reference_doc,
+        )
+        self.assertIn(
+            "older information is not discarded only because it is old, but it must be reclassified to `hipotese` when `temporal_risk` is `alto`",
+            reference_doc,
+        )
+        self.assertIn("## Temporal Sensitivity Matrix", reference_doc)
+        self.assertIn("Use the following matrix before assigning `time_sensitivity_context`:", reference_doc)
+        self.assertIn("The runtime computes the top-level `time_sensitivity_context` from the highest sensitivity present across all finding items in the round.", reference_doc)
+        self.assertIn("The public validator enforces the minimum externally checkable subset of that rule", reference_doc)
+        self.assertIn("`alta`: laws, regulations, fiscal rules, vendor policies, pricing, security advisories, API behavior, official product documentation", reference_doc)
+        self.assertIn("`media`: standards guidance, implementation guides, platform recommendations, operational documentation", reference_doc)
+        self.assertIn("`baixa`: conceptual architecture, foundational references, historical records, or stable explanatory material", reference_doc)
+        self.assertIn("when one present-day claim mixes recent and stale or undated sources, the temporal basis must say that the claim is mixed", reference_doc)
+        self.assertIn("`temporal_risk` must be assigned as follows:", reference_doc)
+        self.assertIn("## Current Threshold Windows", reference_doc)
+        self.assertIn("`alta`: `recente` up to 90 days; `intermediaria` up to 365 days; after that `possivelmente_desatualizada`", reference_doc)
+        self.assertIn("`media`: `recente` up to 365 days; `intermediaria` up to 1095 days; after that `possivelmente_desatualizada`", reference_doc)
+        self.assertIn("`baixa`: `recente` up to 1095 days; `intermediaria` up to 3650 days; after that `possivelmente_desatualizada`", reference_doc)
+        self.assertIn("## Objective Downgrade Rules", reference_doc)
+        self.assertIn("Every external finding enters the component as `provavel`.", reference_doc)
+        self.assertIn("It must be downgraded to `hipotese` when at least one of the following is true:", reference_doc)
+        self.assertIn("the finding relies on a `possivelmente_desatualizada` source and the claim depends on present-day correctness", reference_doc)
+        self.assertIn("the claim depends on normative force, but no trusted source is `primaria_normativa`", reference_doc)
+        self.assertIn("the claim cannot identify at least one attributable source entry in `source_register`", reference_doc)
+        self.assertIn("A finding may remain `provavel` only when all of the following are true:", reference_doc)
+        self.assertIn("none of the mandatory downgrade conditions above applies", reference_doc)
+        self.assertIn(
+            "a more recent trustworthy source reaches an incompatible operational conclusion about the same claim and the conflict remains unresolved",
+            reference_doc,
+        )
+        self.assertIn("A finding must be discarded instead of downgraded when:", reference_doc)
+        self.assertIn("the source URL is outside the enforced `search_scope`", reference_doc)
+        self.assertIn("the source date is missing in a temporally sensitive claim and the claim cannot populate the required output fields even as `hipotese`", reference_doc)
+        self.assertIn("If `temporal_risk` is `alto`:", reference_doc)
+        self.assertIn("the item must be reclassified as `hipotese`", reference_doc)
+        self.assertIn("it comes from a clearly identified official primary normative source", reference_doc)
+        self.assertIn("it comes from a clearly identified official primary normative source and also points to a canonical internal reference already available to the round", reference_doc)
+        self.assertIn("Internal confirmation alone is not enough for `promotion_candidate` inside this component.", reference_doc)
+        self.assertIn("A finding reclassified to `hipotese` must leave this component as `not_eligible_for_promotion`.", reference_doc)
+        self.assertIn("No item may leave this component as `comprovado`.", reference_doc)
+        self.assertIn("No direct decision is permitted from this component", reference_doc)
+        self.assertIn("It must not read runtime JSON directly.", reference_doc)
+        self.assertIn("decide whether the path should be executed", reference_doc)
+        self.assertIn("mutate state", reference_doc)
+        self.assertIn("create a new canonical artifact", reference_doc)
+        self.assertIn("This downstream handling applies only when the component was explicitly activated for the round; it does not make the component a permanent mandatory gate.", reference_doc)
+        self.assertNotIn("`confirmacao_interna_disponivel`", reference_doc)
+        self.assertNotIn("`interno_vs_externo`", reference_doc)
+        self.assertNotIn("usually", reference_doc)
+        self.assertNotIn("rarely", reference_doc)
+        self.assertNotIn("safe enough", reference_doc)
+        self.assertNotIn("too weak", reference_doc)
+        self.assertIn(
+            "First concrete external `analysis` use case currently implemented as a minimum read-only classifier over supplied external evidence:",
+            integration_surface,
+        )
+        self.assertIn(
+            "produce structured `provavel`, `hipotese`, `conflitos`, `source_date`, `collected_at`, `freshness_status`, `time_sensitivity_context`, `source_strength`, `temporal_risk`, `promotion_status`, `resolution_status`, `source_aliases`, `bundle_source_key`, `bundle_identity_scope`, and citation/provenance metadata",
+            integration_surface,
+        )
+        self.assertIn("normalize one supplied external bundle before classification so equivalent URLs do not inflate evidence count", integration_surface)
+        self.assertIn("enforce `search_scope` as a domain allowlist over supplied source URLs", integration_surface)
+        self.assertIn("bind its output to the snapshot revision and validation result it actually read", integration_surface)
+        self.assertIn("publish versioned serializable request/report contracts with strict top-level payload validation", integration_surface)
+        self.assertIn("treat `get_external_freshness_contract_schemas()` as the canonical integration surface for public schemas", integration_surface)
+        self.assertIn("treat `get_external_freshness_contract_fixture_payloads_v1()` as the canonical integration surface for public fixture payloads", integration_surface)
+        self.assertIn("treat `serialize_*` and `validate_*` as the canonical integration surface for wire payloads", integration_surface)
+        self.assertIn("keep serialized `content_hash` structurally present and use the empty-string placeholder when no semantic hash is available", integration_surface)
+        self.assertIn(
+            "treat `validate_external_freshness_request_payload()` and `validate_external_freshness_report_payload()` as minimum operational-semantic checks, not shape-only validators",
+            integration_surface,
+        )
+        self.assertIn("host-normalized `search_scope`", integration_surface)
+        self.assertIn("non-empty claim explanations", integration_surface)
+        self.assertIn("promotion basis/status coherence", integration_surface)
+        self.assertIn("promotion candidates anchored by at least one `primaria_normativa` source", integration_surface)
+        self.assertIn("report claims anchored by at least one non-`descartada` source", integration_surface)
+        self.assertIn(
+            "treat `internal_proven_items` canonicality as runtime snapshot-aware validation; the standalone request validator only proves payload-local binding between `internal_confirmation_reference` and the supplied handles",
+            integration_surface,
+        )
+        self.assertIn("treat `validate_external_bundle_normalization_report_payload()` as structural contract validation only", integration_surface)
+        self.assertIn("alias coherence remains producer/test responsibility", integration_surface)
+        self.assertIn("treat exported `EXTERNAL_*_SCHEMA_V1` values as compatibility snapshots only, not validation authority", integration_surface)
+        self.assertIn("treat exported `build_external_*_fixture_v1()` helpers as Python convenience fixtures, not canonical integration payloads", integration_surface)
+        self.assertIn("treat exported `External*` dataclasses as Python composition helpers, not canonical wire payloads", integration_surface)
+        self.assertIn("treat exported `Verified*` dataclasses as Python composition/output helpers, not canonical wire payloads", integration_surface)
+        self.assertIn("return defensive public schema snapshots so callers cannot mutate later validation state through a shared reference", integration_surface)
+        self.assertIn("publish reusable versioned fixture payloads for integration and regression coverage without expanding runtime authority", integration_surface)
+        self.assertIn(
+            "treat those fixture payloads as contract-valid reusable samples, not a guaranteed transcript of one specific verifier run",
+            integration_surface,
+        )
+        self.assertIn("mark `bundle_identity_scope=report_scoped` explicitly so bundle keys are not treated as cross-round identifiers", integration_surface)
+        self.assertIn("keep `v1` within the locally validated schema subset", integration_surface)
+        self.assertIn("block schema-keyword growth until an explicit contract decision exists", integration_surface)
+        self.assertIn(
+            "downweight stale, undated, or temporally superseded findings automatically and reclassify them to `hipotese` when `temporal_risk` is `alto`",
+            integration_surface,
+        )
+        self.assertIn(
+            "follow a formal output schema, temporal sensitivity matrix, and objective downgrade rules instead of operator interpretation",
+            integration_surface,
+        )
+        self.assertIn("leave live source acquisition and web querying outside the tracked package", integration_surface)
+        self.assertIn("preserve query strings in canonical resource URLs unless a stronger equivalence proof is supplied", integration_surface)
+        self.assertIn("collapse query variants only when stronger equivalence evidence such as matching `content_hash` is already available", integration_surface)
+        self.assertIn("promote external evidence directly into runtime truth", integration_surface)
+        self.assertIn("treat caller-supplied arbitrary text as canonical internal proof", integration_surface)
+        self.assertIn("accept free-form `canonical_context_relevant` blobs as if they were part of the payload contract", integration_surface)
+        self.assertIn("bypass the explicit downstream evidence review, conditional risk review, or pre-execution approval boundary", integration_surface)
+        self.assertNotIn("stable bundle-source keys", reference_doc)
+        self.assertNotIn("stable bundle keys", reference_doc)
+        self.assertNotIn("across rounds, not only inside one local request", reference_doc)
+        self.assertNotIn("`url` or equivalent identifier", reference_doc)
+
+    def test_external_freshness_public_api_inventory_matches_package_exports(self) -> None:
+        reference_doc = (REFERENCE_DOCS / "EXTERNAL_FRESHNESS_VERIFIER.md").read_text(encoding="utf-8")
+        readme = (REPO_ROOT / "extensions" / "external_freshness_verifier" / "README.md").read_text(encoding="utf-8")
+        expected_categories = {
+            "Canonical integration surface": {
+                "get_external_freshness_contract_schemas",
+                "get_external_freshness_contract_fixture_payloads_v1",
+                "serialize_external_freshness_request",
+                "serialize_external_bundle_normalization_report",
+                "serialize_external_freshness_report",
+                "validate_external_freshness_request_payload",
+                "validate_external_bundle_normalization_report_payload",
+                "validate_external_freshness_report_payload",
+            },
+            "Compatibility snapshots and Python fixture helpers": {
+                "EXTERNAL_FRESHNESS_CONTRACT_VERSION",
+                "EXTERNAL_FRESHNESS_REQUEST_SCHEMA_V1",
+                "EXTERNAL_BUNDLE_NORMALIZATION_REPORT_SCHEMA_V1",
+                "EXTERNAL_FRESHNESS_REPORT_SCHEMA_V1",
+                "build_external_freshness_request_fixture_v1",
+                "build_external_bundle_normalization_report_fixture_v1",
+                "build_external_freshness_report_fixture_v1",
+            },
+            "Python composition/output types": {
+                "ExternalBundleNormalizationReport",
+                "ExternalBundleSourceAlias",
+                "ExternalFindingInput",
+                "ExternalFreshnessReport",
+                "ExternalFreshnessRequest",
+                "ExternalGap",
+                "ExternalSourceInput",
+                "VerifiedClaim",
+                "VerifiedConflict",
+                "VerifiedSourceRecord",
+            },
+            "Operational read-only helpers": {
+                "ExternalFreshnessVerifierError",
+                "normalize_external_bundle",
+                "verify_external_freshness",
+                "render_external_freshness_markdown",
+                "write_external_freshness_markdown",
+            },
+        }
+
+        reference_inventory = extract_public_api_inventory_categories(
+            reference_doc,
+            "## Public API Inventory",
+            ("## Output Contract",),
+        )
+        readme_inventory = extract_public_api_inventory_categories(
+            readme,
+            "Public API inventory at package root:",
+            ("It does not:",),
+        )
+
+        self.assertEqual(reference_inventory, expected_categories)
+        self.assertEqual(readme_inventory, expected_categories)
+        self.assertEqual(reference_inventory, readme_inventory)
+        expected_public_api = set().union(*expected_categories.values())
+        self.assertEqual(expected_public_api, set(external_freshness_module.__all__))
 
     def test_robustness_baseline_and_policy_are_explicit_in_docs(self) -> None:
         baseline = (OPERATIONS_DOCS / "ROBUSTNESS_BASELINE.md").read_text(encoding="utf-8")
@@ -478,13 +1023,16 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("The project is deliberately frozen for new capability growth", readme)
         self.assertIn("growth beyond the current public surface requires an explicit demand and classification step", core_contract)
         self.assertIn("further capability growth stays deliberately frozen", boundaries)
+        self.assertIn("minimum approved external increments were closed", boundaries)
         self.assertIn("The deliberate freeze may be broken only when", freeze_policy)
         self.assertIn(
             "Classify the proposal as `export`, `analysis`, `integration`, or the already-approved `assistive discovery` carve-out.",
             freeze_policy,
         )
+        self.assertIn("current approved operational surface", freeze_policy)
         self.assertIn("core expansion or schema growth", freeze_policy)
         self.assertIn("one minimum safe external increment at a time", readme)
+        self.assertIn("no additional safe autonomous capability growth remains inside the current contract", readme)
         self.assertIn("`bootstrap-scan` as assistive discovery only", freeze_policy)
         self.assertIn("does not register `sources`", freeze_policy)
         self.assertIn("Assistive Discovery Carve-Out", freeze_policy)
@@ -522,6 +1070,20 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("assistive-discovery shape for initial bootstrap only", integration_surface)
         self.assertIn("suggest candidates for explicit human review", integration_surface)
 
+    def test_runtime_lock_and_import_confirmation_are_explicit_in_primary_docs(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        boundaries = (REFERENCE_DOCS / "ARCHITECTURE_BOUNDARIES.md").read_text(encoding="utf-8")
+        runtime_spec = (REFERENCE_DOCS / "RUNTIME_SPEC.md").read_text(encoding="utf-8")
+
+        self.assertIn("`import-context` previews a sources diff and requires `y` confirmation", readme)
+        self.assertIn("`.cerebro/runtime.lock`", readme)
+        self.assertIn("transient coordination file", readme)
+        self.assertIn("These persisted runtime files define business continuity", boundaries)
+        self.assertIn("`.cerebro/runtime.lock`", boundaries)
+        self.assertIn("does not become a second source of truth", boundaries)
+        self.assertIn("runtime.lock", runtime_spec)
+        self.assertIn("It is coordination only and not canonical state.", runtime_spec)
+
     def test_automation_bridge_docs_keep_it_external_and_non_authoritative(self) -> None:
         integration_surface = (REFERENCE_DOCS / "INTEGRATION_SURFACE.md").read_text(encoding="utf-8")
         freeze_policy = (OPERATIONS_DOCS / "FREEZE_POLICY.md").read_text(encoding="utf-8")
@@ -539,9 +1101,9 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertIn("## Automation Bridge", board)
         self.assertIn("disposable MVP initialized outside tracked product code", board)
         self.assertIn("## Architecture Options", handoff)
-        self.assertIn("Option 1: Local Orchestrator With Agents SDK Plus Codex Executor Over MCP", handoff)
+        self.assertIn("Option 1: Local Orquestrador With Agents SDK Plus Codex Executor Over MCP", handoff)
         self.assertIn("Option 2: Deep Integration Through Codex App Server", handoff)
-        self.assertIn("Option 3: Minimal Local Orchestrator Using `codex exec`", handoff)
+        self.assertIn("Option 3: Minimal Local Orquestrador Using `codex exec`", handoff)
         self.assertIn("Recommended architecture:", handoff)
         self.assertIn("`codex exec --ephemeral --json --output-schema -o`", handoff)
         self.assertIn("does not register `sources`", handoff)
@@ -698,6 +1260,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         forbidden_attributes = {
             "cerebro_dir",
             "close_session",
+            "discard_session",
             "compute_sha256",
             "events_path",
             "initialize",
@@ -908,6 +1471,36 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
         self.assertEqual(offenders, [])
 
+    def test_session_discard_command_remains_atomic_orchestration_only(self) -> None:
+        path = REPO_ROOT / "cli" / "commands" / "session_discard.py"
+        tree = parse_python(path)
+        forbidden_attributes = {
+            "close_session",
+            "has_active_session",
+            "load_state",
+            "open_session",
+            "save_state",
+            "validate_state",
+        }
+        offenders: list[str] = []
+
+        for literal in string_literals_without_docstrings(tree):
+            if any(fragment in literal for fragment in (".cerebro", "state.json", "session.local.json")):
+                offenders.append(f"literal {literal!r}")
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name == "json" or alias.name.startswith("core."):
+                        offenders.append(f"import {alias.name}")
+            if isinstance(node, ast.ImportFrom):
+                if node.module == "json" or (node.module and node.module.startswith("core.")):
+                    offenders.append(f"from {node.module}")
+            if isinstance(node, ast.Attribute) and node.attr in forbidden_attributes:
+                offenders.append(f"attribute .{node.attr}")
+
+        self.assertEqual(offenders, [])
+
     def test_bootstrap_scan_command_remains_assistive_only(self) -> None:
         path = REPO_ROOT / "cli" / "commands" / "bootstrap_scan.py"
         tree = parse_python(path)
@@ -939,6 +1532,36 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
         self.assertEqual(offenders, [])
 
+    def test_doctor_command_remains_read_only(self) -> None:
+        path = REPO_ROOT / "cli" / "commands" / "doctor.py"
+        tree = parse_python(path)
+        offenders: list[str] = []
+        forbidden_name_calls = {"run_analyze", "run_validate", "run_import_context", "run_init"}
+        forbidden_attribute_names = {
+            "validate_state",
+            "open_session",
+            "save_state",
+            "register_sources",
+            "update_checkpoint",
+            "apply_retention",
+            "close_session",
+        }
+
+        for literal in string_literals_without_docstrings(tree):
+            if any(fragment in literal for fragment in (".cerebro", "state.json", "session.local.json")):
+                offenders.append(f"literal {literal!r}")
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in forbidden_name_calls:
+                offenders.append(f"calls {node.func.id}")
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                if node.func.attr in forbidden_attribute_names:
+                    offenders.append(f"calls .{node.func.attr}")
+            if isinstance(node, ast.Attribute) and node.attr in forbidden_attribute_names:
+                offenders.append(f"attribute .{node.attr}")
+
+        self.assertEqual(offenders, [])
+
     def test_cli_subcommand_surface_is_canonical_and_alias_free(self) -> None:
         parser = build_parser()
         subparsers = next(
@@ -946,11 +1569,18 @@ class ArchitectureIsolationTests(unittest.TestCase):
         )
         expected = {
             "analyze",
+            "approve",
+            "apply",
             "bootstrap-scan",
+            "context-index-export",
+            "doctor",
             "init",
             "import-context",
             "checkpoint",
+            "plan",
             "resume",
+            "rollback",
+            "session-discard",
             "handoff-export",
             "impact-export",
             "sources-export",
@@ -958,6 +1588,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
             "status-export",
             "validation-export",
             "validate",
+            "verify",
         }
 
         self.assertEqual(set(subparsers.choices), expected)
