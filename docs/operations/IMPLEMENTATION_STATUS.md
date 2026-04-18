@@ -35,17 +35,32 @@
     - `tests.test_cli.CliHelpAndExitCodeTests.test_main_without_argv_fails_closed_when_terminal_is_unavailable`
   - Critério de pronto: `sim`
 
+- Fatia 3: `Registro de projetos`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `cli/project_registry.py:1-140`
+    - `cli/main.py:33-92`
+    - `tests/test_cli.py:345-541`
+    - `docs/operations/MIGRATION_PLAN.md:1-129`
+  - Testes adicionados:
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_without_argv_opens_context_menu_and_dispatches_managed_project_mode`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_without_argv_lists_registered_projects_and_dispatches_selected_project`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_without_argv_fails_closed_when_project_registry_is_invalid`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_project_registry_serializes_concurrent_updates`
+  - Critério de pronto: `sim`
+
 ## Fatia atual
 
-- Qual é: `FATIA 2 — Menu de contexto ao abrir`
+- Qual é: `FATIA 3 — Registro de projetos`
 - Estado: `concluída`
 
 ## Próxima fatia
 
-- Qual é: `FATIA 3 — Registro de projetos`
+- Qual é: `FATIA 4 — Dashboard de estado ao abrir`
 - Dependências:
   - `FATIA 1` concluída com `cwd` default preservado
   - `FATIA 2` concluída com menu fino reaproveitando `analyze` e `--project-root`
+  - `FATIA 3` concluída com registry opcional e não-autoritativo em `~/.cerebro/projects.toml`
   - memória externa alinhada em `MIGRATION_PLAN.md`
 
 ## Itens em Grupo 6

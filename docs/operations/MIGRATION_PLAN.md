@@ -9,8 +9,12 @@
 - `FATIA 2 — Menu de contexto ao abrir`: concluída em `2026-04-18`.
   - `cli/main.py` agora intercepta `argv` vazio antes do parser, falha fechado sem TTY e converte o menu em dispatch explícito para `analyze` com `cwd` ou `--project-root`: `cli/main.py:32-55`, `cli/main.py:344-355`.
   - Cobertura do menu adicionada em `tests/test_cli.py:286-385`, incluindo modo desenvolvimento, gerenciamento de projeto, seleção inválida, `project_root` vazio, ausência de terminal e `main(None)`.
-- Próxima fatia canônica: `FATIA 3 — Registro de projetos`.
-- Pendências ainda não iniciadas nesta trilha: `FATIA 3` a `FATIA 6`.
+- `FATIA 3 — Registro de projetos`: concluída em `2026-04-18`.
+  - `cli/project_registry.py` introduz o catálogo opcional em `~/.cerebro/projects.toml`, com leitura normalizada, escrita atômica e serialização explícita de writers concorrentes via lock irmão do arquivo.
+  - `cli/main.py` agora lista projetos registrados, permite selecionar entrada existente ou registrar root novo e sempre materializa o resultado como `--project-root ... analyze`.
+  - Cobertura do fluxo adicionada em `tests/test_cli.py:345-541`, incluindo registro inicial, seleção de projeto já registrado, falha fechada com TOML inválido e concorrência entre writers do registry.
+- Próxima fatia canônica: `FATIA 4 — Dashboard de estado ao abrir`.
+- Pendências ainda não iniciadas nesta trilha: `FATIA 4` a `FATIA 6`.
 
 ## Estado atual confirmado
 
@@ -63,11 +67,19 @@ Ordenado por esforço, menor primeiro.
      - a opção `2` materializa `--project-root` explícito e reusa o mesmo dispatcher;
      - sem terminal, seleção inválida ou `project_root` vazio, o fluxo falha fechado.
 
-5. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
+5. Concluído — adicionar registro global opcional de projetos.
+   - Evidência implementada: `cli/project_registry.py:1-140`, `cli/main.py:33-92`, `tests/test_cli.py:345-541`.
+   - Resultado:
+     - o menu `(2) Gerenciar projeto` lista projetos já conhecidos do usuário;
+     - roots novos são persistidos em `~/.cerebro/projects.toml` como metadata opcional;
+     - selecionar projeto existente apenas rematerializa `--project-root`, sem transferir autoridade para fora do dispatcher;
+     - writes concorrentes no registry são serializados para não perder atualização silenciosamente.
+
+6. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
    - Evidência: `cli/main.py:61`, `cli/main.py:238`, `cli/output.py:42`, `cli/output.py:48`.
    - Implementação: trocar wording para “project root” quando o root vier de argumento; manter a semântica atual quando não vier.
 
-6. Separar claramente instruções de engenharia vs operação.
+7. Separar claramente instruções de engenharia vs operação.
    - Evidência: `AGENTS.md:3-8`, `AGENTS.md:34-50`, `AGENTS.md:136-187`.
    - Implementação: manter `AGENTS.md` do Cerebro e criar template mínimo de `AGENTS.md` para projetos gerenciados.
 
@@ -92,6 +104,10 @@ Razão:
 ## Riscos confirmados
 
 Por severidade.
+
+- Médio — concorrência no registry global podia perder atualização sem erro.
+  - Confirmado e corrigido nesta fatia ao serializar o read-modify-write em `cli/project_registry.py`.
+  - Evidência: `cli/project_registry.py:37-83`, `tests/test_cli.py:492-541`.
 
 - Médio — mis-targeting operacional.
   - Com `--project-root`, o operador pode apontar para outro workspace sem trocar de diretório.

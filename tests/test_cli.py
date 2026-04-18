@@ -5,12 +5,15 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
+import tomllib
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
 import cli.main as cli_main_module
+import cli.project_registry as project_registry_module
 from cli.commands.init import run_init
 from cli.commands.resume import run_resume
 from cli.commands.validate import run_validate
@@ -19,6 +22,10 @@ from tests.runtime_fixtures import seed_registered_source
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _toml_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
 
 
 class CliHelpAndExitCodeTests(unittest.TestCase):
@@ -284,8 +291,9 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             self.assertEqual(observed, [project_root])
 
     def test_main_without_argv_opens_context_menu_and_dispatches_development_mode(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp_dir:
+        with tempfile.TemporaryDirectory() as tmp_dir, tempfile.TemporaryDirectory() as fake_home:
             root = Path(tmp_dir).resolve()
+            fake_home_root = Path(fake_home).resolve()
             observed: list[Path] = []
             stream = io.StringIO()
 
@@ -296,11 +304,12 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             previous_cwd = Path.cwd()
             try:
                 os.chdir(root)
-                with mock.patch("sys.stdin.isatty", return_value=True):
-                    with mock.patch("builtins.input", side_effect=["1"]):
-                        with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
-                            with redirect_stdout(stream):
-                                exit_code = cli_main_module.main([])
+                with mock.patch("pathlib.Path.home", return_value=fake_home_root):
+                    with mock.patch("sys.stdin.isatty", return_value=True):
+                        with mock.patch("builtins.input", side_effect=["1"]):
+                            with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
+                                with redirect_stdout(stream):
+                                    exit_code = cli_main_module.main([])
             finally:
                 os.chdir(previous_cwd)
 
@@ -310,6 +319,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             self.assertIn("CEREBRO", output)
             self.assertIn("(1) Desenvolvimento", output)
             self.assertIn("(2) Gerenciar projeto", output)
+            self.assertFalse((fake_home_root / ".cerebro" / "projects.toml").exists())
 
     def test_main_none_uses_process_argv_for_context_menu_dispatch(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -335,9 +345,10 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             self.assertEqual(observed, [root])
 
     def test_main_without_argv_opens_context_menu_and_dispatches_managed_project_mode(self) -> None:
-        with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as other_dir:
+        with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as other_dir, tempfile.TemporaryDirectory() as fake_home:
             project_root = Path(project_dir).resolve()
             other_root = Path(other_dir).resolve()
+            fake_home_root = Path(fake_home).resolve()
             observed: list[Path] = []
 
             def fake_analyze(handler_root: Path, _args: object) -> int:
@@ -347,15 +358,22 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             previous_cwd = Path.cwd()
             try:
                 os.chdir(other_root)
-                with mock.patch("sys.stdin.isatty", return_value=True):
-                    with mock.patch("builtins.input", side_effect=["2", str(project_root)]):
-                        with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
-                            exit_code = cli_main_module.main([])
+                with mock.patch("pathlib.Path.home", return_value=fake_home_root):
+                    with mock.patch("sys.stdin.isatty", return_value=True):
+                        with mock.patch("builtins.input", side_effect=["2", str(project_root)]):
+                            with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
+                                exit_code = cli_main_module.main([])
             finally:
                 os.chdir(previous_cwd)
 
+            registry_path = fake_home_root / ".cerebro" / "projects.toml"
             self.assertEqual(exit_code, 0)
             self.assertEqual(observed, [project_root])
+            self.assertTrue(registry_path.exists())
+            registry = tomllib.loads(registry_path.read_text(encoding="utf-8"))
+            self.assertEqual(registry["projects"][0]["name"], project_root.name)
+            self.assertEqual(Path(registry["projects"][0]["path"]), project_root)
+            self.assertTrue(registry["projects"][0]["last_used"])
 
     def test_main_without_argv_fails_closed_for_invalid_context_menu_selection(self) -> None:
         stream = io.StringIO()
@@ -373,11 +391,14 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
     def test_main_without_argv_fails_closed_for_blank_project_root(self) -> None:
         stream = io.StringIO()
 
-        with mock.patch("sys.stdin.isatty", return_value=True):
-            with mock.patch("builtins.input", side_effect=["2", "   "]):
-                with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
-                    with redirect_stdout(stream):
-                        exit_code = cli_main_module.main([])
+        with tempfile.TemporaryDirectory() as fake_home:
+            fake_home_root = Path(fake_home).resolve()
+            with mock.patch("pathlib.Path.home", return_value=fake_home_root):
+                with mock.patch("sys.stdin.isatty", return_value=True):
+                    with mock.patch("builtins.input", side_effect=["2", "   "]):
+                        with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
+                            with redirect_stdout(stream):
+                                exit_code = cli_main_module.main([])
 
         output = stream.getvalue()
         self.assertEqual(exit_code, 1)
@@ -395,6 +416,127 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         output = stream.getvalue()
         self.assertEqual(exit_code, 1)
         self.assertIn("context_menu_unavailable", output)
+
+    def test_main_without_argv_lists_registered_projects_and_dispatches_selected_project(self) -> None:
+        with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as second_dir, tempfile.TemporaryDirectory() as other_dir, tempfile.TemporaryDirectory() as fake_home:
+            project_root = Path(project_dir).resolve()
+            second_root = Path(second_dir).resolve()
+            other_root = Path(other_dir).resolve()
+            fake_home_root = Path(fake_home).resolve()
+            registry_dir = fake_home_root / ".cerebro"
+            registry_dir.mkdir(parents=True, exist_ok=True)
+            registry_path = registry_dir / "projects.toml"
+            registry_path.write_text(
+                "\n".join(
+                    [
+                        "version = 1",
+                        "",
+                        "[[projects]]",
+                        'name = "alpha"',
+                        f'path = "{_toml_escape(str(project_root))}"',
+                        'last_used = "2026-04-17T10:00:00+00:00"',
+                        "",
+                        "[[projects]]",
+                        'name = "beta"',
+                        f'path = "{_toml_escape(str(second_root))}"',
+                        'last_used = "2026-04-16T10:00:00+00:00"',
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            observed: list[Path] = []
+            stream = io.StringIO()
+
+            def fake_analyze(handler_root: Path, _args: object) -> int:
+                observed.append(handler_root)
+                return 0
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(other_root)
+                with mock.patch("pathlib.Path.home", return_value=fake_home_root):
+                    with mock.patch("sys.stdin.isatty", return_value=True):
+                        with mock.patch("builtins.input", side_effect=["2", "1"]):
+                            with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
+                                with redirect_stdout(stream):
+                                    exit_code = cli_main_module.main([])
+            finally:
+                os.chdir(previous_cwd)
+
+            output = stream.getvalue()
+            registry = tomllib.loads(registry_path.read_text(encoding="utf-8"))
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(observed, [project_root])
+            self.assertIn("Projetos registrados", output)
+            self.assertEqual(registry["projects"][0]["path"], str(project_root))
+            self.assertNotEqual(registry["projects"][0]["last_used"], "2026-04-17T10:00:00+00:00")
+
+    def test_main_without_argv_fails_closed_when_project_registry_is_invalid(self) -> None:
+        with tempfile.TemporaryDirectory() as fake_home:
+            fake_home_root = Path(fake_home).resolve()
+            registry_dir = fake_home_root / ".cerebro"
+            registry_dir.mkdir(parents=True, exist_ok=True)
+            (registry_dir / "projects.toml").write_text("not = [valid", encoding="utf-8")
+            stream = io.StringIO()
+
+            with mock.patch("pathlib.Path.home", return_value=fake_home_root):
+                with mock.patch("sys.stdin.isatty", return_value=True):
+                    with mock.patch("builtins.input", side_effect=["2"]):
+                        with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
+                            with redirect_stdout(stream):
+                                exit_code = cli_main_module.main([])
+
+        output = stream.getvalue()
+        self.assertEqual(exit_code, 1)
+        self.assertIn("project_registry_invalid", output)
+
+    def test_project_registry_serializes_concurrent_updates(self) -> None:
+        with tempfile.TemporaryDirectory() as fake_home, tempfile.TemporaryDirectory() as project_a_dir, tempfile.TemporaryDirectory() as project_b_dir:
+            fake_home_root = Path(fake_home).resolve()
+            project_a = Path(project_a_dir).resolve()
+            project_b = Path(project_b_dir).resolve()
+            entered = threading.Event()
+            release = threading.Event()
+            second_done = threading.Event()
+            errors: list[Exception] = []
+            original_load = project_registry_module._load_projects_unlocked
+            load_calls = {"count": 0}
+
+            def blocking_load(path: Path) -> list[dict[str, str]]:
+                load_calls["count"] += 1
+                if load_calls["count"] == 1:
+                    entered.set()
+                    release.wait(timeout=5)
+                return original_load(path)
+
+            def register_project(root: Path, *, done: threading.Event | None = None) -> None:
+                try:
+                    project_registry_module.register_or_update_project(root)
+                except Exception as exc:  # pragma: no cover - test helper
+                    errors.append(exc)
+                finally:
+                    if done is not None:
+                        done.set()
+
+            with mock.patch("pathlib.Path.home", return_value=fake_home_root):
+                with mock.patch.object(project_registry_module, "_load_projects_unlocked", side_effect=blocking_load):
+                    first = threading.Thread(target=register_project, args=(project_a,))
+                    second = threading.Thread(target=register_project, args=(project_b,), kwargs={"done": second_done})
+                    first.start()
+                    self.assertTrue(entered.wait(timeout=5))
+                    second.start()
+                    self.assertFalse(second_done.wait(timeout=0.2))
+                    release.set()
+                    first.join(timeout=5)
+                    second.join(timeout=5)
+
+            registry = tomllib.loads((fake_home_root / ".cerebro" / "projects.toml").read_text(encoding="utf-8"))
+            paths = {Path(item["path"]) for item in registry["projects"]}
+            self.assertEqual(errors, [])
+            self.assertFalse(first.is_alive())
+            self.assertFalse(second.is_alive())
+            self.assertEqual(paths, {project_a, project_b})
 
     def test_plan_uses_explicit_project_root_for_relative_input_file(self) -> None:
         with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as other_dir:

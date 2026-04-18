@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 import sys
 
+from cli.project_registry import ProjectRegistryError, load_projects, register_or_update_project
 from cli.commands.analyze import run_analyze
 from cli.commands.approve import run_approve
 from cli.commands.apply import run_apply
@@ -45,14 +46,57 @@ def _dispatch_context_menu(argv: list[str]) -> list[str] | None:
     if choice == "1":
         return ["analyze"]
     if choice == "2":
-        project_root = input("Project root: ").strip()
-        if not project_root:
-            print_fail([user_error("project_root_missing", "project root is required for managed-project mode")])
-            return None
-        return ["--project-root", project_root, "analyze"]
+        return _dispatch_managed_project_mode()
 
     print_fail([user_error("context_menu_invalid", f"invalid context menu selection: {choice or '<empty>'}")])
     return None
+
+
+def _dispatch_managed_project_mode() -> list[str] | None:
+    try:
+        projects = load_projects()
+    except ProjectRegistryError as exc:
+        print_fail([user_error("project_registry_invalid", str(exc))])
+        return None
+
+    if projects:
+        print("Projetos registrados")
+        for index, project in enumerate(projects, start=1):
+            print(f"({index}) {project['name']} — {project['path']}")
+        print("(N) Novo projeto")
+        selection = input(f"Selecione [1-{len(projects)}/N]: ").strip()
+        if selection.lower() == "n":
+            return _register_and_dispatch_project()
+        if selection.isdigit():
+            project_index = int(selection) - 1
+            if 0 <= project_index < len(projects):
+                return _register_and_dispatch_project(projects[project_index]["path"])
+        print_fail([user_error("project_registry_selection_invalid", f"invalid project selection: {selection or '<empty>'}")])
+        return None
+
+    return _register_and_dispatch_project()
+
+
+def _register_and_dispatch_project(project_root: str | None = None) -> list[str] | None:
+    raw_project_root = project_root if project_root is not None else input("Project root: ").strip()
+    if not raw_project_root:
+        print_fail([user_error("project_root_missing", "project root is required for managed-project mode")])
+        return None
+
+    resolved_root = Path(raw_project_root).expanduser().resolve()
+    if not resolved_root.exists():
+        print_fail([user_error("project_root_not_found", f"project root does not exist: {resolved_root}")])
+        return None
+    if not resolved_root.is_dir():
+        print_fail([user_error("project_root_invalid", f"project root is not a directory: {resolved_root}")])
+        return None
+
+    try:
+        register_or_update_project(resolved_root)
+    except ProjectRegistryError as exc:
+        print_fail([user_error("project_registry_invalid", str(exc))])
+        return None
+    return ["--project-root", str(resolved_root), "analyze"]
 
 
 def build_parser() -> argparse.ArgumentParser:
