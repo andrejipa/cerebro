@@ -283,6 +283,119 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertEqual(observed, [project_root])
 
+    def test_main_without_argv_opens_context_menu_and_dispatches_development_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir).resolve()
+            observed: list[Path] = []
+            stream = io.StringIO()
+
+            def fake_analyze(handler_root: Path, _args: object) -> int:
+                observed.append(handler_root)
+                return 0
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(root)
+                with mock.patch("sys.stdin.isatty", return_value=True):
+                    with mock.patch("builtins.input", side_effect=["1"]):
+                        with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
+                            with redirect_stdout(stream):
+                                exit_code = cli_main_module.main([])
+            finally:
+                os.chdir(previous_cwd)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(observed, [root])
+            self.assertIn("CEREBRO", output)
+            self.assertIn("(1) Desenvolvimento", output)
+            self.assertIn("(2) Gerenciar projeto", output)
+
+    def test_main_none_uses_process_argv_for_context_menu_dispatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir).resolve()
+            observed: list[Path] = []
+
+            def fake_analyze(handler_root: Path, _args: object) -> int:
+                observed.append(handler_root)
+                return 0
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(root)
+                with mock.patch.object(sys, "argv", ["cerebro"]):
+                    with mock.patch("sys.stdin.isatty", return_value=True):
+                        with mock.patch("builtins.input", side_effect=["1"]):
+                            with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
+                                exit_code = cli_main_module.main()
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(observed, [root])
+
+    def test_main_without_argv_opens_context_menu_and_dispatches_managed_project_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as other_dir:
+            project_root = Path(project_dir).resolve()
+            other_root = Path(other_dir).resolve()
+            observed: list[Path] = []
+
+            def fake_analyze(handler_root: Path, _args: object) -> int:
+                observed.append(handler_root)
+                return 0
+
+            previous_cwd = Path.cwd()
+            try:
+                os.chdir(other_root)
+                with mock.patch("sys.stdin.isatty", return_value=True):
+                    with mock.patch("builtins.input", side_effect=["2", str(project_root)]):
+                        with mock.patch.object(cli_main_module, "run_analyze", side_effect=fake_analyze):
+                            exit_code = cli_main_module.main([])
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(observed, [project_root])
+
+    def test_main_without_argv_fails_closed_for_invalid_context_menu_selection(self) -> None:
+        stream = io.StringIO()
+
+        with mock.patch("sys.stdin.isatty", return_value=True):
+            with mock.patch("builtins.input", side_effect=["9"]):
+                with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
+                    with redirect_stdout(stream):
+                        exit_code = cli_main_module.main([])
+
+        output = stream.getvalue()
+        self.assertEqual(exit_code, 1)
+        self.assertIn("context_menu_invalid", output)
+
+    def test_main_without_argv_fails_closed_for_blank_project_root(self) -> None:
+        stream = io.StringIO()
+
+        with mock.patch("sys.stdin.isatty", return_value=True):
+            with mock.patch("builtins.input", side_effect=["2", "   "]):
+                with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
+                    with redirect_stdout(stream):
+                        exit_code = cli_main_module.main([])
+
+        output = stream.getvalue()
+        self.assertEqual(exit_code, 1)
+        self.assertIn("project_root_missing", output)
+
+    def test_main_without_argv_fails_closed_when_terminal_is_unavailable(self) -> None:
+        stream = io.StringIO()
+
+        with mock.patch("sys.stdin.isatty", return_value=False):
+            with mock.patch("builtins.input", side_effect=AssertionError("input should not be called")):
+                with mock.patch.object(cli_main_module, "run_analyze", side_effect=AssertionError("analyze should not run")):
+                    with redirect_stdout(stream):
+                        exit_code = cli_main_module.main([])
+
+        output = stream.getvalue()
+        self.assertEqual(exit_code, 1)
+        self.assertIn("context_menu_unavailable", output)
+
     def test_plan_uses_explicit_project_root_for_relative_input_file(self) -> None:
         with tempfile.TemporaryDirectory() as project_dir, tempfile.TemporaryDirectory() as other_dir:
             project_root = Path(project_dir).resolve()

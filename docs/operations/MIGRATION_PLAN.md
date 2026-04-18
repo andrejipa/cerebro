@@ -6,8 +6,11 @@
   - Dispatcher global aceita `--project-root` antes e depois do subcomando em `cli/main.py:32-57` e `cli/main.py:320-322`.
   - `plan --input-file` agora resolve relativo ao root lógico em `cli/commands/plan.py:105` e `cli/commands/_plan_input.py:11-61`.
   - Cobertura mínima adicionada em `tests/test_cli.py:224-344` e `tests/test_alpha_runtime.py:199-225`.
-- Próxima fatia canônica: `FATIA 2 — Menu de contexto ao abrir`.
-- Pendências ainda não iniciadas nesta trilha: `FATIA 2` a `FATIA 6`.
+- `FATIA 2 — Menu de contexto ao abrir`: concluída em `2026-04-18`.
+  - `cli/main.py` agora intercepta `argv` vazio antes do parser, falha fechado sem TTY e converte o menu em dispatch explícito para `analyze` com `cwd` ou `--project-root`: `cli/main.py:32-55`, `cli/main.py:344-355`.
+  - Cobertura do menu adicionada em `tests/test_cli.py:286-385`, incluindo modo desenvolvimento, gerenciamento de projeto, seleção inválida, `project_root` vazio, ausência de terminal e `main(None)`.
+- Próxima fatia canônica: `FATIA 3 — Registro de projetos`.
+- Pendências ainda não iniciadas nesta trilha: `FATIA 3` a `FATIA 6`.
 
 ## Estado atual confirmado
 
@@ -52,11 +55,19 @@ Ordenado por esforço, menor primeiro.
      - `plan --input-file` lê do project root explícito;
      - `bootstrap-scan --root` continua dominante sobre o root global.
 
-4. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
+4. Concluído — adicionar menu de contexto ao abrir.
+   - Evidência implementada: `cli/main.py:32-55`, `cli/main.py:344-355`.
+   - Resultado:
+     - sem argumentos, o CLI oferece `(1) Desenvolvimento` e `(2) Gerenciar projeto`;
+     - a opção `1` despacha `analyze` no `cwd`;
+     - a opção `2` materializa `--project-root` explícito e reusa o mesmo dispatcher;
+     - sem terminal, seleção inválida ou `project_root` vazio, o fluxo falha fechado.
+
+5. Ajustar textos que hoje descrevem o `cwd` como única autoridade.
    - Evidência: `cli/main.py:61`, `cli/main.py:238`, `cli/output.py:42`, `cli/output.py:48`.
    - Implementação: trocar wording para “project root” quando o root vier de argumento; manter a semântica atual quando não vier.
 
-5. Separar claramente instruções de engenharia vs operação.
+6. Separar claramente instruções de engenharia vs operação.
    - Evidência: `AGENTS.md:3-8`, `AGENTS.md:34-50`, `AGENTS.md:136-187`.
    - Implementação: manter `AGENTS.md` do Cerebro e criar template mínimo de `AGENTS.md` para projetos gerenciados.
 

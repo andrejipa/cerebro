@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 
 from cli.commands.analyze import run_analyze
 from cli.commands.approve import run_approve
@@ -26,6 +27,32 @@ from cli.commands.validate import run_validate
 from cli.commands.verify import run_verify
 from cli.commands.validation_export import run_validation_export
 from cli.output import print_fail, user_error
+
+
+def _dispatch_context_menu(argv: list[str]) -> list[str] | None:
+    if argv:
+        return argv
+    if not sys.stdin.isatty():
+        print_fail([user_error("context_menu_unavailable", "interactive context menu requires a terminal; pass a subcommand explicitly")])
+        return None
+
+    print("CEREBRO")
+    print("---------------------")
+    print("(1) Desenvolvimento")
+    print("(2) Gerenciar projeto")
+
+    choice = input("Selecione [1/2]: ").strip()
+    if choice == "1":
+        return ["analyze"]
+    if choice == "2":
+        project_root = input("Project root: ").strip()
+        if not project_root:
+            print_fail([user_error("project_root_missing", "project root is required for managed-project mode")])
+            return None
+        return ["--project-root", project_root, "analyze"]
+
+    print_fail([user_error("context_menu_invalid", f"invalid context menu selection: {choice or '<empty>'}")])
+    return None
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -317,10 +344,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
-    root = Path(args.project_root).resolve() if getattr(args, "project_root", None) else Path.cwd()
     try:
+        effective_argv = list(sys.argv[1:] if argv is None else argv)
+        dispatched_argv = _dispatch_context_menu(effective_argv)
+        if dispatched_argv is None:
+            return 1
+        parser = build_parser()
+        args = parser.parse_args(dispatched_argv)
+        root = Path(args.project_root).resolve() if getattr(args, "project_root", None) else Path.cwd()
         return args.handler(root, args)
     except KeyboardInterrupt:
         print_fail([user_error("interrupted", "command interrupted by user")])

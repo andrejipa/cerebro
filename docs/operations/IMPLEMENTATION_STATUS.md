@@ -20,18 +20,33 @@
     - `tests.test_alpha_runtime.AlphaRuntimeTests.test_plan_command_resolves_relative_input_file_from_root_instead_of_process_cwd`
   - Critério de pronto: `sim`
 
+- Fatia 2: `Menu de contexto ao abrir`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `cli/main.py:32-55`
+    - `cli/main.py:344-355`
+    - `tests/test_cli.py:286-385`
+  - Testes adicionados:
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_without_argv_opens_context_menu_and_dispatches_development_mode`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_none_uses_process_argv_for_context_menu_dispatch`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_without_argv_opens_context_menu_and_dispatches_managed_project_mode`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_without_argv_fails_closed_for_invalid_context_menu_selection`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_without_argv_fails_closed_for_blank_project_root`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_without_argv_fails_closed_when_terminal_is_unavailable`
+  - Critério de pronto: `sim`
+
 ## Fatia atual
 
-- Qual é: `FATIA 1 — --project-root global em cli/main.py`
+- Qual é: `FATIA 2 — Menu de contexto ao abrir`
 - Estado: `concluída`
 
 ## Próxima fatia
 
-- Qual é: `FATIA 2 — Menu de contexto ao abrir`
+- Qual é: `FATIA 3 — Registro de projetos`
 - Dependências:
   - `FATIA 1` concluída com `cwd` default preservado
-  - parser global já aceita root explícito antes e depois do subcomando
-  - memória externa atualizada em `MIGRATION_PLAN.md`
+  - `FATIA 2` concluída com menu fino reaproveitando `analyze` e `--project-root`
+  - memória externa alinhada em `MIGRATION_PLAN.md`
 
 ## Itens em Grupo 6
 
