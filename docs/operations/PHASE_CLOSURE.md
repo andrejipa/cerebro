@@ -244,3 +244,46 @@ O protocolo de referencia para essa reabertura continua sendo o `Formal Resume T
 - `python -m unittest discover -s tests -v` verde com `634` testes e `6` skips.
 - `python -m unittest tests.test_architecture -v` verde com `51` testes.
 - O modelo externo agora fecha a trilha canônica `FATIAS 1-6` sem pendências abertas nesta fila.
+
+## Aditivo De Prova Final — 2026-04-18
+
+### Motivo do aditivo
+
+- A primeira prova de parada do modelo externo fechou a trilha canônica, mas deixou lacunas residuais de cobertura em branches fail-closed do menu gerenciado, dashboard, `doctor` e `iteration-commit`.
+- Essas lacunas eram documentais e de teste; nenhum bug novo de produção foi confirmado nesta rodada.
+
+### Correções adicionais registradas
+
+- Commit `1630484` — `test: close external-model coverage gaps - 643 testes`
+- Commit `58ace77` — `test: close remaining proof gaps - 655 testes`
+
+### Evidência adicionada
+
+- `tests/test_cli.py` cristalizou os caminhos fail-closed do menu e do dashboard:
+  seleção inválida de projeto registrado, root ausente, root não diretório e `state_unavailable`.
+- `tests/test_doctor.py` cristalizou falhas fechadas e estados marginais do `doctor`:
+  estado canônico inválido, falha de leitura do store, sessão inconsistente, relatório de fraquezas ilegível e política de freeze ilegível.
+- `tests/test_iteration_commit.py` cristalizou falhas fechadas do `iteration-commit`:
+  suíte vermelha, contagem indisponível, arquitetura vermelha, stage vazio, root git divergente, `git add` falhando, falta de fatia concluída e falha no cleanup do index.
+
+### Contagem final consolidada da trilha
+
+- Início da trilha: `595`
+- Fechamento canônico inicial: `634`
+- Fechamento consolidado após prova rerrodada: `655`
+- Delta total: `+60`
+
+### Prova de parada rerrodada
+
+- `P1` — varredura limpa: sem contaminação entre modo desenvolvimento e gerenciamento de projeto.
+- `P2` — compatível: `cwd` continua default e `--project-root` permanece opt-in sem quebrar projetos existentes.
+- `P3` — cobertura adequada: as lacunas residuais apontadas anteriormente foram fechadas.
+- `P4` — estrutura justificada: menu, registry, dashboard, `doctor` e `iteration-commit` seguem coesos no boundary de `cli/`.
+- `P5` — superfície segura: `--project-root` continua fail-closed e claims/proofs permanecem vinculados ao root resolvido.
+
+### Estado operacional final
+
+- `MODELO EXTERNO IMPLEMENTADO. Sistema em estado operacional.`
+- Menu de contexto ativo.
+- `--project-root` funcional.
+- Próxima fase natural: worktrees ou novo problema confirmado.
