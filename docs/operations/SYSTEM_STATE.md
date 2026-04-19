@@ -10,16 +10,17 @@
 - Current posture: deliberate freeze for growth, corrective hardening authorized
 - Allowed work: corrective maintenance, proportional regression coverage, factual documentation updates
 - Current queue mode: hardening arquitetural em execução
-- Current next item: `WEAK-HIGH-003 — remover o sentinel sintético check-state do contrato de verification`
+- Current next item: `WEAK-CRIT-001 — mover approval de overwrite destrutivo para policy por efeito`
 - Current weakness posture:
   - `CRÍTICO`: `1` open, `0` Group 6
-  - `ALTO`: `1` open, `0` Group 6
+  - `ALTO`: `0` open, `0` Group 6
 - Hardening update:
   - `verify` host-trusting foi fechado nesta sessão: `verify` não herda mais o `PATH` completo do host, `stdout/stderr` são redigidos antes da persistência e o leak por segmento de `PATH` ficou coberto por regressão
-  - os próximos débitos confirmados permanecem `WEAK-HIGH-003` (`check-state` sintético) e `WEAK-CRIT-001` (approval por efeito em `overwrite=true`)
+  - `WEAK-HIGH-003` também foi fechado nesta sessão: `verification.state_check` ficou separado, `verification.checks` voltou a conter apenas checks de comando e a migração legada ficou centralizada no core
+  - o próximo débito confirmado remanescente é `WEAK-CRIT-001` (approval por efeito em `overwrite=true`)
 - Nota operacional: as seções históricas abaixo pertencem à antiga trilha documenter-only e não refletem mais a fila executável atual; o snapshot acima é a referência canônica do estado corrente.
 
-Snapshot updated on 2026-04-19 after the DÉBITO 3 hardening pass.
+Snapshot updated on 2026-04-19 after the DÉBITO 2 hardening pass.
 
 ## Gate Status
 
@@ -58,7 +59,7 @@ Snapshot updated on 2026-04-19 after the DÉBITO 3 hardening pass.
 - `DOC-005` replaced the remaining raw-tail preflight with a temp-log summary because trailing test output in this workspace could hide the actual suite verdict
 - `OPPORTUNITY_MAP.md` and `SYSTEM_STATE.md` were both missing before this bootstrap
 
-## Queue State
+## Historical Queue State
 
 - Current next item: `none — documenter queue exhausted; await Formal Resume Trigger`
 - Current queue mode: documentary only
@@ -77,15 +78,15 @@ Snapshot updated on 2026-04-19 after the DÉBITO 3 hardening pass.
   - `WEAK-MED-004`
   - `DOC-DRIFT-002`
 
-## Weakness Intake
+## Historical Weakness Intake
 
 - `WEAK-CRIT-001`: confirmed critical runtime gap from `WEAKNESS_REPORT.md`; `exec.command` can mutate the workspace and fail before canonical action registration
 - `WEAK-HIGH-001`: confirmed high-severity runtime gap from `WEAKNESS_REPORT.md`; `_save_state_with_refreshed_session()` can leave `session_revision_invalid` after a hard crash window
 - `WEAK-HIGH-002`: confirmed high-severity runtime gap from `WEAKNESS_REPORT.md`; `open_session()` can leave `session_registry_mismatch` after a hard crash between the canonical registry write and `session.local.json`
-- `WEAK-HIGH-003`: confirmed high-severity policy gap from `WEAKNESS_REPORT.md`; `fs.create_file` with `overwrite=true` can still mutate an existing file without approval because the gate is keyed by `kind`, not destructive effect
+- `WEAK-HIGH-003`: closed on 2026-04-19; `verification.state_check` now persists preflight separately and `verification.checks` contains only command checks
 - `WEAK-MED-004`: confirmed medium-severity rollback residual from `WEAKNESS_REPORT.md`; `create-new` removes the file on rollback but can leave an empty directory created by the apply
-- Latest deep-audit intake also added new medium-severity items: `close_session()` crash split, the `verify` `32`-checks edge caused by the synthetic `check-state`, and a stronger coverage gap around a single end-to-end `session -> plan -> apply -> verify -> rollback` flow
-- Latest deep-audit intake also recorded undocumented runtime behaviors now tracked in `WEAKNESS_REPORT.md`: the synthetic `check-state`, `plan_generation_id` fallback, and auto-filled `consolidation_id`
+- Latest deep-audit intake also added new medium-severity items: `close_session()` crash split and a stronger coverage gap around a single end-to-end `session -> plan -> apply -> verify -> rollback` flow
+- Latest deep-audit intake also recorded undocumented runtime behaviors now tracked in `WEAKNESS_REPORT.md`: `plan_generation_id` fallback and auto-filled `consolidation_id`
 - The separate documentary drift in `AGENT_ARCHITECTURE.md` is confirmed, but remains blocked in this loop because `tests/test_architecture.py` currently guards the old literal flow and headings
 - All confirmed runtime items fit corrective maintenance under the freeze policy, but none can execute inside the current documenter-only loop because they require runtime and test mutations
 - Revalidated on 2026-04-17 after direct weakness-queue intake: the blocked set expanded, but no mutating slice became executable inside the documentary boundary

@@ -2,14 +2,22 @@
 
 ## Resumo executivo
 
- O Cerebro está operacionalmente estável e a suíte principal segue verde, mas a auditoria ainda confirma riscos técnicos abertos no runtime. Com o fechamento nesta sessão do gap host-trusting de `verify` no eixo `env -> stdout/stderr -> artifacts`, os itens mais graves remanescentes ficaram concentrados em dois pontos: a lacuna de policy em `fs.create_file` com `overwrite=true`, que ainda consegue mutar um arquivo existente sem approval porque o gate continua decidido por `kind`, não por efeito destrutivo observável, e o sentinel sintético `check-state`, que segue contaminando `verification.checks` e já depende de decisão arquitetural para sair do formato persistido. Fora disso, a base mostra um padrão claro de dívida concentrada: `StateStore` supercarregado, contratos implícitos entre módulos, e cobertura forte nos fluxos principais mas desigual em alguns helpers e cenários de bootstrap/corrupção.
+ O Cerebro está operacionalmente estável e a suíte principal segue verde, mas a auditoria ainda confirma um risco arquitetural aberto no runtime: a lacuna de policy por efeito em `fs.create_file` com `overwrite=true`, que ainda consegue mutar um arquivo existente sem approval porque o gate continua decidido por `kind`, não por efeito destrutivo observável. Nesta sessão, o sentinel sintético `check-state` foi removido do contrato persistido de `verification`: `state_check` agora fica separado, `verification.checks` voltou a representar apenas checks reais de comando, e a migração legada ficou centralizada no core. Fora disso, a base mostra um padrão claro de dívida concentrada: `StateStore` supercarregado, contratos implícitos entre módulos, e cobertura forte nos fluxos principais mas desigual em alguns helpers e cenários de bootstrap/corrupção.
 
 ## Achados confirmados pelos debates
 
 ### CRÍTICO
 
-- Nenhum item `CRÍTICO` aberto.
-  Fechamento desta sessão:
+- `approval_required_kinds` continua operando por `kind`, então `fs.create_file` com `overwrite=true` ainda consegue sobrescrever um arquivo existente sem `approval_id`, embora o efeito físico seja destrutivo para o conteúdo anterior.
+  Evidência:
+  [core/agent_runtime.py](</d:/projetos_cli/cerebro/core/agent_runtime.py:204>),
+  [core/execution_policy.py](</d:/projetos_cli/cerebro/core/execution_policy.py:54>),
+  [cli/commands/apply.py](</d:/projetos_cli/cerebro/cli/commands/apply.py:147>),
+  [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:608>).
+  Debate que confirmou: a falsificação adversarial derrubou a leitura de “bypass acidental” porque a policy atual é explicitamente por `kind`, mas não falsificou o risco operacional por efeito. A reprodução direta desta rodada sobrescreveu `draft.txt` com `overwrite=true`, `approval_id == ""` e `approval_count == 0`.
+  Status atual: a menor correção segura cruza [core/validation.py](</d:/projetos_cli/cerebro/core/validation.py:947>), então este item ficou aberto para a próxima iteração do `Grupo 6`.
+
+- Fechamento anterior nesta categoria:
   o gap pós-mutação de `exec.command` foi fechado em
   [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:148>),
   [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:839>)
@@ -62,24 +70,21 @@
   [tests/test_state_store.py](</d:/projetos_cli/cerebro/tests/test_state_store.py:1366>).
   Debate que confirmou: o rollout principal reproduziu `0 -> 1 -> 0` diretamente no boundary canônico; a alternativa de deixar a monotonicidade apenas nos chamadores foi descartada porque mantinha o downgrade possível no nível mais baixo de persistência.
 
-- `approval_required_kinds` continua operando por `kind`, então `fs.create_file` com `overwrite=true` ainda consegue sobrescrever um arquivo existente sem `approval_id`, embora o efeito físico seja destrutivo para o conteúdo anterior.
-  Evidência:
-  [core/agent_runtime.py](</d:/projetos_cli/cerebro/core/agent_runtime.py:204>),
-  [core/execution_policy.py](</d:/projetos_cli/cerebro/core/execution_policy.py:54>),
-  [cli/commands/apply.py](</d:/projetos_cli/cerebro/cli/commands/apply.py:147>),
-  [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:608>).
-  Debate que confirmou: a falsificação adversarial derrubou a leitura de “bypass acidental” porque a policy atual é explicitamente por `kind`, mas não falsificou o risco operacional por efeito. A reprodução direta desta rodada sobrescreveu `draft.txt` com `overwrite=true`, `approval_id == ""` e `approval_count == 0`.
-  Status atual: a menor correção segura cruza [core/validation.py](</d:/projetos_cli/cerebro/core/validation.py:947>), então este item saiu da trilha corretiva imediata e ficou bloqueado para `Grupo 6` até decisão arquitetural explícita.
-
-- `verification.checks` continua misturando o sentinel sintético `check-state` com checks reais de comando, então CLI, `StateStore`, memória e extensões já precisam filtrar `gate == "command"` para reconstruir o contrato operacional real.
-  Evidência:
-  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:184>),
-  [cli/commands/verify.py](</d:/projetos_cli/cerebro/cli/commands/verify.py:54>),
-  [core/state_store.py](</d:/projetos_cli/cerebro/core/state_store.py:4186>),
-  [core/memory_runtime.py](</d:/projetos_cli/cerebro/core/memory_runtime.py:108>),
-  [extensions/status_export/exporter.py](</d:/projetos_cli/cerebro/extensions/status_export/exporter.py:185>).
-  Debate que confirmou: oponente não falsificou a contaminação do contrato, apenas observou que os filtros atuais limitam parte do dano.
-  Status atual: a menor correção segura cruza o formato persistido de `verification`, `cli/commands/verify.py`, `core/state_store.py`, `core/memory_runtime.py` e `extensions/status_export/exporter.py`, então este item ficou bloqueado para `Grupo 6` até decisão arquitetural explícita.
+- Fechamento desta sessão: o sentinel sintético `check-state` saiu do contrato persistido de `verification`; o preflight agora vive em `verification.state_check`, `verification.checks` voltou a conter apenas checks reais de comando, a migração legada ficou centralizada na canonicalização e os consumidores passaram a depender de um helper único em vez de filtros distribuídos.
+  Evidência do fechamento:
+  [core/agent_runtime.py](</d:/projetos_cli/cerebro/core/agent_runtime.py:481>),
+  [core/agent_runtime.py](</d:/projetos_cli/cerebro/core/agent_runtime.py:525>),
+  [core/validation.py](</d:/projetos_cli/cerebro/core/validation.py:696>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:363>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:525>),
+  [cli/commands/verify.py](</d:/projetos_cli/cerebro/cli/commands/verify.py:45>),
+  [core/state_store.py](</d:/projetos_cli/cerebro/core/state_store.py:4261>),
+  [core/memory_runtime.py](</d:/projetos_cli/cerebro/core/memory_runtime.py:111>),
+  [extensions/status_export/exporter.py](</d:/projetos_cli/cerebro/extensions/status_export/exporter.py:187>),
+  [tests/test_verification_runtime.py](</d:/projetos_cli/cerebro/tests/test_verification_runtime.py:523>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:2096>),
+  [tests/test_state_store.py](</d:/projetos_cli/cerebro/tests/test_state_store.py:388>).
+  Critério satisfeito: `check-state` não é mais persistido em `verification.checks`, falha de preflight cai em `state_check.failed`, verify parcial continua parcial sem sentinel, e a suíte ampla permaneceu verde (`696` testes, `0` falhas, `6` skips; `tests.test_architecture` verde com `51` testes).
 
 ### MÉDIO
 
@@ -130,7 +135,7 @@
   [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:241>),
   [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:244>),
   [tests/test_verification_runtime.py](</d:/projetos_cli/cerebro/tests/test_verification_runtime.py:347>).
-  Prova operacional: a regressão nova força `prepare_project_sandbox()` a lançar `OSError`, observa `run_verify()` retornando `1`, `verification.status == "failed"` com `check-state` falho e um único evento `verify_failed` persistido no audit trail.
+  Prova operacional: a regressão nova força `prepare_project_sandbox()` a lançar `OSError`, observa `run_verify()` retornando `1`, `verification.status == "failed"` com `state_check.failed`, `checks == []` e um único evento `verify_failed` persistido no audit trail.
 
 - Fechamento desta sessão: `rollback` de `fs.move` agora poda a árvore de destino criada pelo `apply` quando ela fica vazia após restaurar o arquivo na origem, sem tocar diretórios preexistentes nem o caso com `target_preimage_ref`.
   Evidência:
@@ -189,12 +194,12 @@
   [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:906>).
   Prova operacional: a regressão nova simula o probe `os.kill(pid, 0)` retornando `WinError 87`, observa `validate_state()` recuperar o lock e seguir verde; um segundo teste fixa o caminho oposto e prova que o timeout continua intencional quando o owner PID ainda parece ativo.
 
-- Fechamento desta sessão: `verify` agora falha cedo quando a seleção de comandos ultrapassa o budget efetivo de `verification.checks`, reservando explicitamente um slot para o `check-state` sintético e impedindo a persistência inválida de `33` checks.
+- Fechamento desta sessão: `verify` agora aceita o budget cheio de `32` checks de comando porque o preflight saiu de `verification.checks`, impedindo o falso overflow sintético e preservando o contrato command-only.
   Evidência:
   [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:231>),
   [core/agent_runtime.py](</d:/projetos_cli/cerebro/core/agent_runtime.py:214>),
   [tests/test_verification_runtime.py](</d:/projetos_cli/cerebro/tests/test_verification_runtime.py:18>).
-  Prova operacional: a regressão nova persiste um plano com `32` comandos `allow_in_verify`, observa `run_verify()` retornar `1` com `verification_failed`, mensagem explícita de budget (`at most 31 commands can run`) e ausência de `invalid_agent_verification_checks`, preservando `verification.status == "idle"`.
+  Prova operacional: a regressão nova persiste um plano com `32` comandos `allow_in_verify`, observa `run_verify()` retornar `0`, `checks: 32`, ausência de `invalid_agent_verification_checks` e `verification.status == "passed"`.
 
 - A cobertura negativa de approval ainda deixa aberto o caso `fs.create_file` com `overwrite=true` sobre arquivo existente sob `approval_required_kinds=["fs.write_patch"]`.
   Evidência:
@@ -259,7 +264,7 @@
   `verify` reescreve sandbox env completo em [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:36>);
   `plan_updated` reseta `batch_registry["used_ids"]` em [core/state_store.py](</d:/projetos_cli/cerebro/core/state_store.py:1346>);
   o “sandbox” de `verify` é apenas um clone descartável do workspace, não um sandbox de host, em [core/command_sandbox.py](</d:/projetos_cli/cerebro/core/command_sandbox.py:84>) e [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:209>);
-  `verify` sempre injeta um `check-state` sintético antes dos checks registrados em [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:133>);
+  `verify` agora persiste o preflight separadamente em `verification.state_check` e reserva `verification.checks` apenas para checks de comando reais em [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:380>);
   `action_belongs_to_current_plan()` faz fallback para `task_id`/`action_id` quando `plan_generation_id` está ausente em [core/agent_runtime.py](</d:/projetos_cli/cerebro/core/agent_runtime.py:651>);
   `record_parallel_approach_consolidation()` auto-preenche `consolidation_id` quando ele não vem explícito em [core/state_store.py](</d:/projetos_cli/cerebro/core/state_store.py:373>).
 
@@ -284,7 +289,7 @@
 - Fechado nesta sessão: `fs.move` com `from == to` agora falha fechado como `action_no_effect` antes da mutação, evitando o falso `applied` e o rollback envenenado que antes terminava em `original source path already exists and blocks rollback`.
 - Fechado nesta sessão: as regressões de `fs.move` agora cobrem também paths lexicalmente diferentes que resolvem para o mesmo arquivo, cristalizando o contrato real do guard por path resolvido.
 - Fechado nesta sessão: `runtime.lock` agora tem regressões explícitas separando owner PID inválido/morto (cleanup) de owner PID ainda vivo (timeout esperado).
-- Fechado nesta sessão: `verify` agora tem regressão explícita para o edge de `32` comandos registrados mais o `check-state` sintético e falha cedo antes de tentar persistir `33` checks.
+- Fechado nesta sessão: `verify` agora tem regressão explícita para o budget cheio de `32` comandos reais sem overflow sintético.
 - Fechado nesta sessão: a compensação de `guarded_apply_batch()` e `guarded_rollback_batch()` agora continua em best effort mesmo quando o primeiro restore falha, restaurando os caminhos restantes antes de propagar erro canônico de compensation.
 - Fechado nesta sessão: `exec.command` agora ancora approval e retry ao snapshot resolvido do `command_registry`, então drift de `argv`/`cwd`/`timeout_ms`/`side_effect` deixa de reaproveitar aprovação antiga silenciosamente.
 - Fechado nesta sessão: `exec.command` com `command_id` removido do `command_registry` agora falha fechado antes de approval/retry, em vez de gerar um novo gate para um comando que já não existe.
@@ -350,4 +355,4 @@
 
 - Primeiro item: manter o gap de approval por efeito em `fs.create_file overwrite=true` em `Grupo 6`, porque a menor correção segura cruza `core/validation.py`.
 - Segundo item: fechar as lacunas de cobertura pequenas e baratas (e2e contínuo de sessão->plan->apply->verify->rollback, testes diretos de helpers centrais, `runtime.lock` órfão) e alinhar a documentação operacional aos comportamentos reais já descobertos nesta auditoria.
-- Terceiro item: decidir se o boundary host-trusting atual de `verify` permanece residual aceito ou se sobe para slice corretivo/arquitetural explícito, junto do edge de `32` checks + `check-state` e da falta de contrato explícito hoje espalhada entre validator, runtime e docs.
+- Terceiro item: decidir se o boundary host-trusting atual de `verify` permanece residual aceito ou se sobe para slice corretivo/arquitetural explícito, junto dos contratos ainda implícitos espalhados entre validator, runtime e docs.

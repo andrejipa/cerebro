@@ -21,8 +21,32 @@
     - regressões cobrem leak de env, helper chain mínima via comando resolvido e preservação de `C:` legítimo
 
 - Débito 2: `check-state` sintético
-  - Estado: `pendente`
-  - Próximo passo: separar o sentinel do contrato persistido de `verification.checks` sem reabrir drift em CLI, store, memória e exports
+  - Estado: `fechado`
+  - Fechado em: `2026-04-19`
+  - Arquivos alterados:
+    - `core/agent_runtime.py:481-525`
+    - `core/validation.py:696-734`
+    - `core/validation.py:1025-1031`
+    - `core/verification_runtime.py:363-383`
+    - `core/verification_runtime.py:471-525`
+    - `cli/commands/verify.py:45-92`
+    - `core/state_store.py:1722`
+    - `core/state_store.py:4261-4299`
+    - `core/memory_runtime.py:109-111`
+    - `extensions/status_export/exporter.py:185-187`
+    - `core/__init__.py:3-15`
+    - `tests/test_verification_runtime.py:65-121`
+    - `tests/test_alpha_runtime.py:633-650`
+    - `tests/test_alpha_runtime.py:2096-2109`
+    - `tests/test_state_store.py:388-462`
+    - `tests/test_validate.py:108-201`
+  - Critério satisfeito: `sim`
+  - Evidência:
+    - `verification.state_check` agora persiste preflight explicitamente
+    - `verification.checks` voltou a conter apenas checks de comando
+    - legado `gate == "state"` migra automaticamente na canonicalização
+    - `python -m unittest discover -s tests -v` -> `696` testes, `0` falhas, `6` skips
+    - `python -m unittest tests.test_architecture -v` -> `51` testes, `0` falhas
 
 - Débito 1: `approval` por efeito em `overwrite=true`
   - Estado: `pendente`

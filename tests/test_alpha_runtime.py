@@ -649,8 +649,9 @@ class AlphaRuntimeTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertIn("verification_passed", output)
             self.assertEqual(state["agent_runtime"]["verification"]["status"], "passed")
-            self.assertEqual(len(state["agent_runtime"]["verification"]["checks"]), 2)
-            artifact_ref = state["agent_runtime"]["verification"]["checks"][1]["artifact_ref"]
+            self.assertEqual(state["agent_runtime"]["verification"]["state_check"]["status"], "passed")
+            self.assertEqual(len(state["agent_runtime"]["verification"]["checks"]), 1)
+            artifact_ref = state["agent_runtime"]["verification"]["checks"][0]["artifact_ref"]
             self.assertTrue((store.cerebro_dir / artifact_ref).exists())
 
     def test_verify_a1_policy_deny_returns_verification_failed_not_internal_error(self) -> None:
@@ -795,14 +796,14 @@ class AlphaRuntimeTests(unittest.TestCase):
             self.assertEqual(run_verify(root, type("Args", (), {"command_id": []})), 0)
 
             state = store.load_state()
-            artifact_ref = state["agent_runtime"]["verification"]["checks"][1]["artifact_ref"]
+            artifact_ref = state["agent_runtime"]["verification"]["checks"][0]["artifact_ref"]
             (store.cerebro_dir / artifact_ref).unlink()
 
             result = store.validate_state()
 
             self.assertFalse(result["ok"])
             self.assertEqual(result["errors"][0]["code"], "runtime_artifact_missing")
-            self.assertIn("agent_runtime.verification.checks[1].artifact_ref", result["errors"][0]["message"])
+            self.assertIn("agent_runtime.verification.checks[0].artifact_ref", result["errors"][0]["message"])
 
     def test_validate_fails_when_current_verification_artifact_content_diverges(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -817,14 +818,14 @@ class AlphaRuntimeTests(unittest.TestCase):
             self.assertEqual(run_verify(root, type("Args", (), {"command_id": []})), 0)
 
             state = store.load_state()
-            artifact_ref = state["agent_runtime"]["verification"]["checks"][1]["artifact_ref"]
+            artifact_ref = state["agent_runtime"]["verification"]["checks"][0]["artifact_ref"]
             (store.cerebro_dir / artifact_ref).write_text("tampered stdout\n", encoding="utf-8")
 
             result = store.validate_state()
 
             self.assertFalse(result["ok"])
             self.assertEqual(result["errors"][0]["code"], "runtime_artifact_hash_mismatch")
-            self.assertIn("agent_runtime.verification.checks[1].artifact_ref", result["errors"][0]["message"])
+            self.assertIn("agent_runtime.verification.checks[0].artifact_ref", result["errors"][0]["message"])
 
     def test_verify_fails_when_command_mutates_workspace_and_real_root_stays_clean(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -888,7 +889,7 @@ class AlphaRuntimeTests(unittest.TestCase):
             self.assertEqual(runtime["verification"]["status"], "failed")
             self.assertIn(
                 "mutated the observed sandbox state",
-                runtime["verification"]["checks"][1]["message"],
+                runtime["verification"]["checks"][0]["message"],
             )
             self.assertTrue(store.validate_state()["ok"])
 
@@ -955,7 +956,7 @@ class AlphaRuntimeTests(unittest.TestCase):
             self.assertEqual(runtime["verification"]["status"], "failed")
             self.assertIn(
                 "changed .cerebro/state.json",
-                runtime["verification"]["checks"][1]["message"],
+                runtime["verification"]["checks"][0]["message"],
             )
             self.assertNotEqual(store.load_state()["checkpoint"]["summary"], "tampered by verify")
             self.assertTrue(store.validate_state()["ok"])
@@ -1056,7 +1057,7 @@ class AlphaRuntimeTests(unittest.TestCase):
                         exit_code = run_verify(root, type("Args", (), {"command_id": []}))
 
                 runtime = store.read_agent_runtime()
-                artifact_ref = runtime["verification"]["checks"][1]["artifact_ref"]
+                artifact_ref = runtime["verification"]["checks"][0]["artifact_ref"]
                 stdout_text = (store.cerebro_dir / artifact_ref).read_text(encoding="utf-8")
                 stderr_text = (store.cerebro_dir / artifact_ref.replace(".stdout.txt", ".stderr.txt")).read_text(
                     encoding="utf-8"
@@ -1144,7 +1145,7 @@ class AlphaRuntimeTests(unittest.TestCase):
                     exit_code = run_verify(root, type("Args", (), {"command_id": [], "session_token": session["session_token"]}))
 
             runtime = store.read_agent_runtime()
-            artifact_ref = runtime["verification"]["checks"][1]["artifact_ref"]
+            artifact_ref = runtime["verification"]["checks"][0]["artifact_ref"]
             stdout_text = (store.cerebro_dir / artifact_ref).read_text(encoding="utf-8")
             self.assertEqual(exit_code, 0)
             self.assertEqual(stdout_text.strip(), "helper-ok")
@@ -1208,7 +1209,7 @@ class AlphaRuntimeTests(unittest.TestCase):
                 exit_code = run_verify(root, type("Args", (), {"command_id": []}))
 
             runtime = store.read_agent_runtime()
-            artifact_ref = runtime["verification"]["checks"][1]["artifact_ref"]
+            artifact_ref = runtime["verification"]["checks"][0]["artifact_ref"]
             stdout_text = (store.cerebro_dir / artifact_ref).read_text(encoding="utf-8")
             stderr_text = (store.cerebro_dir / artifact_ref.replace(".stdout.txt", ".stderr.txt")).read_text(
                 encoding="utf-8"
@@ -1294,8 +1295,8 @@ class AlphaRuntimeTests(unittest.TestCase):
                 runtime = store.read_agent_runtime()
                 self.assertEqual(exit_code, 1)
                 self.assertEqual(runtime["verification"]["status"], "failed")
-                self.assertIn("live runtime authority", runtime["verification"]["checks"][1]["message"])
-                self.assertIn("external session claim", runtime["verification"]["checks"][1]["message"])
+                self.assertIn("live runtime authority", runtime["verification"]["checks"][0]["message"])
+                self.assertIn("external session claim", runtime["verification"]["checks"][0]["message"])
                 self.assertEqual(before_claim, self._read_session_claim_bytes(store, session["owner_claim_id"]))
                 self.assertTrue(store.validate_state()["ok"])
 
@@ -1382,8 +1383,8 @@ class AlphaRuntimeTests(unittest.TestCase):
                 runtime = store.read_agent_runtime()
                 self.assertEqual(exit_code, 1)
                 self.assertEqual(runtime["verification"]["status"], "failed")
-                self.assertIn("live runtime authority", runtime["verification"]["checks"][1]["message"])
-                self.assertIn("external session live proof", runtime["verification"]["checks"][1]["message"])
+                self.assertIn("live runtime authority", runtime["verification"]["checks"][0]["message"])
+                self.assertIn("external session live proof", runtime["verification"]["checks"][0]["message"])
                 self.assertEqual(before_live_proof, store._read_optional_session_live_proof_bytes(live_proof_id))
                 self.assertTrue(store.validate_state()["ok"])
 
@@ -1452,8 +1453,8 @@ class AlphaRuntimeTests(unittest.TestCase):
             runtime = store.read_agent_runtime()
             self.assertEqual(exit_code, 1)
             self.assertEqual(runtime["verification"]["status"], "failed")
-            self.assertIn("live runtime authority", runtime["verification"]["checks"][1]["message"])
-            self.assertIn("state.json", runtime["verification"]["checks"][1]["message"])
+            self.assertIn("live runtime authority", runtime["verification"]["checks"][0]["message"])
+            self.assertIn("state.json", runtime["verification"]["checks"][0]["message"])
             self.assertEqual(store.load_state()["checkpoint"]["summary"], before_summary)
             self.assertTrue(store.validate_state()["ok"])
 
@@ -2104,7 +2105,7 @@ class AlphaRuntimeTests(unittest.TestCase):
             self.assertEqual(runtime_after_subset["verification"]["pending_action_ids"], ["act-create"])
             self.assertEqual(
                 [item["command_id"] for item in runtime_after_subset["verification"]["checks"]],
-                ["state", "cmd-001"],
+                ["cmd-001"],
             )
             self.assertEqual(runtime_after_subset["plan"]["tasks"][0]["status"], "running")
 
@@ -2195,20 +2196,14 @@ class AlphaRuntimeTests(unittest.TestCase):
                     "pending_action_ids": ["act-001"],
                     "last_run_at": "2026-04-14T00:00:20+00:00",
                     "status": "passed",
+                    "state_check": {
+                        "status": "passed",
+                        "exit_code": 0,
+                        "message": "partial verify",
+                    },
                     "checks": [
                         {
-                            "id": "check-state",
-                            "gate": "state",
-                            "command_id": "state",
-                            "status": "passed",
-                            "exit_code": 0,
-                            "artifact_ref": "",
-                            "covered_action_ids": ["act-001"],
-                            "message": "partial verify",
-                        },
-                        {
                             "id": "check-cmd-001",
-                            "gate": "command",
                             "command_id": "cmd-001",
                             "status": "passed",
                             "exit_code": 0,
@@ -3787,18 +3782,12 @@ class AlphaRuntimeTests(unittest.TestCase):
                     "pending_action_ids": [],
                     "last_run_at": "2026-04-14T00:00:20+00:00",
                     "status": "passed",
-                    "checks": [
-                        {
-                            "id": "check-001",
-                            "gate": "state",
-                            "command_id": "state",
-                            "status": "passed",
-                            "exit_code": 0,
-                            "artifact_ref": "",
-                            "covered_action_ids": ["act-001"],
-                            "message": "state verified",
-                        }
-                    ],
+                    "state_check": {
+                        "status": "passed",
+                        "exit_code": 0,
+                        "message": "state verified",
+                    },
+                    "checks": [],
                 },
                 validated_revision=updated["revision"],
             )

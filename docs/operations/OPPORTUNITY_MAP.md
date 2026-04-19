@@ -6,14 +6,14 @@
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`
 - Current posture: deliberate freeze remains active for growth, but corrective hardening is active and authorized
 - Current executable queue:
-  - `WEAK-HIGH-003 — remover o sentinel sintético check-state do contrato de verification`
   - `WEAK-CRIT-001 — mover approval de overwrite destrutivo para policy por efeito`
-- Current next item: `WEAK-HIGH-003 — check-state sintético`
+- Current next item: `WEAK-CRIT-001 — approval por efeito em overwrite destrutivo`
 - Current weakness posture:
   - `CRÍTICO`: `1` open, `0` Group 6
-  - `ALTO`: `1` open, `0` Group 6
+  - `ALTO`: `0` open, `0` Group 6
 - Latest hardening result:
   - `DÉBITO 3` (`verify` host-trusting) foi fechado com regressão explícita para leak de env, leak por segmento de `PATH`, helper chain mínima por comando resolvido e preservação de `C:` legítimo
+  - `DÉBITO 2` (`check-state` sintético) foi fechado: `verification.state_check` ficou separado, `verification.checks` voltou a ser command-only e a migração legada ficou centralizada na canonicalização
   - o drift entre `WEAKNESS_REPORT.md`, `SYSTEM_STATE.md` e `OPPORTUNITY_MAP.md` agora fica ancorado neste snapshot atual, que substitui a antiga trilha documenter-only descrita nas seções históricas abaixo
 
 Bootstrap document created on 2026-04-16 for the autonomous loop.
@@ -207,7 +207,7 @@ Bootstrap document created on 2026-04-16 for the autonomous loop.
 - Status: `blocked`
 - Reason: targeted literal guards already cover the current closure claim; deeper structural hardening would require a separate test-surface slice outside the active documenter-only queue
 
-### BLOCKED-WEAK-CRIT-001 — `exec.command` post-mutation artifact persistence gap
+### BLOCKED-WEAK-CRIT-LEGACY-EXEC — `exec.command` post-mutation artifact persistence gap
 
 - Source: `docs/operations/WEAKNESS_REPORT.md`
 - Status: `blocked in documenter track`
@@ -225,7 +225,7 @@ Bootstrap document created on 2026-04-16 for the autonomous loop.
 - Status: `blocked in documenter track`
 - Reason: the confirmed high-severity fix requires mutating `core/state_store.py` and proportional regression tests to close the `session_registry_mismatch` window, which this loop may not touch under `AGENTS.md`
 
-### BLOCKED-WEAK-HIGH-003 — effect-level approval gap for `fs.create_file overwrite=true`
+### BLOCKED-WEAK-CRIT-001 — effect-level approval gap for `fs.create_file overwrite=true`
 
 - Source: `docs/operations/WEAKNESS_REPORT.md`
 - Status: `blocked in documenter track`
@@ -252,17 +252,18 @@ Bootstrap document created on 2026-04-16 for the autonomous loop.
 
 ## Next Item
 
-- `none — documenter queue exhausted; await Formal Resume Trigger`
+- `WEAK-CRIT-001 — effect-level approval gap for fs.create_file overwrite=true`
+- Historical closure note preserved for the documentary perimeter: `documenter queue exhausted; await Formal Resume Trigger`
 - blocked residuals:
-  - `WEAK-CRIT-001`, `WEAK-HIGH-001`, `WEAK-HIGH-002`, `WEAK-HIGH-003`, and `WEAK-MED-004` require leaving the documenter-only track because they are corrective runtime slices
+  - `WEAK-CRIT-001` and `WEAK-MED-004` still require mutating runtime code and proportional regression coverage
   - `AGENT_ARCHITECTURE.md` drift is now explicitly known, but remains blocked by the coupled `tests/test_architecture.py` literal guard
   - `PHASE_CLOSURE.md` structural proof hardening remains outside the active documenter-only queue
 - latest revalidation:
   - the weakness queue was re-read and reconciled on 2026-04-17
-  - `WEAKNESS_REPORT.md` now exposes `1` `CRÍTICO`, `3` `ALTO`, and multiple `MÉDIO`
+  - `WEAKNESS_REPORT.md` now exposes `1` `CRÍTICO` aberto, `0` `ALTO` aberto, and multiple `MÉDIO`
   - the deep audit reproduced a new effect-level approval gap (`fs.create_file overwrite=true` without approval) and a rollback residual (`create-new` leaves empty directory residue)
-  - the deep audit also preserved the newer `MÉDIO` items (`close_session()` crash split, `verify` `32`-checks edge) plus a stronger coverage gap (`session + plan + apply + verify + rollback` end-to-end still fragmented)
-  - undocumented runtime behaviors (`check-state` synthetic verify check, `plan_generation_id` fallback, auto-filled `consolidation_id`) were added to `WEAKNESS_REPORT.md`
+  - the deep audit also preserved newer `MÉDIO` items (`close_session()` crash split) plus a stronger coverage gap (`session + plan + apply + verify + rollback` end-to-end still fragmented)
+  - undocumented runtime behaviors (`plan_generation_id` fallback, auto-filled `consolidation_id`) were added to `WEAKNESS_REPORT.md`
   - the transient red gate seen in a prior `discover` tail did not reproduce on the next serial rerun; the live gate returned `550` tests, `0` failures, `6` skips, and `tests.test_architecture` stayed green
   - a later docs-only revalidation also stayed green (`550` tests, `0` failures, `6` skips; `tests.test_architecture` green) and still did not produce any new executable documentary slice
   - another full memory reread plus green gate revalidation (`550` tests, `0` failures, `6` skips; `tests.test_architecture` green) again confirmed that the current blocked set still yields no executable documentary-only slice

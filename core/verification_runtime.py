@@ -332,12 +332,11 @@ def run_verification_commands(
     ]
     if not selected:
         raise VerificationRuntimeError("no verification commands are registered for the current plan")
-    if len(selected) + 1 > MAX_VERIFICATION_CHECKS:
-        max_verify_commands = MAX_VERIFICATION_CHECKS - 1
+    if len(selected) > MAX_VERIFICATION_CHECKS:
+        max_verify_commands = MAX_VERIFICATION_CHECKS
         raise VerificationRuntimeError(
             "verification command selection exceeds the supported check budget: "
-            f"{len(selected)} requested, but at most {max_verify_commands} commands can run because "
-            "verify reserves one check slot for the synthetic check-state gate"
+            f"{len(selected)} requested, but at most {max_verify_commands} commands can run"
         )
 
     full_required_coverage = covers_required_verification_scope(required_command_ids, selected_ids)
@@ -366,38 +365,24 @@ def run_verification_commands(
             "status": "failed",
             "required_command_ids": list(required_command_ids),
             "pending_action_ids": list(pending_action_ids),
-            "checks": [
-                {
-                    "id": "check-state",
-                    "gate": "state",
-                    "command_id": "state",
-                    "status": "failed",
-                    "exit_code": 1,
-                    "artifact_ref": "",
-                    "artifact_sha256": "",
-                    "covered_action_ids": [],
-                    "message": message,
-                }
-            ],
+            "state_check": {
+                "status": "failed",
+                "exit_code": 1,
+                "message": message,
+            },
+            "checks": [],
         }
     baseline_manifest = capture_tree_manifest(sandbox_root)
     guarded_runtime_files = store.capture_verify_authority_guard()
     host_env = os.environ.copy()
     artifact_redactions = _collect_verify_artifact_redactions(host_env)
 
-    checks: list[dict] = [
-        {
-            "id": "check-state",
-            "gate": "state",
-            "command_id": "state",
-            "status": "passed",
-            "exit_code": 0,
-            "artifact_ref": "",
-            "artifact_sha256": "",
-            "covered_action_ids": covered_action_ids,
-            "message": partial_coverage_message,
-        }
-    ]
+    state_check = {
+        "status": "passed",
+        "exit_code": 0,
+        "message": partial_coverage_message,
+    }
+    checks: list[dict] = []
     overall_status = "passed"
     try:
         for command in selected:
@@ -537,6 +522,7 @@ def run_verification_commands(
         "pending_action_ids": pending_action_ids,
         "last_run_at": _timestamp_now(),
         "status": overall_status,
+        "state_check": state_check,
         "checks": checks,
     }
 
