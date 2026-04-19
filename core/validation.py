@@ -973,7 +973,7 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
         action_status = action.get("status")
         if action_status in {"applied", "failed", "rolled_back"}:
             approval_error = required_action_approval_error(
-                action.get("kind"),
+                action,
                 approval_id,
                 approval_statuses,
                 approval_required_kinds,

@@ -287,3 +287,263 @@ O protocolo de referencia para essa reabertura continua sendo o `Formal Resume T
 - Menu de contexto ativo.
 - `--project-root` funcional.
 - Próxima fase natural: worktrees ou novo problema confirmado.
+
+## Encerramento Formal Da Auditoria Contínua — 2026-04-18
+
+### Estado final
+
+- Data: `2026-04-18`
+- Estado final da auditoria: `closed`
+- Esta seção supersede o snapshot parcial anterior do mesmo dia para a trilha de hardening contínuo
+- Suite final desta auditoria: `665` testes passando, `6` skips
+- Gate arquitetural final: `python -m unittest tests.test_architecture -v` verde com `51` testes
+- `WEAKNESS_REPORT.md`: nenhum `CRÍTICO` aberto; nenhum `ALTO` executável; `2` itens `ALTO` permanecem apenas em `Grupo 6`
+- Prova de parada final: `P1-P5` concluídos em `NÍVEL 0`, com `P2` explicitamente limpo
+
+### Contagem de testes da auditoria
+
+- Início desta auditoria corretiva: `657`
+- Fim desta auditoria corretiva: `665`
+- Delta: `+8`
+
+### Bugs confirmados e corrigidos nesta auditoria
+
+- `EOFError` no menu interativo deixava o CLI cair no catch-all e responder `internal_error`; agora falha fechado com erro específico no boundary de input em [cli/main.py](</D:/projetos_cli/cerebro/cli/main.py:36>), [cli/main.py](</D:/projetos_cli/cerebro/cli/main.py:48>), [cli/main.py](</D:/projetos_cli/cerebro/cli/main.py:75>) e [cli/main.py](</D:/projetos_cli/cerebro/cli/main.py:96>).
+  Testes que cristalizaram:
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:516>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:546>) e
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:597>).
+- Falha de cleanup do lock do registry deixava exceção crua ou mascarava a falha de release quando o branch de escrita também falhava; agora o boundary do registry responde com `ProjectRegistryError` explícito também para `write + lock release` em [cli/project_registry.py](</D:/projetos_cli/cerebro/cli/project_registry.py:107>), [cli/project_registry.py](</D:/projetos_cli/cerebro/cli/project_registry.py:121>), [cli/project_registry.py](</D:/projetos_cli/cerebro/cli/project_registry.py:133>) e [cli/project_registry.py](</D:/projetos_cli/cerebro/cli/project_registry.py:134>).
+  Testes que cristalizaram:
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:566>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:956>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:984>) e
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1013>).
+
+### Timeouts desta auditoria
+
+- Nenhum timeout ocorreu na rodada final de prova.
+- Os relançamentos desta sessão vieram de novos achados confirmados ou lacunas de cobertura, não de travamento de agentes.
+
+### Itens mantidos em Grupo 6
+
+- `WEAK-HIGH-003` — gap de approval por efeito em `fs.create_file overwrite=true`; continua exigindo decisão arquitetural porque a menor correção cruza policy/validation. Critério de reabertura: autorização explícita para tocar o boundary de policy por efeito destrutivo.
+- `verification.checks` com sentinel sintético `check-state`; continua exigindo decisão arquitetural porque a menor correção cruza formato persistido e múltiplos consumidores. Critério de reabertura: autorização explícita para alterar o contrato persistido de verification.
+
+### Compatibilidade confirmada
+
+- Os novos fail-closed do menu continuam restritos ao boundary interativo de `cli/` e não alteram `core/`.
+- O endurecimento do registry permanece opcional, local ao módulo e sem virar nova fonte de verdade.
+- `doctor` continua com o mesmo custo dominante documentado e sem hotspot novo.
+
+### Estado operacional final
+
+- `AUDITORIA CONCLUÍDA. Sistema em estado operacional.`
+- Retorne para worktrees ou novo problema confirmado.
+
+## Fechamento Formal Da Trilha Worktrees — 2026-04-18
+
+### Data e estado final
+
+- Data: `2026-04-18`
+- Estado final da trilha: `WORKTREES IMPLEMENTADOS`
+- Suite final desta trilha: `688` testes passando, `6` skips
+- Gate arquitetural final: `python -m unittest tests.test_architecture -v` verde com `51` testes
+- Prova de parada final: `P1-P5` em `NÍVEL 0`, com `P2` explicitamente limpo
+- Teste de isolamento manual: `passou`
+
+### Contagem de testes da trilha
+
+- Início da trilha: `665`
+- Fim da trilha: `688`
+- Delta: `+23`
+
+### Fatias concluídas com evidência
+
+- `FATIA 1 — cerebro worktree create <nome>`:
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:87>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1180>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1500>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1522>).
+- `FATIA 2 — cerebro worktree list`:
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:216>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1333>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1388>).
+- `FATIA 3 — cerebro worktree clean <nome>`:
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:154>),
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:293>),
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:320>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1554>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1591>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1625>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1658>).
+- `FATIA 4 — spawn em worktree isolado`:
+  [_local/automation_bridge/run_parallel_worktrees.py](</D:/projetos_cli/cerebro/_local/automation_bridge/run_parallel_worktrees.py:233>),
+  [_local/automation_bridge/run_parallel_worktrees.py](</D:/projetos_cli/cerebro/_local/automation_bridge/run_parallel_worktrees.py:238>),
+  [_local/automation_bridge/test_run_bridge.py](</D:/projetos_cli/cerebro/_local/automation_bridge/test_run_bridge.py:393>),
+  [_local/automation_bridge/test_run_bridge.py](</D:/projetos_cli/cerebro/_local/automation_bridge/test_run_bridge.py:487>).
+- `FATIA 5 — merge supervisionado`:
+  [_local/automation_bridge/review_worktree.py](</D:/projetos_cli/cerebro/_local/automation_bridge/review_worktree.py:40>),
+  [_local/automation_bridge/test_run_bridge.py](</D:/projetos_cli/cerebro/_local/automation_bridge/test_run_bridge.py:514>),
+  [_local/automation_bridge/test_run_bridge.py](</D:/projetos_cli/cerebro/_local/automation_bridge/test_run_bridge.py:555>).
+
+### Teste manual de isolamento
+
+- Dois worktrees reais (`alpha` e `beta`) foram criados em repo temporário, inicializados com `.cerebro/state.json` próprio e despachados pelo launcher externo com `--project-root` distinto.
+- A revisão supervisionada read-only em `alpha` retornou `branch = worktree-alpha`, `review_status = pending_manual_merge`, `merge_base` e `head_commit` válidos, e diff explícito para `feature.txt`.
+
+### Timeouts desta trilha
+
+- Houve timeouts durante a revisão crítica intermediária da Fatia 4; os agentes sem retorno foram fechados e a trilha prosseguiu apenas com evidência retornada e validação local.
+- Nenhum timeout ocorreu na prova de parada final.
+
+### Grupo 6
+
+- Nenhuma fatia ficou em `Grupo 6` nesta trilha.
+
+### Estado operacional final
+
+- `WORKTREES IMPLEMENTADOS. Sistema em estado operacional.`
+- Cada agente paralelo opera em worktree isolado.
+- Retorne para próxima fase ou novo problema confirmado.
+
+## Encerramento Formal Da Auditoria De Worktrees — 2026-04-19
+
+### Data e estado final
+
+- Data: `2026-04-19`
+- Estado final da auditoria: `closed`
+- Suite final desta auditoria: `694` testes passando, `6` skips
+- Gate arquitetural final: `python -m unittest tests.test_architecture -v` verde com `51` testes
+- Teste manual de worktree: `passou`
+
+### Contagem de testes da auditoria
+
+- Início desta auditoria: `688`
+- Fim desta auditoria: `694`
+- Delta: `+6`
+
+### Riscos confirmados e corrigidos
+
+- `RISCO 1` e `RISCO 7` — `create_worktree` agora opera sob um boundary único de registry lock, evitando lost update entre leitura, `git worktree add` e persistência do `worktrees.toml`, com regressões explícitas para concorrência real e falha ao soltar o lock depois de persistir.
+  Evidência:
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:95>),
+  [cli/worktree_registry.py](</D:/projetos_cli/cerebro/cli/worktree_registry.py:98>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1579>) e
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1633>).
+- `RISCO 2` — `clean_worktree` agora recupera de forma fail-closed os estados não registrados deixados por create parcial, tanto para checkout ativo sem registro quanto para branch canônica órfã sem checkout.
+  Evidência:
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:163>),
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:393>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1684>) e
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1757>).
+- `RISCO 6` — a trilha agora tem regressão direta para provar que falha de `git worktree add` aborta fechado, sem criar checkout, branch residual nem entrada no registry.
+  Evidência:
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:95>),
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:125>) e
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1606>).
+
+### Riscos investigados e limpos
+
+- `RISCO 3` — o fluxo normal de `clean` não usa `git worktree remove --force` em worktree registrado ativo; o `--force` fica restrito ao cleanup compensatório ou ao recovery de estado já sem checkout válido.
+  Evidência:
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:200>),
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:217>) e
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:525>).
+- `RISCO 4` — o surface do Cerebro falha fechado quando branch/path do worktree divergem do shape canônico; o `clean` não apaga branch adulterada nem branch ativa em checkout inconsistente.
+  Evidência:
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:339>),
+  [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:362>),
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1791>) e
+  [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1824>).
+- `RISCO 5` — o launcher paralelo usa roots explícitos de worktree e exige `.cerebro/state.json` local; não há uso de `git stash` no fluxo suportado.
+  Evidência:
+  [_local/automation_bridge/run_parallel_worktrees.py](</D:/projetos_cli/cerebro/_local/automation_bridge/run_parallel_worktrees.py:246>),
+  [_local/automation_bridge/run_parallel_worktrees.py](</D:/projetos_cli/cerebro/_local/automation_bridge/run_parallel_worktrees.py:267>),
+  [_local/automation_bridge/test_run_bridge.py](</D:/projetos_cli/cerebro/_local/automation_bridge/test_run_bridge.py:424>) e
+  [_local/automation_bridge/review_worktree.py](</D:/projetos_cli/cerebro/_local/automation_bridge/review_worktree.py:102>).
+
+### Teste manual executado
+
+- Repositório principal com `python -m cli.main --project-root D:\projetos_cli\cerebro worktree create audit-test` → `list` → `clean`; todos os comandos retornaram `0` e o `list` intermediário mostrou `audit-test | worktree-audit-test | active`.
+- Repositório temporário com `git worktree add .worktrees/audit-test -b audit-test-branch` → `git worktree list` → `git worktree remove .worktrees/audit-test` → `git branch -D audit-test-branch`; todos os comandos retornaram `0`.
+
+### Timeouts desta auditoria
+
+- `DEBATE 2 architect/mediator` — `TIMEOUT` no primeiro disparo; relançado serial e adjudicado apenas com os achados já confirmados.
+- Nenhum outro timeout ocorreu nesta sessão.
+
+### Grupo 6
+
+- Nenhum dos `7` riscos desta auditoria ficou em `Grupo 6`.
+
+### Estado operacional final
+
+- `AUDITORIA DE WORKTREES CONCLUÍDA.`
+- `Sistema em estado operacional.`
+- `Retorne para próxima fase ou novo problema confirmado.`
+
+## Encerramento Formal Do Hardening Arquitetural — Grupo 6 — 2026-04-19
+
+### Data e estado final
+
+- Data: `2026-04-19`
+- Estado final da fase: `closed`
+- Suite final desta fase: `700` testes passando, `6` skips
+- Gate arquitetural final: `python -m unittest tests.test_architecture -v` verde com `51` testes
+- Drift documental: `alinhado`
+- Prova de parada final: `P1-P5` limpa, com `P1` confirmando os três débitos não reproduzíveis e `P2` explicitamente limpo
+
+### Contagem de testes da fase
+
+- Início desta fase do Grupo 6: `696`
+- Fim desta fase do Grupo 6: `700`
+- Delta: `+4`
+
+### Débitos fechados com evidência
+
+- `DÉBITO 1 — approval-by-effect`:
+  [core/execution_policy.py](</D:/projetos_cli/cerebro/core/execution_policy.py:73>),
+  [cli/commands/apply.py](</D:/projetos_cli/cerebro/cli/commands/apply.py:178>),
+  [cli/commands/apply.py](</D:/projetos_cli/cerebro/cli/commands/apply.py:202>),
+  [cli/commands/apply.py](</D:/projetos_cli/cerebro/cli/commands/apply.py:409>),
+  [core/validation.py](</D:/projetos_cli/cerebro/core/validation.py:975>),
+  [cli/commands/rollback.py](</D:/projetos_cli/cerebro/cli/commands/rollback.py:77>),
+  [tests/test_alpha_runtime.py](</D:/projetos_cli/cerebro/tests/test_alpha_runtime.py:4105>),
+  [tests/test_alpha_runtime.py](</D:/projetos_cli/cerebro/tests/test_alpha_runtime.py:4163>),
+  [tests/test_execution_policy.py](</D:/projetos_cli/cerebro/tests/test_execution_policy.py:62>).
+  Critério satisfeito: overwrite destrutivo real ou projetado agora exige approval explícito antes da mutação; `create` benigno continua livre; `validate` e `rollback` reaplicam o mesmo contrato.
+- `DÉBITO 2 — check-state sintético`:
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:380>),
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:525>),
+  [core/validation.py](</D:/projetos_cli/cerebro/core/validation.py:696>),
+  [cli/commands/verify.py](</D:/projetos_cli/cerebro/cli/commands/verify.py:67>),
+  [tests/test_verification_runtime.py](</D:/projetos_cli/cerebro/tests/test_verification_runtime.py:465>),
+  [tests/test_state_store.py](</D:/projetos_cli/cerebro/tests/test_state_store.py:417>).
+  Critério satisfeito: `verification.state_check` ficou separado, `verification.checks` voltou a representar apenas checks reais de comando e o sentinel não reaparece no contrato persistido.
+- `DÉBITO 3 — verify host-trusting`:
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:100>),
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:135>),
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:179>),
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:449>),
+  [tests/test_alpha_runtime.py](</D:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1011>),
+  [tests/test_alpha_runtime.py](</D:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1137>),
+  [tests/test_alpha_runtime.py](</D:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1201>).
+  Critério satisfeito: `verify` não herda mais o ambiente amplo do host, recompõe `PATH` mínimo por comando resolvido e redige `stdout/stderr` antes da persistência.
+
+### Grupo 6
+
+- Nenhum débito permaneceu em `Grupo 6`.
+
+### Timeouts desta sessão
+
+- `ARQ2` — `TIMEOUT`; resposta incoerente, relançado serial e descartado como evidência.
+- `ARQ1` — `TIMEOUT`; sem retorno útil, relançado serial.
+- `implementer` — `TIMEOUT`; fechado após a janela do protocolo e a implementação prosseguiu apenas com evidência local no workspace.
+
+### Estado operacional final
+
+- `HARDENING ARQUITETURAL CONCLUÍDO.`
+- `Débitos do Grupo 6 fechados com evidência dupla.`
+- `Sistema em estado operacional com policy por efeito.`
+- `Retorne para próxima fase ou novo problema confirmado.`

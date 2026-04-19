@@ -39,6 +39,8 @@ The baseline below is now part of the expected contract for future evolution.
 - blocked `analyze` does not open a local session
 - `analyze` keeps `session_token` suppressed by default and only emits it when explicitly requested with `emit_session_token=True`
 - repeated `checkpoint -> analyze` cycles preserve checkpoint, sources, and revision semantics
+- `import-context` and `checkpoint` keep `operation_failed` stable under real `session.local.json` unlink failure and real `state.json` replace failure, while restoring local session plus external claim/live-proof artifacts
+- `close_session()` fail-closes when `session.local.json` cannot be read or validated, records `session_close_failed`, and keeps registry, local session sidecar, external claim, and live-proof intact; `import-context` and `checkpoint` surface that branch as `operation_failed`
 - runtime failures remain explicit and predictable under corruption
 
 ### Extensions
@@ -73,7 +75,7 @@ The baseline below is now part of the expected contract for future evolution.
 - `verify` now runs through a core-owned transaction helper, so the CLI no longer depends on `StateStore._runtime_lock()` directly, the happy-path preflight avoids one redundant canonical runtime reload, and the helper fail-closes if `root` and `StateStore.root` diverge
 - `verify` proves ownership of the active session before spawning any verification command, so a missing or invalid `session_token` fails closed with no subprocess side effects and no premature verification mutation
 - `verify` also fail-closes when sandbox preparation breaks before the first command, recording `verify_failed` plus a canonical failed verification record instead of aborting without audit evidence
-- `verify` also fail-closes before execution when the selected command set would overflow `verification.checks`; the runtime reserves one slot for the synthetic `check-state` gate and rejects plans above the effective budget instead of leaking `invalid_agent_verification_checks`
+- `verify` also fail-closes before execution when the selected command set would overflow the real `verification.checks` budget; `state_check` is now persisted separately, so the runtime accepts the full command budget without a synthetic `check-state` slot and still rejects true overflows instead of leaking `invalid_agent_verification_checks`
 - `runtime.lock` recovers stale owners whose PID probe resolves to “inactive” (`ProcessLookupError`, `errno.ESRCH`, or Windows `WinError 87`) and reserves timeout only for owners that still appear alive
 - `command_registry.commands[*].cwd` is only validated as a non-empty string in `validate_state_data`; the root boundary remains enforced later by `apply` and `verify`, which fail closed when a command `cwd` resolves outside the project
 - `prepare_project_sandbox()` clones the workspace into a disposable tree without mutating the original project, and command-sandbox manifest diffs ignore pure directory `mtime` churn while still surfacing observable file drift
@@ -84,6 +86,7 @@ The baseline below is now part of the expected contract for future evolution.
 - `validate` fail-closes with `state_missing` and user-facing guidance when `.cerebro/state.json` disappears after an otherwise successful `init`
 - the integrated runtime flow `init -> validate -> analyze -> plan -> apply -> verify -> rollback` remains executable end-to-end in one continuous scenario, with session ownership preserved across commands and verification invalidated back to `idle` after rollback
 - `open_session` persists the canonical active-session registry before `session.local.json` and rolls back the registry plus external proof artifacts if the final session-file write fails
+- `close_session` also requires a readable/valid local session sidecar before cleanup, so session-read failures now abort before registry/claim/live-proof removal and leave explicit trace evidence instead of succeeding silently
 - `session-discard` also recovers the narrow residue where that canonical registry survived but `session.local.json` is missing, clearing the active-session registry plus external claim/live-proof artifacts without bumping revision and without changing the plain `session_absent` path
 - `open_session` also fails closed when that registry rollback itself fails after the final `session.local.json` write error, reusing the registry-only discard path so the canonical state returns to a valid no-session shape instead of persisting `session_registry_mismatch`
 - state mutations that refresh an owned session now write a local `session.refresh.pending.json` journal; a crash before `state.json` commit restores the previous session sidecar on the next validation, and a stale post-commit journal finalizes without weakening `session_revision_invalid`
@@ -103,7 +106,7 @@ The baseline below is now part of the expected contract for future evolution.
 - exports do not open a second validation gate and do not attempt runtime repair
 - CLI command names remain canonical; aliases require an explicit architecture decision
 - hardening remains external to the core unless a future concrete gap cannot be stopped by tests and governance
-- the current CLI regression layer for `import-context` and `checkpoint` still injects `StateStoreError` through `mock.patch.object(StateStore, ...)` for `close_session()`/`save_state()` failure paths in `tests/test_validate.py`; this baseline does not yet claim end-to-end filesystem I/O fault coverage for those rollback paths
+- the current CLI regression layer for `import-context` and `checkpoint` now exercises real `Path.unlink` failure on `session.local.json` and real `os.replace` failure on `state.json` in `tests/test_validate.py`; this baseline still does not claim arbitrary host-level filesystem fault injection beyond those explicit rollback boundaries
 
 ## Permanent Defense Layers
 

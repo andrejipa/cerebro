@@ -3,24 +3,25 @@
 ## Current Snapshot — 2026-04-19
 
 - Suite status: green
-- Last suite result: `696` tests, `0` failures, `6` skips
+- Last suite result: `700` tests, `0` failures, `6` skips
 - Architecture gate: `51` tests, `0` failures
 - Command used: `python -m unittest discover -s tests -v`
 - Runtime continuity state: no local `.cerebro/state.json` present in this workspace
 - Current posture: deliberate freeze for growth, corrective hardening authorized
 - Allowed work: corrective maintenance, proportional regression coverage, factual documentation updates
-- Current queue mode: hardening arquitetural em execução
-- Current next item: `WEAK-CRIT-001 — mover approval de overwrite destrutivo para policy por efeito`
+- Current queue mode: hardening arquitetural concluído
+- Current next item: `none — hardening do Grupo 6 concluído; await Formal Resume Trigger or new confirmed bug`
 - Current weakness posture:
-  - `CRÍTICO`: `1` open, `0` Group 6
+  - `CRÍTICO`: `0` open, `0` Group 6
   - `ALTO`: `0` open, `0` Group 6
 - Hardening update:
   - `verify` host-trusting foi fechado nesta sessão: `verify` não herda mais o `PATH` completo do host, `stdout/stderr` são redigidos antes da persistência e o leak por segmento de `PATH` ficou coberto por regressão
   - `WEAK-HIGH-003` também foi fechado nesta sessão: `verification.state_check` ficou separado, `verification.checks` voltou a conter apenas checks de comando e a migração legada ficou centralizada no core
-  - o próximo débito confirmado remanescente é `WEAK-CRIT-001` (approval por efeito em `overwrite=true`)
+  - `WEAK-CRIT-001` também foi fechado nesta sessão: overwrite destrutivo real ou projetado agora exige approval explícito, enquanto `create` benigno continua livre
+  - a prova de parada `P1-P5` terminou limpa; `P1` confirmou os três débitos não reproduzíveis e `P2` confirmou ausência de regressão nova
 - Nota operacional: as seções históricas abaixo pertencem à antiga trilha documenter-only e não refletem mais a fila executável atual; o snapshot acima é a referência canônica do estado corrente.
 
-Snapshot updated on 2026-04-19 after the DÉBITO 2 hardening pass.
+Snapshot updated on 2026-04-19 after the final Grupo 6 proof pass.
 
 ## Gate Status
 
@@ -71,7 +72,6 @@ Snapshot updated on 2026-04-19 after the DÉBITO 2 hardening pass.
   - `GAP-02`
   - `alignment-export`
   - `PHASE_CLOSURE-structure`
-  - `WEAK-CRIT-001`
   - `WEAK-HIGH-001`
   - `WEAK-HIGH-002`
   - `WEAK-HIGH-003`
@@ -80,7 +80,7 @@ Snapshot updated on 2026-04-19 after the DÉBITO 2 hardening pass.
 
 ## Historical Weakness Intake
 
-- `WEAK-CRIT-001`: confirmed critical runtime gap from `WEAKNESS_REPORT.md`; `exec.command` can mutate the workspace and fail before canonical action registration
+- `WEAK-CRIT-001`: closed on 2026-04-19; approval agora é decidido por efeito destrutivo real ou projetado em `fs.create_file overwrite=true`, com verificação simétrica em `apply`, `validate` e `rollback`
 - `WEAK-HIGH-001`: confirmed high-severity runtime gap from `WEAKNESS_REPORT.md`; `_save_state_with_refreshed_session()` can leave `session_revision_invalid` after a hard crash window
 - `WEAK-HIGH-002`: confirmed high-severity runtime gap from `WEAKNESS_REPORT.md`; `open_session()` can leave `session_registry_mismatch` after a hard crash between the canonical registry write and `session.local.json`
 - `WEAK-HIGH-003`: closed on 2026-04-19; `verification.state_check` now persists preflight separately and `verification.checks` contains only command checks

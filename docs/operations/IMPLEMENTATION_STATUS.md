@@ -2,6 +2,10 @@
 
 ## Hardening Arquitetural — Grupo 6
 
+- Estado do Grupo 6: `encerrado`
+- Prova de parada: `P1-P5` limpa em `2026-04-19`
+- Próximo passo: `nenhum — aguardar Formal Resume Trigger ou novo problema confirmado`
+
 - Débito 3: `verify` host-trusting
   - Estado: `fechado`
   - Fechado em: `2026-04-19`
@@ -49,8 +53,27 @@
     - `python -m unittest tests.test_architecture -v` -> `51` testes, `0` falhas
 
 - Débito 1: `approval` por efeito em `overwrite=true`
-  - Estado: `pendente`
-  - Próximo passo: mover a decisão `ALLOW / DENY / REQUIRE_APPROVAL` para o efeito destrutivo observado, não apenas para `kind`
+  - Estado: `fechado`
+  - Fechado em: `2026-04-19`
+  - Arquivos alterados:
+    - `core/execution_policy.py:73-126`
+    - `cli/commands/apply.py:178-230`
+    - `cli/commands/apply.py:409-436`
+    - `cli/commands/rollback.py:60-77`
+    - `core/validation.py:975-981`
+    - `tests/test_execution_policy.py:58-70`
+    - `tests/test_alpha_runtime.py:2529-2553`
+    - `tests/test_alpha_runtime.py:4105-4169`
+    - `tests/test_validation_approval_guards.py:51-68`
+    - `tests/test_validate.py:411-434`
+  - Critério satisfeito: `sim`
+  - Evidência:
+    - approval agora depende do efeito destrutivo real ou projetado, não apenas do `kind`
+    - overwrite destrutivo real e batch `create -> overwrite` agora retornam `approval_required` antes da mutação
+    - `create` benigno continua livre
+    - `validate` e `rollback` reaplicam o mesmo contrato sobre o histórico persistido
+    - `python -m unittest discover -s tests -v` -> `700` testes, `0` falhas, `6` skips
+    - `python -m unittest tests.test_architecture -v` -> `51` testes, `0` falhas
 
 ## Fatias concluídas
 

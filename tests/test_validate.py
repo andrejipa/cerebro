@@ -110,6 +110,25 @@ def append_noise_events(store: StateStore, count: int) -> None:
             handle.write((json.dumps(payload, separators=(",", ":")) + "\n").encode("utf-8"))
 
 
+def seed_approved_action(store: StateStore, *, approval_id: str, action_kind: str, target: str) -> int:
+    validation = store.validate_state()
+    updated = store.update_agent_approval(
+        {
+            "id": approval_id,
+            "status": "approved",
+            "fingerprint": f"fp-{approval_id}",
+            "action_kind": action_kind,
+            "task_id": "",
+            "target": target,
+            "reason": "approval required",
+            "requested_at": "2026-04-15T00:00:00+00:00",
+            "resolved_at": "2026-04-15T00:00:01+00:00",
+        },
+        validated_revision=validation["revision"],
+    )
+    return updated["revision"]
+
+
 def seed_retention_fixture(root: Path) -> StateStore:
     store, _ = seed_valid_runtime(root)
     validation = store.validate_state()
@@ -163,7 +182,12 @@ def seed_retention_fixture(root: Path) -> StateStore:
         }
     )
 
-    validation = store.validate_state()
+    validation_revision = seed_approved_action(
+        store,
+        approval_id="apr-live",
+        action_kind="fs.create_file",
+        target="draft.txt",
+    )
     live_action_path = store.artifacts_dir / "actions" / "act-live" / "preimage.txt"
     live_action_path.parent.mkdir(parents=True, exist_ok=True)
     live_action_path.write_text("before", encoding="utf-8")
@@ -177,7 +201,7 @@ def seed_retention_fixture(root: Path) -> StateStore:
             "target": "draft.txt",
             "task_id": "",
             "batch_id": "",
-            "approval_id": "",
+            "approval_id": "apr-live",
             "artifact_refs": [live_action_ref],
             "rollback_ref": live_action_ref,
             "details": {
@@ -187,7 +211,7 @@ def seed_retention_fixture(root: Path) -> StateStore:
             },
             "updated_at": "2026-04-15T00:00:00+00:00",
         },
-        validated_revision=validation["revision"],
+        validated_revision=validation_revision,
     )
 
     live_verification_dir = store.artifacts_dir / "verification" / "verify-live"
@@ -383,6 +407,30 @@ class ValidationFunctionTests(unittest.TestCase):
 
         self.assertIn("invalid_agent_action_status", {item["code"] for item in errors})
         self.assertTrue(any("requires a non-empty approval_id" in item["message"] for item in errors))
+
+    def test_validate_state_rejects_applied_destructive_create_without_approval_id(self) -> None:
+        state = self._valid_state()
+        state["agent_runtime"]["actions"] = [
+            {
+                "id": "act-001",
+                "kind": "fs.create_file",
+                "status": "applied",
+                "summary": "Overwrite without approval.",
+                "target": "draft.txt",
+                "task_id": "",
+                "batch_id": "",
+                "approval_id": "",
+                "artifact_refs": ["artifacts/actions/act-001/preimage.txt"],
+                "rollback_ref": "artifacts/actions/act-001/preimage.txt",
+                "details": {"created_new": False, "path": "draft.txt"},
+                "updated_at": "2026-04-16T00:02:00+00:00",
+            }
+        ]
+
+        errors = validate_state_data(state)
+
+        self.assertIn("invalid_agent_action_status", {item["code"] for item in errors})
+        self.assertTrue(any("kind fs.create_file requires a non-empty approval_id" in item["message"] for item in errors))
 
     def test_validate_state_rejects_unknown_required_verification_command_id(self) -> None:
         state = self._valid_state()
@@ -792,6 +840,12 @@ class ValidateCommandTests(unittest.TestCase):
             artifact_path.parent.mkdir(parents=True, exist_ok=True)
             artifact_path.write_text("before", encoding="utf-8")
             artifact_ref = artifact_path.relative_to(store.cerebro_dir).as_posix()
+            validation_revision = seed_approved_action(
+                store,
+                approval_id="apr-001",
+                action_kind="fs.create_file",
+                target="draft.txt",
+            )
 
             store.record_agent_action(
                 {
@@ -802,12 +856,13 @@ class ValidateCommandTests(unittest.TestCase):
                     "target": "draft.txt",
                     "task_id": "",
                     "batch_id": "",
-                    "approval_id": "",
+                    "approval_id": "apr-001",
                     "artifact_refs": [artifact_ref],
                     "rollback_ref": artifact_ref,
                     "details": {"created_new": False, "path": "draft.txt"},
                     "updated_at": "2026-04-15T00:00:00+00:00",
-                }
+                },
+                validated_revision=validation_revision,
             )
             artifact_path.unlink()
 
@@ -829,6 +884,12 @@ class ValidateCommandTests(unittest.TestCase):
             artifact_path.parent.mkdir(parents=True, exist_ok=True)
             artifact_path.write_text("before", encoding="utf-8")
             artifact_ref = artifact_path.relative_to(store.cerebro_dir).as_posix()
+            validation_revision = seed_approved_action(
+                store,
+                approval_id="apr-001",
+                action_kind="fs.create_file",
+                target="draft.txt",
+            )
 
             store.record_agent_action(
                 {
@@ -839,7 +900,7 @@ class ValidateCommandTests(unittest.TestCase):
                     "target": "draft.txt",
                     "task_id": "",
                     "batch_id": "",
-                    "approval_id": "",
+                    "approval_id": "apr-001",
                     "artifact_refs": [artifact_ref],
                     "rollback_ref": artifact_ref,
                     "details": {
@@ -848,7 +909,8 @@ class ValidateCommandTests(unittest.TestCase):
                         "rollback_artifact_sha256": hashlib.sha256(b"before").hexdigest(),
                     },
                     "updated_at": "2026-04-15T00:00:00+00:00",
-                }
+                },
+                validated_revision=validation_revision,
             )
             artifact_path.write_text("tampered", encoding="utf-8")
 
@@ -865,6 +927,12 @@ class ValidateCommandTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             store, _ = seed_valid_runtime(root)
+            validation_revision = seed_approved_action(
+                store,
+                approval_id="apr-001",
+                action_kind="fs.create_file",
+                target="draft.txt",
+            )
             store.record_agent_action(
                 {
                     "id": "act-001",
@@ -874,12 +942,13 @@ class ValidateCommandTests(unittest.TestCase):
                     "target": "draft.txt",
                     "task_id": "",
                     "batch_id": "",
-                    "approval_id": "",
+                    "approval_id": "apr-001",
                     "artifact_refs": ["../outside.txt"],
                     "rollback_ref": "../outside.txt",
                     "details": {"created_new": False, "path": "draft.txt"},
                     "updated_at": "2026-04-15T00:00:00+00:00",
-                }
+                },
+                validated_revision=validation_revision,
             )
 
             stream = io.StringIO()
@@ -898,6 +967,12 @@ class ValidateCommandTests(unittest.TestCase):
             artifact_dir = store.cerebro_dir / "artifacts" / "actions" / "act-001"
             artifact_dir.mkdir(parents=True, exist_ok=True)
             artifact_ref = artifact_dir.relative_to(store.cerebro_dir).as_posix()
+            validation_revision = seed_approved_action(
+                store,
+                approval_id="apr-001",
+                action_kind="fs.create_file",
+                target="draft.txt",
+            )
             store.record_agent_action(
                 {
                     "id": "act-001",
@@ -907,12 +982,13 @@ class ValidateCommandTests(unittest.TestCase):
                     "target": "draft.txt",
                     "task_id": "",
                     "batch_id": "",
-                    "approval_id": "",
+                    "approval_id": "apr-001",
                     "artifact_refs": [artifact_ref],
                     "rollback_ref": artifact_ref,
                     "details": {"created_new": False, "path": "draft.txt"},
                     "updated_at": "2026-04-15T00:00:00+00:00",
-                }
+                },
+                validated_revision=validation_revision,
             )
 
             stream = io.StringIO()

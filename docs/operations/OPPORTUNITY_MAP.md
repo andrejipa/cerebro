@@ -2,18 +2,20 @@
 
 ## Current Snapshot — 2026-04-19
 
-- Suite gate confirmed green: `696` tests, `0` failures, `6` skips via `python -m unittest discover -s tests -v`
+- Suite gate confirmed green: `700` tests, `0` failures, `6` skips via `python -m unittest discover -s tests -v`
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`
 - Current posture: deliberate freeze remains active for growth, but corrective hardening is active and authorized
 - Current executable queue:
-  - `WEAK-CRIT-001 — mover approval de overwrite destrutivo para policy por efeito`
-- Current next item: `WEAK-CRIT-001 — approval por efeito em overwrite destrutivo`
+  - `none — Grupo 6 encerrado`
+- Current next item: `none — hardening do Grupo 6 concluído; await Formal Resume Trigger or new confirmed bug`
 - Current weakness posture:
-  - `CRÍTICO`: `1` open, `0` Group 6
+  - `CRÍTICO`: `0` open, `0` Group 6
   - `ALTO`: `0` open, `0` Group 6
 - Latest hardening result:
   - `DÉBITO 3` (`verify` host-trusting) foi fechado com regressão explícita para leak de env, leak por segmento de `PATH`, helper chain mínima por comando resolvido e preservação de `C:` legítimo
   - `DÉBITO 2` (`check-state` sintético) foi fechado: `verification.state_check` ficou separado, `verification.checks` voltou a ser command-only e a migração legada ficou centralizada na canonicalização
+  - `DÉBITO 1` (`approval` por efeito em `overwrite=true`) foi fechado: overwrite destrutivo real ou projetado agora exige approval explícito, sem fatigue nova para `create` benigno
+  - a prova de parada `P1-P5` terminou limpa; `P2` confirmou ausência de regressão nova e `P1` confirmou os três débitos não reproduzíveis
   - o drift entre `WEAKNESS_REPORT.md`, `SYSTEM_STATE.md` e `OPPORTUNITY_MAP.md` agora fica ancorado neste snapshot atual, que substitui a antiga trilha documenter-only descrita nas seções históricas abaixo
 
 Bootstrap document created on 2026-04-16 for the autonomous loop.
@@ -225,12 +227,6 @@ Bootstrap document created on 2026-04-16 for the autonomous loop.
 - Status: `blocked in documenter track`
 - Reason: the confirmed high-severity fix requires mutating `core/state_store.py` and proportional regression tests to close the `session_registry_mismatch` window, which this loop may not touch under `AGENTS.md`
 
-### BLOCKED-WEAK-CRIT-001 — effect-level approval gap for `fs.create_file overwrite=true`
-
-- Source: `docs/operations/WEAKNESS_REPORT.md`
-- Status: `blocked in documenter track`
-- Reason: the confirmed fix requires mutating `core/execution_policy.py`, `cli/commands/apply.py`, `core/action_runtime.py`, and proportional regression tests so approval can depend on destructive effect, not only `kind`
-
 ### BLOCKED-WEAK-MED-004 — rollback leaves empty directory residue after `create-new`
 
 - Source: `docs/operations/WEAKNESS_REPORT.md`
@@ -252,16 +248,17 @@ Bootstrap document created on 2026-04-16 for the autonomous loop.
 
 ## Next Item
 
-- `WEAK-CRIT-001 — effect-level approval gap for fs.create_file overwrite=true`
+- `none — hardening do Grupo 6 concluído`
 - Historical closure note preserved for the documentary perimeter: `documenter queue exhausted; await Formal Resume Trigger`
 - blocked residuals:
-  - `WEAK-CRIT-001` and `WEAK-MED-004` still require mutating runtime code and proportional regression coverage
+  - `WEAK-MED-004` and deeper architectural residuals still require mutating runtime code and proportional regression coverage
   - `AGENT_ARCHITECTURE.md` drift is now explicitly known, but remains blocked by the coupled `tests/test_architecture.py` literal guard
   - `PHASE_CLOSURE.md` structural proof hardening remains outside the active documenter-only queue
 - latest revalidation:
   - the weakness queue was re-read and reconciled on 2026-04-17
-  - `WEAKNESS_REPORT.md` now exposes `1` `CRÍTICO` aberto, `0` `ALTO` aberto, and multiple `MÉDIO`
-  - the deep audit reproduced a new effect-level approval gap (`fs.create_file overwrite=true` without approval) and a rollback residual (`create-new` leaves empty directory residue)
+  - `WEAKNESS_REPORT.md` now exposes `0` `CRÍTICO` aberto, `0` `ALTO` aberto, and multiple `MÉDIO`
+  - the deep audit gap on effect-level approval (`fs.create_file overwrite=true` without approval) is now closed; the rollback residual (`create-new` leaves empty directory residue) remains tracked as `MÉDIO`
+  - the final Grupo 6 proof pass ended clean: `P1` reproduced no original debt, `P2` found no new regression, and the live gate stayed green at `700` tests plus `51` architecture tests
   - the deep audit also preserved newer `MÉDIO` items (`close_session()` crash split) plus a stronger coverage gap (`session + plan + apply + verify + rollback` end-to-end still fragmented)
   - undocumented runtime behaviors (`plan_generation_id` fallback, auto-filled `consolidation_id`) were added to `WEAKNESS_REPORT.md`
   - the transient red gate seen in a prior `discover` tail did not reproduce on the next serial rerun; the live gate returned `550` tests, `0` failures, `6` skips, and `tests.test_architecture` stayed green

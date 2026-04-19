@@ -69,6 +69,53 @@ class AlphaRuntimeTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         return approval_id
 
+    def _run_apply(
+        self,
+        root: Path,
+        action_file: str | list[str],
+        *,
+        batch_id: str = "",
+        retry_justification: str = "",
+    ) -> int:
+        return run_apply(
+            root,
+            type(
+                "Args",
+                (),
+                {
+                    "action_file": action_file,
+                    "task_id": "",
+                    "batch_id": batch_id,
+                    "retry_justification": retry_justification,
+                },
+            ),
+        )
+
+    def _apply_with_approvals(
+        self,
+        root: Path,
+        store: StateStore,
+        action_file: str | list[str],
+        *,
+        batch_id: str = "",
+        retry_justification: str = "",
+    ) -> list[str]:
+        approvals: list[str] = []
+        for _ in range(8):
+            stream = io.StringIO()
+            with redirect_stdout(stream):
+                exit_code = self._run_apply(
+                    root,
+                    action_file,
+                    batch_id=batch_id,
+                    retry_justification=retry_justification,
+                )
+            if exit_code == 0:
+                return approvals
+            self.assertIn("approval_required", stream.getvalue())
+            approvals.append(self._approve_latest(root, store))
+        self.fail("apply did not succeed after resolving required approvals")
+
     def _configure_read_only_exec_command_plan(
         self,
         store: StateStore,
@@ -2560,13 +2607,7 @@ class AlphaRuntimeTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            self.assertEqual(
-                run_apply(
-                    root,
-                    type("Args", (), {"action_file": str(overwrite_file), "task_id": "", "batch_id": "", "retry_justification": ""}),
-                ),
-                0,
-            )
+            self._apply_with_approvals(root, store, str(overwrite_file))
 
             validation = store.validate_state()
             for index in range(1, MAX_ACTION_HISTORY + 1):
@@ -2631,13 +2672,7 @@ class AlphaRuntimeTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            self.assertEqual(
-                run_apply(
-                    root,
-                    type("Args", (), {"action_file": str(overwrite_file), "task_id": "", "batch_id": "", "retry_justification": ""}),
-                ),
-                0,
-            )
+            self._apply_with_approvals(root, store, str(overwrite_file))
             self.assertEqual(run_rollback(root, type("Args", (), {"action_id": "act-old", "batch_id": ""})), 0)
 
             stream = io.StringIO()
@@ -3238,13 +3273,7 @@ class AlphaRuntimeTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
-            self.assertEqual(
-                run_apply(
-                    root,
-                    type("Args", (), {"action_file": str(action_file), "task_id": "", "batch_id": "", "retry_justification": ""}),
-                ),
-                0,
-            )
+            self._apply_with_approvals(root, store, str(action_file))
 
             state = store.load_state()
             artifact_ref = state["agent_runtime"]["actions"][0]["rollback_ref"]
@@ -3294,10 +3323,8 @@ class AlphaRuntimeTests(unittest.TestCase):
                     encoding="utf-8",
                 )
                 action_files.append(str(action_file))
-            self.assertEqual(
-                run_apply(root, type("Args", (), {"action_file": action_files, "task_id": "", "batch_id": batch_id})),
-                0,
-            )
+            approvals = self._apply_with_approvals(root, store, action_files, batch_id=batch_id)
+            self.assertEqual(len(approvals), 2)
 
             (root / "draft-a.txt").write_text("manually-diverged\n", encoding="utf-8")
 
@@ -4055,8 +4082,8 @@ class AlphaRuntimeTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            self.assertEqual(run_apply(root, type("Args", (), {"action_file": str(alpha_action), "task_id": "", "batch_id": "", "retry_justification": ""})), 0)
-            self.assertEqual(run_apply(root, type("Args", (), {"action_file": str(beta_action), "task_id": "", "batch_id": "", "retry_justification": ""})), 0)
+            self.assertEqual(self._run_apply(root, str(alpha_action)), 0)
+            self._apply_with_approvals(root, store, str(beta_action))
 
             stream = io.StringIO()
             with redirect_stdout(stream):
@@ -4067,23 +4094,124 @@ class AlphaRuntimeTests(unittest.TestCase):
             self.assertEqual(exit_code, 1)
             self.assertIn("retry requires an explicit justification", stream.getvalue())
 
-            self.assertEqual(
-                run_apply(
-                    root,
-                    type(
-                        "Args",
-                        (),
-                        {
-                            "action_file": str(alpha_retry_action),
-                            "task_id": "",
-                            "batch_id": "",
-                            "retry_justification": "restore known good content after target changed to beta",
-                        },
-                    ),
-                ),
-                0,
+            self._apply_with_approvals(
+                root,
+                store,
+                str(alpha_retry_action),
+                retry_justification="restore known good content after target changed to beta",
             )
             self.assertEqual((root / "draft.txt").read_text(encoding="utf-8"), "alpha\n")
+
+    def test_apply_requires_approval_for_destructive_create_file_but_not_benign_create(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            draft = root / "draft.txt"
+            draft.write_text("before\n", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            run_plan(root, self._plan_args(summary="Approval by effect.", approval_required_kind=["fs.write_patch"]))
+
+            create_file = root / "create.json"
+            create_file.write_text(
+                json.dumps(
+                    {
+                        "id": "act-create",
+                        "kind": "fs.create_file",
+                        "summary": "create fresh file",
+                        "path": "fresh.txt",
+                        "content": "fresh\n",
+                        "overwrite": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(self._run_apply(root, str(create_file)), 0)
+            self.assertEqual((root / "fresh.txt").read_text(encoding="utf-8"), "fresh\n")
+            self.assertEqual(store.read_agent_runtime()["approvals"]["items"], [])
+
+            overwrite_file = root / "overwrite.json"
+            overwrite_file.write_text(
+                json.dumps(
+                    {
+                        "id": "act-overwrite",
+                        "kind": "fs.create_file",
+                        "summary": "overwrite draft",
+                        "path": "draft.txt",
+                        "content": "after\n",
+                        "overwrite": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            blocked_stream = io.StringIO()
+            with redirect_stdout(blocked_stream):
+                blocked_exit = self._run_apply(root, str(overwrite_file))
+            self.assertEqual(blocked_exit, 1)
+            self.assertIn("approval_required", blocked_stream.getvalue())
+            self.assertEqual(draft.read_text(encoding="utf-8"), "before\n")
+            self.assertEqual(
+                [item["id"] for item in store.read_agent_runtime()["actions"]],
+                ["act-create"],
+            )
+            approval = store.read_agent_runtime()["approvals"]["items"][-1]
+            self.assertEqual(approval["action_kind"], "fs.create_file")
+            self.assertEqual(approval["target"], "draft.txt")
+
+    def test_apply_batch_requires_approval_for_projected_destructive_create_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            run_plan(root, self._plan_args(summary="Batch approval by effect.", approval_required_kind=["fs.write_patch"]))
+
+            create_file = root / "create.json"
+            create_file.write_text(
+                json.dumps(
+                    {
+                        "id": "act-create",
+                        "kind": "fs.create_file",
+                        "summary": "create draft",
+                        "path": "draft.txt",
+                        "content": "alpha\n",
+                        "overwrite": False,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            overwrite_file = root / "overwrite.json"
+            overwrite_file.write_text(
+                json.dumps(
+                    {
+                        "id": "act-overwrite",
+                        "kind": "fs.create_file",
+                        "summary": "overwrite draft",
+                        "path": "draft.txt",
+                        "content": "beta\n",
+                        "overwrite": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            blocked_stream = io.StringIO()
+            with redirect_stdout(blocked_stream):
+                blocked_exit = self._run_apply(
+                    root,
+                    [str(create_file), str(overwrite_file)],
+                    batch_id="batch-approval",
+                )
+            self.assertEqual(blocked_exit, 1)
+            self.assertIn("approval_required", blocked_stream.getvalue())
+            self.assertFalse((root / "draft.txt").exists())
+            runtime = store.read_agent_runtime()
+            self.assertEqual(runtime["actions"], [])
+            self.assertEqual(runtime["approvals"]["items"][-1]["target"], "draft.txt")
 
     def test_task_assessment_penalizes_real_cost_and_redundancy(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

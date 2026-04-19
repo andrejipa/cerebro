@@ -2,20 +2,28 @@
 
 ## Resumo executivo
 
- O Cerebro está operacionalmente estável e a suíte principal segue verde, mas a auditoria ainda confirma um risco arquitetural aberto no runtime: a lacuna de policy por efeito em `fs.create_file` com `overwrite=true`, que ainda consegue mutar um arquivo existente sem approval porque o gate continua decidido por `kind`, não por efeito destrutivo observável. Nesta sessão, o sentinel sintético `check-state` foi removido do contrato persistido de `verification`: `state_check` agora fica separado, `verification.checks` voltou a representar apenas checks reais de comando, e a migração legada ficou centralizada no core. Fora disso, a base mostra um padrão claro de dívida concentrada: `StateStore` supercarregado, contratos implícitos entre módulos, e cobertura forte nos fluxos principais mas desigual em alguns helpers e cenários de bootstrap/corrupção.
+ O Cerebro está operacionalmente estável e a suíte principal segue verde. Nesta sessão, o último débito crítico remanescente do `Grupo 6` foi fechado: approval agora é decidido por efeito destrutivo real ou projetado em `fs.create_file overwrite=true`, não apenas por `kind`. O sentinel sintético `check-state` já havia sido removido do contrato persistido de `verification`, e `verify` já havia deixado de herdar o ambiente amplo do host. Fora disso, a base ainda mostra um padrão claro de dívida concentrada: `StateStore` supercarregado, contratos implícitos entre módulos, e cobertura forte nos fluxos principais mas desigual em alguns helpers e cenários de bootstrap/corrupção.
 
 ## Achados confirmados pelos debates
 
 ### CRÍTICO
 
-- `approval_required_kinds` continua operando por `kind`, então `fs.create_file` com `overwrite=true` ainda consegue sobrescrever um arquivo existente sem `approval_id`, embora o efeito físico seja destrutivo para o conteúdo anterior.
-  Evidência:
-  [core/agent_runtime.py](</d:/projetos_cli/cerebro/core/agent_runtime.py:204>),
-  [core/execution_policy.py](</d:/projetos_cli/cerebro/core/execution_policy.py:54>),
-  [cli/commands/apply.py](</d:/projetos_cli/cerebro/cli/commands/apply.py:147>),
-  [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:608>).
-  Debate que confirmou: a falsificação adversarial derrubou a leitura de “bypass acidental” porque a policy atual é explicitamente por `kind`, mas não falsificou o risco operacional por efeito. A reprodução direta desta rodada sobrescreveu `draft.txt` com `overwrite=true`, `approval_id == ""` e `approval_count == 0`.
-  Status atual: a menor correção segura cruza [core/validation.py](</d:/projetos_cli/cerebro/core/validation.py:947>), então este item ficou aberto para a próxima iteração do `Grupo 6`.
+- Fechamento desta sessão: approval por efeito agora cobre `fs.create_file overwrite=true` quando o alvo já existe no filesystem real ou no estado projetado do batch. `apply` calcula `target_exists` antes da execução, `validation` e `rollback` reaplicam o mesmo contrato sobre o `action_record` persistido, e `create` benigno continua livre.
+  Evidência do fechamento:
+  [core/execution_policy.py](</d:/projetos_cli/cerebro/core/execution_policy.py:73>),
+  [core/execution_policy.py](</d:/projetos_cli/cerebro/core/execution_policy.py:100>),
+  [core/execution_policy.py](</d:/projetos_cli/cerebro/core/execution_policy.py:116>),
+  [cli/commands/apply.py](</d:/projetos_cli/cerebro/cli/commands/apply.py:178>),
+  [cli/commands/apply.py](</d:/projetos_cli/cerebro/cli/commands/apply.py:202>),
+  [cli/commands/apply.py](</d:/projetos_cli/cerebro/cli/commands/apply.py:409>),
+  [core/validation.py](</d:/projetos_cli/cerebro/core/validation.py:975>),
+  [cli/commands/rollback.py](</d:/projetos_cli/cerebro/cli/commands/rollback.py:60>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:4105>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:4163>),
+  [tests/test_validation_approval_guards.py](</d:/projetos_cli/cerebro/tests/test_validation_approval_guards.py:51>),
+  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:411>),
+  [tests/test_execution_policy.py](</d:/projetos_cli/cerebro/tests/test_execution_policy.py:62>).
+  Prova operacional: a reprodução adversarial do overwrite destrutivo real e do batch projetado `create -> overwrite` agora retorna `approval_required`, preserva o conteúdo anterior, não registra `actions` e cria apenas o `approval` pendente. A suíte ampla permaneceu verde com `700` testes, `0` falhas e `6` skips; `tests.test_architecture` também permaneceu verde com `51` testes.
 
 - Fechamento anterior nesta categoria:
   o gap pós-mutação de `exec.command` foi fechado em
@@ -201,12 +209,15 @@
   [tests/test_verification_runtime.py](</d:/projetos_cli/cerebro/tests/test_verification_runtime.py:18>).
   Prova operacional: a regressão nova persiste um plano com `32` comandos `allow_in_verify`, observa `run_verify()` retornar `0`, `checks: 32`, ausência de `invalid_agent_verification_checks` e `verification.status == "passed"`.
 
-- A cobertura negativa de approval ainda deixa aberto o caso `fs.create_file` com `overwrite=true` sobre arquivo existente sob `approval_required_kinds=["fs.write_patch"]`.
+- Fechamento desta sessão: a cobertura negativa de approval agora cristaliza tanto o caso destrutivo real quanto o batch projetado para `fs.create_file overwrite=true` sob `approval_required_kinds=["fs.write_patch"]`.
   Evidência:
-  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:2628>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:4105>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:4163>),
+  [tests/test_validation_approval_guards.py](</d:/projetos_cli/cerebro/tests/test_validation_approval_guards.py:51>),
+  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:411>),
+  [tests/test_execution_policy.py](</d:/projetos_cli/cerebro/tests/test_execution_policy.py:62>),
   [docs/operations/ROBUSTNESS_BASELINE.md](</d:/projetos_cli/cerebro/docs/operations/ROBUSTNESS_BASELINE.md:73>).
-  Residual estreitado nesta sessão: o negativo direto para action sensível `failed` sem `approval_id` agora está cristalizado em [tests/test_validation_approval_guards.py](</d:/projetos_cli/cerebro/tests/test_validation_approval_guards.py:24>).
-  Debate que confirmou: a oposição não encontrou teste que cobrisse a combinação destrutiva `overwrite=true` sob approval.
+  Critério satisfeito: o helper central distingue `target_exists=False/True`, `create` benigno segue sem fatigue indevida, e histórico persistido sem `approval_id` para overwrite destrutivo falha fechado em `validate` e `rollback`.
 
 ## Dívida técnica por categoria
 
@@ -316,7 +327,7 @@
   [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:1064>),
   [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:2031>).
   Prova operacional: `_read_session_file()` inválido ou explosivo agora preserva `active_session_id`, `active_session_claim_id`, `session.local.json`, claim externo e live-proof externo, enquanto `import-context` e `checkpoint` retornam `operation_failed` em vez de seguir com sucesso silencioso.
-- Fechar a lacuna de policy em que `fs.create_file` com `overwrite=true` continua dispensando approval por estar classificado só por `kind`.
+- Fechado nesta sessão: a lacuna de policy em que `fs.create_file` com `overwrite=true` dispensava approval por estar classificado só por `kind`.
 
 ### exige arquitetura
 
@@ -353,6 +364,6 @@
 
 ## Próxima rodada
 
-- Primeiro item: manter o gap de approval por efeito em `fs.create_file overwrite=true` em `Grupo 6`, porque a menor correção segura cruza `core/validation.py`.
-- Segundo item: fechar as lacunas de cobertura pequenas e baratas (e2e contínuo de sessão->plan->apply->verify->rollback, testes diretos de helpers centrais, `runtime.lock` órfão) e alinhar a documentação operacional aos comportamentos reais já descobertos nesta auditoria.
-- Terceiro item: decidir se o boundary host-trusting atual de `verify` permanece residual aceito ou se sobe para slice corretivo/arquitetural explícito, junto dos contratos ainda implícitos espalhados entre validator, runtime e docs.
+- Primeiro item: nenhum dentro do `Grupo 6`; a prova de parada `P1-P5` terminou limpa em `2026-04-19`.
+- Segundo item: manter o foco residual nos débitos arquiteturais fora do `Grupo 6`, especialmente concentração no `StateStore` e contratos ainda implícitos entre runtime, validator e documentação.
+- Terceiro item: reabrir o loop apenas por `Formal Resume Trigger` ou por problema novo confirmado com evidência rastreável.
