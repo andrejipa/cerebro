@@ -1,5 +1,33 @@
 # Implementation Status — External Cerebro Model
 
+## Hardening Arquitetural — Grupo 6
+
+- Débito 3: `verify` host-trusting
+  - Estado: `fechado`
+  - Fechado em: `2026-04-19`
+  - Arquivos alterados:
+    - `core/verification_runtime.py:24-37`
+    - `core/verification_runtime.py:66-80`
+    - `core/verification_runtime.py:83-97`
+    - `core/verification_runtime.py:100-125`
+    - `core/verification_runtime.py:128-182`
+    - `tests/test_alpha_runtime.py:963-1086`
+    - `tests/test_alpha_runtime.py:1088-1150`
+    - `tests/test_alpha_runtime.py:1152-1210`
+  - Critério satisfeito: `sim`
+  - Evidência:
+    - `verify` não herda mais o `PATH` completo do host; o subprocesso usa `PATH` mínimo reconstruído a partir do comando resolvido
+    - `stdout/stderr` continuam redigidos antes da persistência, inclusive por segmento de `PATH`
+    - regressões cobrem leak de env, helper chain mínima via comando resolvido e preservação de `C:` legítimo
+
+- Débito 2: `check-state` sintético
+  - Estado: `pendente`
+  - Próximo passo: separar o sentinel do contrato persistido de `verification.checks` sem reabrir drift em CLI, store, memória e exports
+
+- Débito 1: `approval` por efeito em `overwrite=true`
+  - Estado: `pendente`
+  - Próximo passo: mover a decisão `ALLOW / DENY / REQUIRE_APPROVAL` para o efeito destrutivo observado, não apenas para `kind`
+
 ## Fatias concluídas
 
 - Fatia 1: `--project-root` global
@@ -123,3 +151,162 @@
 ## Itens em Grupo 6
 
 - Nenhum nesta trilha de implementação até o momento.
+
+## Trilha Worktrees
+
+### Fatias concluídas
+
+- Fatia 1: `cerebro worktree create <nome>`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `.gitignore`
+    - `cli/main.py`
+    - `cli/worktree_registry.py`
+    - `cli/commands/worktree.py`
+    - `tests/test_cli.py`
+    - `tests/test_architecture.py`
+    - `docs/operations/WORKTREE_PLAN.md`
+  - Testes adicionados:
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_help_declares_isolated_git_role`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_dispatches_current_working_directory_to_worktree_handler`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_main_dispatches_explicit_project_root_to_worktree_handler`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_create_creates_git_worktree_and_registry_entry`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_create_rejects_invalid_name`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_create_fails_closed_when_name_is_already_registered`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_create_cleans_up_when_registry_persist_fails`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_create_reports_cleanup_failure_when_registry_persist_fails`
+  - Teste de worktree:
+    - comando real `git worktree add .worktrees/test-wt -b worktree-test-wt` executado com sucesso
+    - suíte dentro do worktree executada sobre o `HEAD` commitado (`Ran 164 tests ... / OK`), que é o limite natural de um worktree criado a partir de um workspace ainda sem commit desta iteração
+  - Critério de pronto: `sim`
+
+- Fatia 2: `cerebro worktree list`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `cli/main.py`
+    - `cli/commands/worktree.py`
+    - `cli/worktree_registry.py`
+    - `tests/test_cli.py`
+    - `docs/operations/WORKTREE_PLAN.md`
+    - `docs/operations/IMPLEMENTATION_STATUS.md`
+  - Testes adicionados:
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_list_reports_active_registered_entry`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_list_reports_missing_registered_entry`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_list_reports_unregistered_detached_entry`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_list_fails_closed_when_git_listing_fails`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_list_fails_closed_when_registry_name_does_not_match_path`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_list_uses_admin_root_when_invoked_from_child_worktree`
+  - Teste de worktree:
+    - `python -m cli.main --project-root . worktree create codex-fat2-admin-check` — `OK`
+    - `python -m cli.main --project-root .worktrees/codex-fat2-admin-check worktree list` — `OK`
+    - `git worktree remove --force .worktrees/codex-fat2-admin-check` + `git branch -D worktree-codex-fat2-admin-check` — `OK`
+  - Critério de pronto: `sim`
+
+- Fatia 3: `cerebro worktree clean <nome>`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `cli/main.py`
+    - `cli/commands/worktree.py`
+    - `cli/worktree_registry.py`
+    - `tests/test_cli.py`
+    - `docs/operations/WORKTREE_PLAN.md`
+    - `docs/operations/IMPLEMENTATION_STATUS.md`
+  - Testes adicionados:
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_clean_removes_worktree_branch_and_registry_entry`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_clean_blocks_dirty_worktree`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_clean_keeps_registry_when_branch_delete_fails`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_clean_recovers_when_checkout_was_removed_before_branch_delete`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_clean_recovers_when_registry_persist_fails_after_physical_cleanup`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_clean_fails_closed_when_removed_checkout_has_tampered_branch`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_clean_fails_closed_when_active_worktree_has_tampered_branch`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_clean_uses_admin_root_when_invoked_from_child_worktree`
+    - `tests.test_cli.CliHelpAndExitCodeTests.test_worktree_clean_fails_closed_when_registry_entry_is_stale`
+  - Teste de worktree:
+    - `python -m cli.main --project-root . worktree create codex-fat3-check` — `OK`
+    - `python -m cli.main --project-root . worktree clean codex-fat3-check` — `OK`
+    - `python -m cli.main --project-root . worktree list` — `worktrees: 0`
+  - Critério de pronto: `sim`
+
+- Fatia 4: `spawn em worktree isolado`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `_local/automation_bridge/run_parallel_worktrees.py`
+    - `_local/automation_bridge/test_run_bridge.py`
+    - `_local/automation_bridge/README.md`
+    - `docs/operations/WORKTREE_PLAN.md`
+    - `docs/operations/IMPLEMENTATION_STATUS.md`
+  - Testes adicionados:
+    - `_local.automation_bridge.test_run_bridge.AutomationBridgeTests.test_parallel_worktrees_launch_child_bridge_runs_with_distinct_roots`
+    - `_local.automation_bridge.test_run_bridge.AutomationBridgeTests.test_parallel_worktrees_fail_closed_when_target_is_not_initialized`
+    - `_local.automation_bridge.test_run_bridge.AutomationBridgeTests.test_parallel_worktrees_fail_closed_when_registered_worktree_is_missing_from_git`
+    - `_local.automation_bridge.test_run_bridge.AutomationBridgeTests.test_parallel_worktrees_fail_closed_when_registered_worktree_branch_diverges`
+  - Teste de worktree:
+    - criação real de dois worktrees temporários — `OK`
+    - `init` real em cada worktree — `OK`
+    - `python _local/automation_bridge/run_parallel_worktrees.py ... --worktree alpha --worktree beta ...` com executor fake — `OK`
+  - Critério de pronto: `sim`
+
+- Fatia 5: `merge supervisionado`
+  - Implementada em: `2026-04-18`
+  - Arquivos alterados:
+    - `_local/automation_bridge/review_worktree.py`
+    - `_local/automation_bridge/test_run_bridge.py`
+    - `_local/automation_bridge/README.md`
+    - `docs/operations/WORKTREE_PLAN.md`
+    - `docs/operations/IMPLEMENTATION_STATUS.md`
+  - Testes adicionados:
+    - `_local.automation_bridge.test_run_bridge.AutomationBridgeTests.test_review_worktree_reports_branch_head_and_diffstat`
+    - `_local.automation_bridge.test_run_bridge.AutomationBridgeTests.test_review_worktree_fails_closed_when_worktree_is_dirty`
+    - `_local.automation_bridge.test_run_bridge.AutomationBridgeTests.test_review_worktree_fails_closed_when_worktree_is_detached`
+  - Teste de worktree:
+    - criação real de worktree temporário com commit próprio — `OK`
+    - `python _local/automation_bridge/review_worktree.py --repo-root ... --worktree alpha` — `OK`
+    - revisão dirty bloqueada explicitamente — `OK`
+  - Critério de pronto: `sim`
+
+### Fatia atual
+
+- Qual é: `nenhuma — encerrado`
+- Estado: `concluída`
+
+### Próxima fatia
+
+- Qual é: `nenhuma — worktrees implementados`
+- Dependências:
+  - `FATIAS 1-5` concluídas
+  - P2 limpo
+  - suíte e arquitetura verdes
+
+### Itens em Grupo 6 — Worktrees
+
+- Nenhum nesta trilha até o momento.
+
+## Auditoria De Worktrees — 2026-04-19
+
+- Estado: `encerrada`
+- Testes: `688 -> 694`
+- Riscos confirmados e corrigidos:
+  - `RISCO 1` + `RISCO 7` — serialização do `create_worktree` sob boundary único de registry lock.
+    Evidência:
+    [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:95>),
+    [cli/worktree_registry.py](</D:/projetos_cli/cerebro/cli/worktree_registry.py:98>),
+    [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1631>),
+    [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1685>).
+  - `RISCO 2` — recovery fail-closed de estado não registrado no `clean_worktree`.
+    Evidência:
+    [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:163>),
+    [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:393>),
+    [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1719>),
+    [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1736>).
+  - `RISCO 6` — regressão direta para falha de `git worktree add`, sem fallback para `main`.
+    Evidência:
+    [cli/commands/worktree.py](</D:/projetos_cli/cerebro/cli/commands/worktree.py:125>),
+    [tests/test_cli.py](</D:/projetos_cli/cerebro/tests/test_cli.py:1606>).
+- Riscos limpos:
+  - `RISCO 3`, `RISCO 4`, `RISCO 5`.
+- Teste manual:
+  - `python -m cli.main --project-root D:\\projetos_cli\\cerebro worktree create audit-test` -> `list` -> `clean` — `OK`
+- Timeouts:
+  - `DEBATE 2 architect/mediator` — `TIMEOUT`; relançado serial e encerrado com os achados confirmados.
+- Decisão final:
+  - `AUDITORIA DE WORKTREES CONCLUÍDA. Sistema em estado operacional.`

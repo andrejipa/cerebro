@@ -2,7 +2,7 @@
 
 ## Resumo executivo
 
- O Cerebro está operacionalmente estável e a suíte principal segue verde, mas a auditoria ainda confirma riscos técnicos abertos no runtime. Com o fechamento nesta sessão do guard de monotonicidade em `save_state()`, do preflight de posse em `verify`, do branch de falha em `prepare_project_sandbox()`, do residual de rollback em `fs.move` e agora também do residual `create-new` em `fs.create_file`, os `ALTO` abertos mais graves ficaram concentrados na lacuna de policy em `fs.create_file` com `overwrite=true`, que ainda consegue mutar um arquivo existente sem approval porque o gate continua decidido por `kind`, não por efeito destrutivo observável, e no sentinel sintético `check-state`, que segue contaminando `verification.checks` e já depende de decisão arquitetural para sair do formato persistido. Fora disso, a base mostra um padrão claro de dívida concentrada: `StateStore` supercarregado, contratos implícitos entre módulos, um boundary host-trusting em `verify` no nível de ambiente herdado e artifacts, e cobertura forte nos fluxos principais mas desigual em alguns helpers e cenários de bootstrap/corrupção.
+ O Cerebro está operacionalmente estável e a suíte principal segue verde, mas a auditoria ainda confirma riscos técnicos abertos no runtime. Com o fechamento nesta sessão do gap host-trusting de `verify` no eixo `env -> stdout/stderr -> artifacts`, os itens mais graves remanescentes ficaram concentrados em dois pontos: a lacuna de policy em `fs.create_file` com `overwrite=true`, que ainda consegue mutar um arquivo existente sem approval porque o gate continua decidido por `kind`, não por efeito destrutivo observável, e o sentinel sintético `check-state`, que segue contaminando `verification.checks` e já depende de decisão arquitetural para sair do formato persistido. Fora disso, a base mostra um padrão claro de dívida concentrada: `StateStore` supercarregado, contratos implícitos entre módulos, e cobertura forte nos fluxos principais mas desigual em alguns helpers e cenários de bootstrap/corrupção.
 
 ## Achados confirmados pelos debates
 
@@ -164,15 +164,19 @@
   [cli/commands/rollback.py](</d:/projetos_cli/cerebro/cli/commands/rollback.py:82>).
   Prova operacional: a regressão nova executa `run_init()`, `run_validate()`, `run_analyze()` com emissão de `session_token`, `run_plan()`, `run_apply()`, `run_verify()` e `run_rollback()` no mesmo projeto temporário, e confirma no fim `validation_passed`, action `rolled_back`, `verification.status == "idle"` e ausência de delta residual no workspace.
 
-- `verify` continua host-trusting: herda quase todo o ambiente do processo e persiste `stdout`/`stderr` brutos em artifacts, então comandos marcados como `read_only` ainda podem ler segredos herdados e exfiltrá-los pela trilha canônica.
-  Evidência:
-  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:36>),
-  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:182>),
-  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:240>),
-  [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:772>),
-  [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:791>),
-  [core/command_sandbox.py](</d:/projetos_cli/cerebro/core/command_sandbox.py:84>).
-  Debate que confirmou: `Debate 2` no eixo de segurança concluiu que o primeiro abuso prático tende a ser `command_registry -> verify`, porque o comando parece seguro, roda com menos atrito operacional e grava a própria exfiltração em `artifacts/verification/...`. No ranking operacional agregado ele continua abaixo de `WEAK-CRIT-001`, porque depende de command input malicioso ou descuidado; ainda assim, ficou confirmado como a superfície de abuso mais crítica do eixo de segurança.
+- Fechamento desta sessão: `verify` deixou de herdar o `PATH` completo do host, passou a montar um `PATH` mínimo a partir do comando resolvido, manteve apenas o subconjunto compatível de variáveis herdadas, e redige `stdout`/`stderr` antes da persistência de artifacts, inclusive por segmento de `PATH`.
+  Evidência do fechamento:
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:24>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:66>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:83>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:100>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:128>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:179>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:963>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1088>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1152>).
+  Prova operacional: reproduções manuais com `INV2_SECRET`, `PYTHONIOENCODING` e `HOST-PATH-SEGMENT-SENTINEL` deixaram de reaparecer em `artifacts/verification/...`, inclusive quando o comando tenta derivar apenas o nome do primeiro segmento do `PATH`. O helper mínimo via comando resolvido continua executável, e `SYSTEMDRIVE` saiu do scrub para preservar `C:` legítimo em `stdout/stderr`.
+  Residual remanescente: `verify` ainda preserva um subconjunto mínimo de compatibilidade (`COMSPEC`, `PATHEXT`, `SYSTEMDRIVE`, `SYSTEMROOT`, `WINDIR`), mas o caminho original de exfiltração persistida via host env amplo ficou fechado.
 
 - Fechamento desta sessão: `runtime.lock` agora trata probes de PID inválido no Windows (`WinError 87`) como dono inativo, então locks órfãos com owner PID morto passam a ser recuperados em vez de esperar até timeout; o timeout fica explícito apenas para o caso em que o owner PID ainda parece vivo.
   Evidência:
@@ -293,12 +297,20 @@
   [tests/test_analyze.py](</d:/projetos_cli/cerebro/tests/test_analyze.py:94>),
   [tests/test_analyze.py](</d:/projetos_cli/cerebro/tests/test_analyze.py:124>).
   Prova operacional: `test_analyze_with_valid_state_prints_stable_context_and_opens_session` valida a saída estável e a abertura da sessão; `test_analyze_does_not_emit_session_token_by_default` garante ausência do token no caminho padrão; `test_analyze_emits_session_token_only_when_requested` garante o token só quando solicitado.
-- Ainda aberto no `main`: os cenários de `import-context` e `checkpoint` que exercitam falha em `close_session()`/`save_state()` em `tests/test_validate.py` ainda usam `mock.patch.object(StateStore, ...)` para injetar `StateStoreError`, então a suíte prova a tradução estável de `operation_failed`, mas ainda não cristaliza a mesma trilha por falha real de I/O no filesystem.
+- Fechado nesta sessão: os cenários de `import-context` e `checkpoint` para falha em `close_session()`/`save_state()` no nível do CLI agora exercitam falhas reais de I/O no boundary do filesystem, sem `mock.patch.object(StateStore, ...)`.
   Evidência:
-  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:982>),
-  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:1013>),
-  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:1900>),
-  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:1935>).
+  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:1012>),
+  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:1064>),
+  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:1973>),
+  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:2027>).
+  Prova operacional: os testes agora falham `Path.unlink` em `session.local.json` e `os.replace` em `state.json`, confirmando `operation_failed` sem `internal_error` e restauração de `state`, `session.local.json`, claim externo e live proof externo.
+- Fechado nesta sessão: `close_session()` não engole mais falha de leitura/validação de `session.local.json`; o core agora registra `session_close_failed` e falha fechado antes de limpar registry, claim ou live-proof, e os chamadores CLI `import-context` e `checkpoint` cristalizam `operation_failed` sem mutação de estado.
+  Evidência:
+  [core/state_store.py](</d:/projetos_cli/cerebro/core/state_store.py:1189>),
+  [tests/test_state_store.py](</d:/projetos_cli/cerebro/tests/test_state_store.py:2347>),
+  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:1064>),
+  [tests/test_validate.py](</d:/projetos_cli/cerebro/tests/test_validate.py:2031>).
+  Prova operacional: `_read_session_file()` inválido ou explosivo agora preserva `active_session_id`, `active_session_claim_id`, `session.local.json`, claim externo e live-proof externo, enquanto `import-context` e `checkpoint` retornam `operation_failed` em vez de seguir com sucesso silencioso.
 - Fechar a lacuna de policy em que `fs.create_file` com `overwrite=true` continua dispensando approval por estar classificado só por `kind`.
 
 ### exige arquitetura
@@ -332,6 +344,7 @@
   [tests/test_architecture.py](</d:/projetos_cli/cerebro/tests/test_architecture.py:1474>),
   [tests/test_extension_contracts.py](</d:/projetos_cli/cerebro/tests/test_extension_contracts.py:253>),
   [tests/test_extension_contracts.py](</d:/projetos_cli/cerebro/tests/test_extension_contracts.py:286>).
+- A auditoria de worktrees de `2026-04-19` fechou sem residual aberto no fluxo suportado do Cerebro: `RISCO 1/7` (corrida no create/registry), `RISCO 2` (órfão parcial) e `RISCO 6` (fallback silencioso) ficaram cobertos por regressão direta; `RISCO 3/4/5` foram investigados e limpos. Prova operacional: suíte `688 -> 694`, `tests.test_architecture` verde e teste manual `create -> list -> clean` aprovado.
 
 ## Próxima rodada
 

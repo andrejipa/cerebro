@@ -999,14 +999,22 @@ class AlphaRuntimeTests(unittest.TestCase):
                                     "python",
                                     "-c",
                                     (
-                                        "import os; from pathlib import Path; "
+                                        "import os, sys; from pathlib import Path; "
                                         "claims = Path(os.environ['CEREBRO_SESSION_CLAIMS_DIR']); "
                                         "proofs = Path(os.environ['CEREBRO_SESSION_LIVE_PROOFS_DIR']); "
                                         "claim = claims / 'probe.json'; "
                                         "proof = proofs / 'probe.json'; "
                                         "claim.write_text('sandbox-only', encoding='utf-8'); "
                                         "proof.write_text('sandbox-only', encoding='utf-8'); "
+                                        "print('secret=' + os.environ.get('INV2_SECRET', '')); "
+                                        "print('lang=' + os.environ.get('LANG', '')); "
+                                        "print('lc_all=' + os.environ.get('LC_ALL', '')); "
+                                        "print('pyio=' + os.environ.get('PYTHONIOENCODING', '')); "
                                         "print('token=' + os.environ.get('CEREBRO_SESSION_TOKEN', ''))"
+                                        "; print('path=' + os.environ.get('PATH', ''))"
+                                        "; print('path_head=' + os.environ.get('PATH', '').split(os.pathsep)[0])"
+                                        "; sys.stderr.write('stderr_secret=' + os.environ.get('INV2_SECRET', '') + '\\n')"
+                                        "; sys.stderr.write('stderr_pyio=' + os.environ.get('PYTHONIOENCODING', ''))"
                                     ),
                                 ],
                                 "cwd": ".",
@@ -1028,9 +1036,17 @@ class AlphaRuntimeTests(unittest.TestCase):
                 )
 
                 stream = io.StringIO()
+                path_sentinel = "INV2-HOST-PATH-SENTINEL"
+                current_path = os.environ.get("PATH", "")
+                host_path = f"{path_sentinel}{os.pathsep}{current_path}" if current_path else path_sentinel
                 with patch.dict(
                     os.environ,
                     {
+                        "INV2_SECRET": "red-team-secret",
+                        "LANG": "red-team-lang-secret",
+                        "LC_ALL": "red-team-lc-secret",
+                        "PYTHONIOENCODING": "red-team-pyio-secret",
+                        "PATH": host_path,
                         SESSION_CLAIMS_DIR_ENV_VAR: claims_dir,
                         SESSION_TOKEN_ENV_VAR: session["session_token"],
                     },
@@ -1042,11 +1058,164 @@ class AlphaRuntimeTests(unittest.TestCase):
                 runtime = store.read_agent_runtime()
                 artifact_ref = runtime["verification"]["checks"][1]["artifact_ref"]
                 stdout_text = (store.cerebro_dir / artifact_ref).read_text(encoding="utf-8")
+                stderr_text = (store.cerebro_dir / artifact_ref.replace(".stdout.txt", ".stderr.txt")).read_text(
+                    encoding="utf-8"
+                )
                 self.assertEqual(exit_code, 0)
                 self.assertEqual(before_claim, self._read_session_claim_bytes(store, session["owner_claim_id"]))
                 self.assertEqual(before_live_proof, store._read_optional_session_live_proof_bytes(claim["live_proof_id"]))
-                self.assertEqual(stdout_text.strip(), "token=")
+                stdout_lines = stdout_text.splitlines()
+                stderr_lines = stderr_text.splitlines()
+                self.assertEqual(stdout_lines[0], "secret=")
+                self.assertEqual(stdout_lines[1], "lang=")
+                self.assertEqual(stdout_lines[2], "lc_all=")
+                self.assertEqual(stdout_lines[3], "pyio=")
+                self.assertEqual(stdout_lines[4], "token=")
+                self.assertTrue(stdout_lines[5].startswith("path="))
+                self.assertTrue(stdout_lines[6].startswith("path_head="))
+                self.assertEqual(stderr_lines[0], "stderr_secret=")
+                self.assertEqual(stderr_lines[1], "stderr_pyio=")
+                self.assertNotIn("red-team-secret", stdout_text)
+                self.assertNotIn("red-team-lang-secret", stdout_text)
+                self.assertNotIn("red-team-lc-secret", stdout_text)
+                self.assertNotIn("red-team-pyio-secret", stdout_text)
+                self.assertNotIn("red-team-secret", stderr_text)
+                self.assertNotIn("red-team-pyio-secret", stderr_text)
+                self.assertNotIn(path_sentinel, stdout_lines[5])
+                self.assertNotIn(path_sentinel, stdout_lines[6])
                 self.assertTrue(store.validate_state()["ok"])
+
+    @unittest.skipUnless(os.name == "nt", "PATH helper-chain smoke uses cmd.exe")
+    def test_verify_preserves_resolved_command_parent_for_sibling_helper_chain(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir, tempfile.TemporaryDirectory() as helper_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            validation = store.validate_state()
+            session = store.open_session("alice", validated_revision=validation["revision"])
+            validation = store.validate_state()
+            (Path(helper_dir) / "helper.cmd").write_text("@echo helper-ok\r\n", encoding="utf-8")
+            (Path(helper_dir) / "main.cmd").write_text("@echo off\r\nhelper.cmd\r\n", encoding="utf-8")
+            store.update_agent_plan(
+                {
+                    "goal": "Verify resolved PATH compatibility",
+                    "summary": "verify should keep the resolved command parent executable while artifacts stay scrubbed",
+                    "tasks": [
+                        {
+                            "id": "task-001",
+                            "title": "Run sibling helper chain",
+                            "status": "ready",
+                            "details": "Run sibling helper chain",
+                            "depends_on": [],
+                            "working_set": ["tracked.txt"],
+                            "acceptance_criteria": ["verify succeeds through resolved-command sibling helper lookup"],
+                            "action_ids": [],
+                        }
+                    ],
+                    "command_registry": [
+                        {
+                            "id": "cmd-001",
+                            "argv": ["main.cmd"],
+                            "cwd": ".",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "read_only",
+                            "risk": "low",
+                            "allow_in_verify": True,
+                        }
+                    ],
+                    "required_command_ids": ["cmd-001"],
+                    "autonomy_level": "A2",
+                    "protected_paths": [".cerebro/**", ".git/**"],
+                    "blocked_command_prefixes": ["rm"],
+                    "approval_required_kinds": ["fs.write_patch"],
+                },
+                validated_revision=validation["revision"],
+                expected_session_token=session["session_token"],
+            )
+
+            helper_path = os.pathsep.join((helper_dir, os.environ.get("PATH", "")))
+            with patch.dict(os.environ, {"PATH": helper_path}, clear=False):
+                stream = io.StringIO()
+                with redirect_stdout(stream):
+                    exit_code = run_verify(root, type("Args", (), {"command_id": [], "session_token": session["session_token"]}))
+
+            runtime = store.read_agent_runtime()
+            artifact_ref = runtime["verification"]["checks"][1]["artifact_ref"]
+            stdout_text = (store.cerebro_dir / artifact_ref).read_text(encoding="utf-8")
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(stdout_text.strip(), "helper-ok")
+
+    @unittest.skipUnless(os.name == "nt", "SYSTEMDRIVE regression is Windows-specific")
+    def test_verify_redaction_keeps_legitimate_windows_drive_letters(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            validation = store.validate_state()
+            store.update_agent_plan(
+                {
+                    "goal": "Verify artifact fidelity",
+                    "summary": "verify redaction must not strip legitimate drive letters from artifacts",
+                    "tasks": [
+                        {
+                            "id": "task-001",
+                            "title": "Run verify",
+                            "status": "ready",
+                            "details": "Run verify",
+                            "depends_on": [],
+                            "working_set": ["tracked.txt"],
+                            "acceptance_criteria": ["verify preserves legitimate drive letters in stdout and stderr"],
+                            "action_ids": [],
+                        }
+                    ],
+                    "command_registry": [
+                        {
+                            "id": "cmd-001",
+                            "argv": [
+                                "python",
+                                "-c",
+                                (
+                                    "import sys; "
+                                    "print('stdout=C:\\\\regression\\\\ok'); "
+                                    "print('stderr=C:\\\\regression\\\\err', file=sys.stderr)"
+                                ),
+                            ],
+                            "cwd": ".",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "read_only",
+                            "risk": "low",
+                            "allow_in_verify": True,
+                        }
+                    ],
+                    "required_command_ids": ["cmd-001"],
+                    "autonomy_level": "A2",
+                    "protected_paths": [".cerebro/**", ".git/**"],
+                    "blocked_command_prefixes": ["rm"],
+                    "approval_required_kinds": ["fs.write_patch"],
+                },
+                validated_revision=validation["revision"],
+            )
+
+            with patch.dict(os.environ, {"SYSTEMDRIVE": "C:"}, clear=False):
+                exit_code = run_verify(root, type("Args", (), {"command_id": []}))
+
+            runtime = store.read_agent_runtime()
+            artifact_ref = runtime["verification"]["checks"][1]["artifact_ref"]
+            stdout_text = (store.cerebro_dir / artifact_ref).read_text(encoding="utf-8")
+            stderr_text = (store.cerebro_dir / artifact_ref.replace(".stdout.txt", ".stderr.txt")).read_text(
+                encoding="utf-8"
+            )
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(stdout_text.strip(), r"stdout=C:\regression\ok")
+            self.assertEqual(stderr_text.strip(), r"stderr=C:\regression\err")
 
     def test_verify_restores_live_external_session_claim_after_absolute_tamper_attempt(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir, tempfile.TemporaryDirectory() as claims_dir:
