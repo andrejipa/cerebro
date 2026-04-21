@@ -1,0 +1,288 @@
+{
+  "authority": "derived-advisory-only",
+  "non_authoritative": true,
+  "read_only": true,
+  "schema_version": "1",
+  "evaluated_at": "2026-04-20T00:00:00Z",
+  "rule": "detect_broken_canonical_refs",
+  "thresholds": {
+    "accept_precision": 0.7,
+    "accept_recall": 0.6,
+    "iterate_precision": 0.6
+  },
+  "metrics": {
+    "total_cases": 11,
+    "tp": 5,
+    "fp": 0,
+    "tn": 6,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "confidence_checked": 5,
+    "confidence_match_rate": 1.0
+  },
+  "verdict": {
+    "classification": "accept_for_staged_promotion",
+    "rationale": "precision and recall clear the conservative acceptance bar; rule is safe for opt-in derived use pending a second tripwire before any wider adoption"
+  },
+  "per_case": [
+    {
+      "id": "docs/operations/synthetic-broken-001.md",
+      "label": "positive",
+      "label_reason": "one broken relative ref inside canonical scope should emit low confidence",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "expected_confidence": "low",
+      "actual_confidence": "low",
+      "suggestion": {
+        "id": "sugg-broken-ref-20260420T000000Z-docs-operations-syntheti-01",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "docs/operations/synthetic-broken-001.md",
+        "project_context": "dataset",
+        "task_description": "A canonical operations document points to a local path that does not exist, so a reader may fail to recover the intended context cleanly.",
+        "suggested_failure_mode": "CONTEXT_NOT_FOUND",
+        "supporting_signals": [
+          "broken_ref=docs/operations/MISSING_HANDOFF.md"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "low",
+        "reason_flags": [
+          "broken_canonical_ref_detected"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      },
+      "scope_state": "in_scope_broken"
+    },
+    {
+      "id": "docs/operations/synthetic-broken-002.md",
+      "label": "positive",
+      "label_reason": "two broken relative refs should emit medium confidence",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "expected_confidence": "medium",
+      "actual_confidence": "medium",
+      "suggestion": {
+        "id": "sugg-broken-ref-20260420T000000Z-docs-operations-syntheti-02",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "docs/operations/synthetic-broken-002.md",
+        "project_context": "dataset",
+        "task_description": "A canonical operations document points to a local path that does not exist, so a reader may fail to recover the intended context cleanly.",
+        "suggested_failure_mode": "CONTEXT_NOT_FOUND",
+        "supporting_signals": [
+          "broken_ref=docs/operations/DOES_NOT_EXIST_A.md",
+          "broken_ref=docs/operations/DOES_NOT_EXIST_B.md"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "medium",
+        "reason_flags": [
+          "broken_canonical_ref_detected"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      },
+      "scope_state": "in_scope_broken"
+    },
+    {
+      "id": "docs/operations/synthetic-broken-003.md",
+      "label": "positive",
+      "label_reason": "four broken refs should emit high confidence",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "expected_confidence": "high",
+      "actual_confidence": "high",
+      "suggestion": {
+        "id": "sugg-broken-ref-20260420T000000Z-docs-operations-syntheti-04",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "docs/operations/synthetic-broken-003.md",
+        "project_context": "dataset",
+        "task_description": "A canonical operations document points to a local path that does not exist, so a reader may fail to recover the intended context cleanly.",
+        "suggested_failure_mode": "CONTEXT_NOT_FOUND",
+        "supporting_signals": [
+          "broken_ref=docs/operations/BROKEN_A.md",
+          "broken_ref=docs/operations/BROKEN_B.md",
+          "broken_ref=docs/operations/BROKEN_C.md",
+          "broken_ref=docs/operations/BROKEN_D.md"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "high",
+        "reason_flags": [
+          "broken_canonical_ref_detected"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      },
+      "scope_state": "in_scope_broken"
+    },
+    {
+      "id": "docs/operations/synthetic-broken-004.md",
+      "label": "positive",
+      "label_reason": "broken absolute path should emit",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "expected_confidence": "low",
+      "actual_confidence": "low",
+      "suggestion": {
+        "id": "sugg-broken-ref-20260420T000000Z-docs-operations-syntheti-01",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "docs/operations/synthetic-broken-004.md",
+        "project_context": "dataset",
+        "task_description": "A canonical operations document points to a local path that does not exist, so a reader may fail to recover the intended context cleanly.",
+        "suggested_failure_mode": "CONTEXT_NOT_FOUND",
+        "supporting_signals": [
+          "broken_ref=D:/definitely_missing_tripwire_target/ghost.md"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "low",
+        "reason_flags": [
+          "broken_canonical_ref_detected"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      },
+      "scope_state": "in_scope_broken"
+    },
+    {
+      "id": "docs/operations/synthetic-broken-005.md",
+      "label": "positive",
+      "label_reason": "mixed link set still emits when two local refs remain broken",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "expected_confidence": "medium",
+      "actual_confidence": "medium",
+      "suggestion": {
+        "id": "sugg-broken-ref-20260420T000000Z-docs-operations-syntheti-02",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "docs/operations/synthetic-broken-005.md",
+        "project_context": "dataset",
+        "task_description": "A canonical operations document points to a local path that does not exist, so a reader may fail to recover the intended context cleanly.",
+        "suggested_failure_mode": "CONTEXT_NOT_FOUND",
+        "supporting_signals": [
+          "broken_ref=docs/operations/BROKEN_MIX_A.md",
+          "broken_ref=docs/operations/BROKEN_MIX_B.md"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "medium",
+        "reason_flags": [
+          "broken_canonical_ref_detected"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      },
+      "scope_state": "in_scope_broken"
+    },
+    {
+      "id": "docs/operations/synthetic-clean-001.md",
+      "label": "negative",
+      "label_reason": "valid relative refs inside canonical scope should stay silent",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "scope_state": "in_scope_clean"
+    },
+    {
+      "id": "docs/operations/synthetic-clean-002.md",
+      "label": "negative",
+      "label_reason": "line suffix is normalized away before existence check",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "scope_state": "in_scope_clean"
+    },
+    {
+      "id": "docs/operations/synthetic-clean-003.md",
+      "label": "negative",
+      "label_reason": "anchor fragment is normalized away before existence check",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "scope_state": "in_scope_clean"
+    },
+    {
+      "id": "docs/operations/synthetic-clean-004.md",
+      "label": "negative",
+      "label_reason": "external URLs, mailto, and fragment-only refs are ignored",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "scope_state": "in_scope_clean"
+    },
+    {
+      "id": "docs/operations/synthetic-clean-005.md",
+      "label": "negative",
+      "label_reason": "artifacts without markdown links stay silent",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "scope_state": "in_scope_clean"
+    },
+    {
+      "id": "docs/reference/synthetic-out-of-scope-001.md",
+      "label": "negative",
+      "label_reason": "source outside docs/operations is intentional out_of_scope silence",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "scope_state": "out_of_scope"
+    }
+  ],
+  "scope_metrics": {
+    "out_of_scope": 1,
+    "in_scope_clean": 5,
+    "in_scope_broken": 5
+  }
+}

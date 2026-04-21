@@ -1,13 +1,27 @@
 # Opportunity Map
 
-## Current Snapshot — 2026-04-19
+## Current Snapshot — 2026-04-21
 
-- Suite gate confirmed green: `700` tests, `0` failures, `6` skips via `python -m unittest discover -s tests -v`
+- Suite gate confirmed green: `730` tests, `0` failures, `6` skips via `python -m unittest discover -s tests -v`
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`
-- Current posture: deliberate freeze remains active for growth, but corrective hardening is active and authorized
+- Current posture: deliberate freeze remains active for canonical-runtime growth; corrective maintenance remains allowed by policy, and approved derived tracks remain active outside the core authority surface
 - Current executable queue:
-  - `none — Grupo 6 encerrado`
-- Current next item: `none — hardening do Grupo 6 concluído; await Formal Resume Trigger or new confirmed bug`
+  - `none for canonical runtime — auditoria pós-hardening encerrada`
+  - `derived track active: experiments/recall_eval — experimentally benchmarked against real corpora; not promoted and still non-authoritative`
+  - `derived track active: experiments/operational_signals — implemented and still advisory-only; manual registry remains empty (correct), while the `suggestions/` sub-layer now has one narrow externally validated rule (`detect_stale_system_state`) and one rule that did not validate on the real corpus (`detect_export_surface_gap`)`
+- Current next item: `none for canonical runtime — operate under freeze; only the already approved derived tracks remain executable inside their explicit non-authoritative boundaries`
+- Documentary recall-trigger evaluation on 2026-04-20 found no concrete repeated unmet use case against `cerebro analyze` plus the approved exports/helpers, so no `Formal Resume Trigger` was opened.
+- One narrowly scoped derived observability increment was later approved and implemented on 2026-04-20: `experiments/operational_signals/`, for recording operational insufficiency signals outside `.cerebro/`; it remains experimental, opt-in, non-authoritative, and does not change runtime authority or freeze policy by itself.
+- The later advisory tripwire sub-layer under `experiments/operational_signals/suggestions/` is now externally classified as `marginal`: one narrow rule stayed useful on real artifacts, while one author-curated rule did not validate outside its own dataset, so the layer must remain advisory-only and should not expand by default.
+- A later directory-wide read-only scan across the four real-project corpora already used by this repo (`IRPF e Caixa Rural`, `estoque_pioneira`, `rpg_caminhada`, and `Resolução Humaita Codex`) inspected `6163` text-like files and produced `0` hits for both current tripwires, reinforcing that the present suggestion layer has very low real-corpus coverage outside the one narrow stale-snapshot pattern already documented in the Cerebro docs.
+- That evidence state is now formally recorded as a closure condition for the sub-layer: keep the one narrow stale rule, keep the export-surface rule as non-validated, and do not expand `suggestions/` until new operational evidence appears.
+- Derived-learning note recorded on 2026-04-21: in measured tripwires, prefer artifact-native, binary, directly observable signals; avoid rules that depend on inferring operator intent or implicit need, because that is where `detect_export_surface_gap` failed to validate beyond its own curated dataset.
+- The documented `broken refs` candidate was then executed on 2026-04-21: `detect_broken_canonical_refs` is now implemented in `experiments/operational_signals/suggestions/`, its curated dataset cleared `accept_for_staged_promotion`, and the external-validation result is `narrow-scope-validated`.
+- That external result is intentionally narrow and explicit:
+  - `docs/operations/`: `28` markdown files scanned, `1` in-scope true positive
+  - external corpora (`IRPF e Caixa Rural`, `estoque_pioneira`, `rpg_caminhada`, `Resolução Humaita Codex`): `4478` markdown files scanned, `0` out-of-scope emissions
+- Current next derived item: `documented candidate: detect_current_surface_drift — execute under docs/operations/SURFACE_DRIFT_TRIPWIRE_MANUAL.md`
+- The separate experimental track `experiments/recall_eval/` has now been executed against real corpora and benchmarked in multiple variants; it remains derived, read-only, non-authoritative, and not accepted as product surface.
 - Current weakness posture:
   - `CRÍTICO`: `0` open, `0` Group 6
   - `ALTO`: `0` open, `0` Group 6
@@ -15,8 +29,9 @@
   - `DÉBITO 3` (`verify` host-trusting) foi fechado com regressão explícita para leak de env, leak por segmento de `PATH`, helper chain mínima por comando resolvido e preservação de `C:` legítimo
   - `DÉBITO 2` (`check-state` sintético) foi fechado: `verification.state_check` ficou separado, `verification.checks` voltou a ser command-only e a migração legada ficou centralizada na canonicalização
   - `DÉBITO 1` (`approval` por efeito em `overwrite=true`) foi fechado: overwrite destrutivo real ou projetado agora exige approval explícito, sem fatigue nova para `create` benigno
-  - a prova de parada `P1-P5` terminou limpa; `P2` confirmou ausência de regressão nova e `P1` confirmou os três débitos não reproduzíveis
-  - o drift entre `WEAKNESS_REPORT.md`, `SYSTEM_STATE.md` e `OPPORTUNITY_MAP.md` agora fica ancorado neste snapshot atual, que substitui a antiga trilha documenter-only descrita nas seções históricas abaixo
+  - a auditoria pós-hardening também fechou o bypass direto no boundary `apply_action()` e o escape em que `verify` conseguia mutar o live workspace fora do sandbox e ainda reportar verde
+  - a prova de parada `P1-P5` terminou limpa; `P2` confirmou ausência de regressão nova, `P1` confirmou os três débitos não reproduzíveis e a varredura pós-hardening não deixou novo `CRÍTICO` ou `ALTO`
+  - o drift entre `WEAKNESS_REPORT.md`, `SYSTEM_STATE.md` e `OPPORTUNITY_MAP.md` agora fica ancorado neste snapshot atual, que substitui as seções históricas documenter-only abaixo; essas seções permanecem apenas como trilha histórica, não como descrição do estado vivo do repositório
 
 Bootstrap document created on 2026-04-16 for the autonomous loop.
 

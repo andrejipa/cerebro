@@ -1,16 +1,27 @@
 # System State
 
-## Current Snapshot — 2026-04-19
+## Current Snapshot — 2026-04-21
 
 - Suite status: green
-- Last suite result: `700` tests, `0` failures, `6` skips
+- Last suite result: `730` tests, `0` failures, `6` skips
 - Architecture gate: `51` tests, `0` failures
 - Command used: `python -m unittest discover -s tests -v`
 - Runtime continuity state: no local `.cerebro/state.json` present in this workspace
-- Current posture: deliberate freeze for growth, corrective hardening authorized
+- Current posture: deliberate freeze for canonical-runtime growth; corrective maintenance remains allowed by policy, and approved derived tracks remain active outside the core authority surface
 - Allowed work: corrective maintenance, proportional regression coverage, factual documentation updates
-- Current queue mode: hardening arquitetural concluído
-- Current next item: `none — hardening do Grupo 6 concluído; await Formal Resume Trigger or new confirmed bug`
+- Current queue mode: auditoria pós-hardening concluída
+- Current next item: `none for canonical runtime — operate under freeze; only the already approved derived tracks remain executable inside their explicit non-authoritative boundaries`
+- Documentary recall-trigger evaluation on 2026-04-20 found no concrete repeated unmet use case against the approved operational surface, so no `Formal Resume Trigger` was opened.
+- One narrowly scoped derived observability increment was later approved and implemented on 2026-04-20: `experiments/operational_signals/`, for recording operational insufficiency signals outside `.cerebro/`; it remains experimental, opt-in, non-authoritative, and does not change runtime authority or freeze policy by itself.
+- The separate experimental track `experiments/recall_eval/` has now been executed and benchmarked against real corpora; it remains derived, read-only, non-authoritative, and not promoted into the approved product surface.
+- `experiments/operational_signals/` is implemented and remains ready only for opt-in derived use; its default registry is currently empty, which is the correct initial state until real insufficiency signals are recorded.
+- The advisory sub-layer `experiments/operational_signals/suggestions/` was externally validated on real non-curated artifacts on 2026-04-20 and is currently classified as `marginal`: `detect_stale_system_state` stayed useful but narrow, while `detect_export_surface_gap` did not validate on the real corpus and must not be treated as established signal coverage.
+- A follow-up directory-wide scan on 2026-04-20 across the four previously used real projects (`6163` text-like files, read-only) produced `0` hits for both current tripwires, which reinforces that the current suggestion layer has negligible coverage on those corpora and remains strictly advisory.
+- The resulting operational decision is now closed and explicit: keep `detect_stale_system_state`, keep `detect_export_surface_gap` only as non-validated evidence, and stop expansion of the current suggestion layer until new real evidence appears.
+- A narrow design heuristic was recorded on 2026-04-21 for future measured tripwires in derived experiments: prefer artifact-native, binary, directly observable signals; avoid rules that depend on inferring operator intent or implicit need.
+- The next narrow slice under `experiments/operational_signals/suggestions/` was executed on 2026-04-21: `detect_broken_canonical_refs` is now implemented, its 11-case curated dataset cleared `accept_for_staged_promotion`, and its external validation result is `narrow-scope-validated`.
+- The scope of that validation is explicit: `28` markdown files under `docs/operations/` yielded `1` in-scope true positive, while `4478` markdown files across the four previously used external corpora yielded `0` out-of-scope emissions.
+- The rule stays narrow by design: it inspects markdown links only, emits only for `docs/operations/`, and must not be generalized beyond that canonical documentation surface without a new manual and validation round.
 - Current weakness posture:
   - `CRÍTICO`: `0` open, `0` Group 6
   - `ALTO`: `0` open, `0` Group 6
@@ -18,10 +29,11 @@
   - `verify` host-trusting foi fechado nesta sessão: `verify` não herda mais o `PATH` completo do host, `stdout/stderr` são redigidos antes da persistência e o leak por segmento de `PATH` ficou coberto por regressão
   - `WEAK-HIGH-003` também foi fechado nesta sessão: `verification.state_check` ficou separado, `verification.checks` voltou a conter apenas checks de comando e a migração legada ficou centralizada no core
   - `WEAK-CRIT-001` também foi fechado nesta sessão: overwrite destrutivo real ou projetado agora exige approval explícito, enquanto `create` benigno continua livre
-  - a prova de parada `P1-P5` terminou limpa; `P1` confirmou os três débitos não reproduzíveis e `P2` confirmou ausência de regressão nova
-- Nota operacional: as seções históricas abaixo pertencem à antiga trilha documenter-only e não refletem mais a fila executável atual; o snapshot acima é a referência canônica do estado corrente.
+  - a auditoria pós-hardening também fechou o bypass direto do boundary `apply_action()` para approval governado e o escape em que `verify` conseguia mutar o live workspace por path absoluto fora do sandbox
+  - a prova de parada `P1-P5` terminou limpa; `P1` confirmou os três débitos não reproduzíveis, `P2` confirmou ausência de regressão nova e a varredura pós-hardening não deixou `CRÍTICO` ou `ALTO` executável
+- Nota operacional: as seções históricas abaixo pertencem à antiga trilha documenter-only e não refletem mais a fila executável atual; o snapshot acima é a referência canônica do estado corrente, inclusive para distinguir freeze do core de atividade em camadas derivadas.
 
-Snapshot updated on 2026-04-19 after the final Grupo 6 proof pass.
+Snapshot updated on 2026-04-21 after the `broken refs` slice was implemented and externally validated inside the approved derived boundary.
 
 ## Gate Status
 
