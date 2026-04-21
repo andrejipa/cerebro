@@ -19,8 +19,11 @@ from .harness import evaluate_dataset, load_dataset
 from .rules import (
     CANONICAL_SCOPE,
     detect_broken_canonical_refs,
+    detect_current_surface_drift,
     detect_export_surface_gap,
     detect_stale_system_state,
+    extract_current_surface_counts,
+    extract_current_surface_sources,
 )
 
 
@@ -30,6 +33,8 @@ REPORT_BROKEN_REFS_MD_PATH = Path(__file__).with_name("report_broken_refs_latest
 REPORT_BROKEN_REFS_JSON_PATH = Path(__file__).with_name("report_broken_refs_latest.json")
 REPORT_EXPORT_MD_PATH = Path(__file__).with_name("report_export_surface_latest.md")
 REPORT_EXPORT_JSON_PATH = Path(__file__).with_name("report_export_surface_latest.json")
+REPORT_SURFACE_DRIFT_MD_PATH = Path(__file__).with_name("report_surface_drift_latest.md")
+REPORT_SURFACE_DRIFT_JSON_PATH = Path(__file__).with_name("report_surface_drift_latest.json")
 
 RULE_REGISTRY = {
     "broken_canonical_refs": {
@@ -37,6 +42,12 @@ RULE_REGISTRY = {
         "dataset": Path(__file__).with_name("dataset_broken_refs.toml"),
         "markdown": REPORT_BROKEN_REFS_MD_PATH,
         "json": REPORT_BROKEN_REFS_JSON_PATH,
+    },
+    "current_surface_drift": {
+        "rule": detect_current_surface_drift,
+        "dataset": Path(__file__).with_name("dataset_surface_drift.toml"),
+        "markdown": REPORT_SURFACE_DRIFT_MD_PATH,
+        "json": REPORT_SURFACE_DRIFT_JSON_PATH,
     },
     "stale_system_state": {
         "rule": detect_stale_system_state,
@@ -85,6 +96,11 @@ def render_markdown(result: dict[str, Any]) -> str:
         lines.append(f"- out_of_scope cases: `{scope_metrics['out_of_scope']}`")
         lines.append(f"- in_scope_clean cases: `{scope_metrics['in_scope_clean']}`")
         lines.append(f"- in_scope_broken cases: `{scope_metrics['in_scope_broken']}`")
+    surface_metrics = result.get("surface_metrics")
+    if surface_metrics:
+        lines.append(f"- insufficient_sources cases: `{surface_metrics['insufficient_sources']}`")
+        lines.append(f"- sources_agree cases: `{surface_metrics['sources_agree']}`")
+        lines.append(f"- drift_detected cases: `{surface_metrics['drift_detected']}`")
     lines.append("")
     lines.append("## Verdict")
     lines.append("")
@@ -98,12 +114,14 @@ def render_markdown(result: dict[str, Any]) -> str:
         conf_actual = case["actual_confidence"] or "—"
         scope_state = case.get("scope_state")
         scope_suffix = f" scope_state=`{scope_state}`" if scope_state else ""
+        surface_state = case.get("surface_state")
+        surface_suffix = f" surface_state=`{surface_state}`" if surface_state else ""
         lines.append(
             f"- `{case['id']}` label=`{case['label']}` outcome=`{case['outcome']}` "
             f"expected_suggestion=`{str(case['expected_suggestion']).lower()}` "
             f"actual_suggestion=`{str(case['actual_suggestion']).lower()}` "
             f"expected_confidence=`{conf_expected}` actual_confidence=`{conf_actual}`"
-            f"{scope_suffix}"
+            f"{scope_suffix}{surface_suffix}"
         )
         lines.append(f"    - reason: {case['label_reason']}")
     lines.append("")
@@ -150,12 +168,34 @@ def _annotate_broken_ref_scope(result: dict[str, Any], dataset: list[dict[str, A
     result["scope_metrics"] = scope_metrics
 
 
+def _annotate_surface_drift_states(result: dict[str, Any], dataset: list[dict[str, Any]]) -> None:
+    surface_metrics = {
+        "insufficient_sources": 0,
+        "sources_agree": 0,
+        "drift_detected": 0,
+    }
+    for case_result, case in zip(result["per_case"], dataset):
+        sources = extract_current_surface_sources(case)
+        counts = extract_current_surface_counts(case)
+        if len(sources) < 2 or len(counts) < 2:
+            surface_state = "insufficient_sources"
+        elif case_result["actual_suggestion"]:
+            surface_state = "drift_detected"
+        else:
+            surface_state = "sources_agree"
+        case_result["surface_state"] = surface_state
+        surface_metrics[surface_state] += 1
+    result["surface_metrics"] = surface_metrics
+
+
 def _evaluate_named_rule(name: str) -> dict[str, Any]:
     config = RULE_REGISTRY[name]
     dataset = load_dataset(config["dataset"])
     result = evaluate_dataset(config["rule"], dataset)
     if name == "broken_canonical_refs":
         _annotate_broken_ref_scope(result, dataset)
+    if name == "current_surface_drift":
+        _annotate_surface_drift_states(result, dataset)
     write_reports(result, markdown_path=config["markdown"], json_path=config["json"])
     return result
 

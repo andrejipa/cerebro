@@ -16,6 +16,7 @@ from experiments.operational_signals.suggestions.harness import (
 )
 from experiments.operational_signals.suggestions.rules import (
     detect_broken_canonical_refs,
+    detect_current_surface_drift,
     detect_export_surface_gap,
 )
 
@@ -42,6 +43,13 @@ class LoadDatasetTests(unittest.TestCase):
         self.assertGreaterEqual(len(cases), 10)
         self.assertTrue(any(case["label"] == "positive" for case in cases))
         self.assertTrue(any("docs/operations/" in case["id"] for case in cases))
+
+    def test_surface_drift_dataset_loads(self) -> None:
+        dataset_path = Path(evaluate_module.__file__).with_name("dataset_surface_drift.toml")
+        cases = load_dataset(dataset_path)
+        self.assertGreaterEqual(len(cases), 10)
+        self.assertTrue(any(case["system_state_text"] for case in cases))
+        self.assertTrue(any(case["opportunity_map_text"] for case in cases))
 
     def test_rejects_unsupported_label(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -164,6 +172,16 @@ class EvaluateDatasetTests(unittest.TestCase):
         self.assertEqual(result["verdict"]["classification"], "accept_for_staged_promotion")
         self.assertEqual(result["rule"], "detect_broken_canonical_refs")
 
+    def test_surface_drift_dataset_reaches_acceptance(self) -> None:
+        dataset_path = Path(evaluate_module.__file__).with_name("dataset_surface_drift.toml")
+        dataset = load_dataset(dataset_path)
+        result = evaluate_dataset(detect_current_surface_drift, dataset)
+        metrics = result["metrics"]
+        self.assertGreaterEqual(metrics["precision"], ACCEPT_PRECISION)
+        self.assertGreaterEqual(metrics["recall"], ACCEPT_RECALL)
+        self.assertEqual(result["verdict"]["classification"], "accept_for_staged_promotion")
+        self.assertEqual(result["rule"], "detect_current_surface_drift")
+
 
 class WriteReportTests(unittest.TestCase):
     def test_write_reports_produces_markdown_and_json(self) -> None:
@@ -217,6 +235,27 @@ class WriteReportTests(unittest.TestCase):
             self.assertEqual(json_payload["scope_metrics"]["out_of_scope"], 1)
             self.assertEqual(json_payload["scope_metrics"]["in_scope_broken"], 5)
             self.assertEqual(json_payload["scope_metrics"]["in_scope_clean"], 5)
+
+    def test_evaluate_main_with_surface_drift_rule_writes_surface_states(self) -> None:
+        with TemporaryDirectory() as tmp:
+            original_registry = evaluate_module.RULE_REGISTRY.copy()
+            md = Path(tmp) / "surface.md"
+            js = Path(tmp) / "surface.json"
+            evaluate_module.RULE_REGISTRY["current_surface_drift"] = {
+                **evaluate_module.RULE_REGISTRY["current_surface_drift"],
+                "markdown": md,
+                "json": js,
+            }
+            try:
+                evaluate_module.main(["--rule", "current_surface_drift"])
+            finally:
+                evaluate_module.RULE_REGISTRY = original_registry
+            markdown_text = md.read_text(encoding="utf-8")
+            json_payload = json.loads(js.read_text(encoding="utf-8"))
+            self.assertIn("surface_state=", markdown_text)
+            self.assertEqual(json_payload["surface_metrics"]["insufficient_sources"], 3)
+            self.assertEqual(json_payload["surface_metrics"]["sources_agree"], 3)
+            self.assertEqual(json_payload["surface_metrics"]["drift_detected"], 4)
 
 
 if __name__ == "__main__":

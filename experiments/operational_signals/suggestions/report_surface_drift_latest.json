@@ -1,0 +1,263 @@
+{
+  "authority": "derived-advisory-only",
+  "non_authoritative": true,
+  "read_only": true,
+  "schema_version": "1",
+  "evaluated_at": "2026-04-20T00:00:00Z",
+  "rule": "detect_current_surface_drift",
+  "thresholds": {
+    "accept_precision": 0.7,
+    "accept_recall": 0.6,
+    "iterate_precision": 0.6
+  },
+  "metrics": {
+    "total_cases": 10,
+    "tp": 4,
+    "fp": 0,
+    "tn": 6,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "confidence_checked": 4,
+    "confidence_match_rate": 1.0
+  },
+  "verdict": {
+    "classification": "accept_for_staged_promotion",
+    "rationale": "precision and recall clear the conservative acceptance bar; rule is safe for opt-in derived use pending a second tripwire before any wider adoption"
+  },
+  "per_case": [
+    {
+      "id": "surface-pos-001",
+      "label": "positive",
+      "label_reason": "system state and opportunity map declare divergent current suite counts",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "expected_confidence": "high",
+      "actual_confidence": "high",
+      "suggestion": {
+        "id": "sugg-surface-drift-20260420T000000Z-surface-pos-001-0180",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "surface-pos-001",
+        "project_context": "dataset",
+        "task_description": "Multiple canonical docs expose divergent current suite counts, so the reader cannot recover a single current surface cleanly.",
+        "suggested_failure_mode": "CONTEXT_AMBIGUOUS",
+        "supporting_signals": [
+          "system_state_text_suite_count=730",
+          "opportunity_map_text_suite_count=550",
+          "max_pairwise_drift=180"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "high",
+        "reason_flags": [
+          "cross_doc_surface_drift_detected",
+          "suite_count_mismatch_across_docs"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      },
+      "surface_state": "drift_detected"
+    },
+    {
+      "id": "surface-pos-002",
+      "label": "positive",
+      "label_reason": "three sources present and drift hits the medium threshold exactly",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "expected_confidence": "medium",
+      "actual_confidence": "medium",
+      "suggestion": {
+        "id": "sugg-surface-drift-20260420T000000Z-surface-pos-002-0010",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "surface-pos-002",
+        "project_context": "dataset",
+        "task_description": "Multiple canonical docs expose divergent current suite counts, so the reader cannot recover a single current surface cleanly.",
+        "suggested_failure_mode": "CONTEXT_AMBIGUOUS",
+        "supporting_signals": [
+          "readme_text_suite_count=720",
+          "system_state_text_suite_count=730",
+          "opportunity_map_text_suite_count=725",
+          "max_pairwise_drift=10"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "medium",
+        "reason_flags": [
+          "cross_doc_surface_drift_detected",
+          "suite_count_mismatch_across_docs"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      },
+      "surface_state": "drift_detected"
+    },
+    {
+      "id": "surface-pos-003",
+      "label": "positive",
+      "label_reason": "four sources present with low-threshold pairwise drift",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "expected_confidence": "low",
+      "actual_confidence": "low",
+      "suggestion": {
+        "id": "sugg-surface-drift-20260420T000000Z-surface-pos-003-0005",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "surface-pos-003",
+        "project_context": "dataset",
+        "task_description": "Multiple canonical docs expose divergent current suite counts, so the reader cannot recover a single current surface cleanly.",
+        "suggested_failure_mode": "CONTEXT_AMBIGUOUS",
+        "supporting_signals": [
+          "readme_text_suite_count=700",
+          "system_state_text_suite_count=705",
+          "opportunity_map_text_suite_count=701",
+          "phase_closure_text_suite_count=703",
+          "max_pairwise_drift=5"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "low",
+        "reason_flags": [
+          "cross_doc_surface_drift_detected",
+          "suite_count_mismatch_across_docs"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      },
+      "surface_state": "drift_detected"
+    },
+    {
+      "id": "surface-pos-004",
+      "label": "positive",
+      "label_reason": "phase closure and current state diverge by more than ten tests",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "expected_confidence": "medium",
+      "actual_confidence": "medium",
+      "suggestion": {
+        "id": "sugg-surface-drift-20260420T000000Z-surface-pos-004-0011",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "surface-pos-004",
+        "project_context": "dataset",
+        "task_description": "Multiple canonical docs expose divergent current suite counts, so the reader cannot recover a single current surface cleanly.",
+        "suggested_failure_mode": "CONTEXT_AMBIGUOUS",
+        "supporting_signals": [
+          "system_state_text_suite_count=645",
+          "phase_closure_text_suite_count=634",
+          "max_pairwise_drift=11"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "medium",
+        "reason_flags": [
+          "cross_doc_surface_drift_detected",
+          "suite_count_mismatch_across_docs"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      },
+      "surface_state": "drift_detected"
+    },
+    {
+      "id": "surface-neg-001",
+      "label": "negative",
+      "label_reason": "two sources agree exactly on the same current suite count",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "surface_state": "sources_agree"
+    },
+    {
+      "id": "surface-neg-002",
+      "label": "negative",
+      "label_reason": "three sources agree after extracting the first suite line from each doc",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "surface_state": "sources_agree"
+    },
+    {
+      "id": "surface-neg-003",
+      "label": "negative",
+      "label_reason": "drift below the conservative absolute threshold",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "surface_state": "sources_agree"
+    },
+    {
+      "id": "surface-neg-004",
+      "label": "negative",
+      "label_reason": "two sources present but only one carries an extractable suite count",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "surface_state": "insufficient_sources"
+    },
+    {
+      "id": "surface-guard-001",
+      "label": "negative",
+      "label_reason": "single source present must stay silent by scope guard",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "surface_state": "insufficient_sources"
+    },
+    {
+      "id": "surface-guard-002",
+      "label": "negative",
+      "label_reason": "single phase closure source present must stay silent by scope guard",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null,
+      "surface_state": "insufficient_sources"
+    }
+  ],
+  "surface_metrics": {
+    "insufficient_sources": 3,
+    "sources_agree": 3,
+    "drift_detected": 4
+  }
+}

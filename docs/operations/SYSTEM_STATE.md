@@ -22,6 +22,9 @@
 - The next narrow slice under `experiments/operational_signals/suggestions/` was executed on 2026-04-21: `detect_broken_canonical_refs` is now implemented, its 11-case curated dataset cleared `accept_for_staged_promotion`, and its external validation result is `narrow-scope-validated`.
 - The scope of that validation is explicit: `28` markdown files under `docs/operations/` yielded `1` in-scope true positive, while `4478` markdown files across the four previously used external corpora yielded `0` out-of-scope emissions.
 - The rule stays narrow by design: it inspects markdown links only, emits only for `docs/operations/`, and must not be generalized beyond that canonical documentation surface without a new manual and validation round.
+- The next slice under the same derived boundary was also executed on 2026-04-21: `detect_current_surface_drift` is now implemented, its 10-case curated dataset cleared `accept_for_staged_promotion`, and its external validation result is `narrow-Cerebro-specific`.
+- The scope of that result is explicit: five real Cerebro states were checked (working tree plus commits `47802bf`, `65b16e5`, `2e9e95f`, `942756f`), but each one exposed an extractable `Last suite result` in only `1` of the `4` canonical docs, so the rule stayed silent in all five cases.
+- The four previously used external corpora also stayed silent because none of them carry the same four-doc canonical surface; this validates the slice only as a narrow inter-file detector for a documentation pattern that is currently rare in live artifacts.
 - Current weakness posture:
   - `CRÍTICO`: `0` open, `0` Group 6
   - `ALTO`: `0` open, `0` Group 6
@@ -33,7 +36,7 @@
   - a prova de parada `P1-P5` terminou limpa; `P1` confirmou os três débitos não reproduzíveis, `P2` confirmou ausência de regressão nova e a varredura pós-hardening não deixou `CRÍTICO` ou `ALTO` executável
 - Nota operacional: as seções históricas abaixo pertencem à antiga trilha documenter-only e não refletem mais a fila executável atual; o snapshot acima é a referência canônica do estado corrente, inclusive para distinguir freeze do core de atividade em camadas derivadas.
 
-Snapshot updated on 2026-04-21 after the `broken refs` slice was implemented and externally validated inside the approved derived boundary.
+Snapshot updated on 2026-04-21 after the `broken refs` and `surface drift` slices were implemented and externally validated inside the approved derived boundary.
 
 ## Gate Status
 

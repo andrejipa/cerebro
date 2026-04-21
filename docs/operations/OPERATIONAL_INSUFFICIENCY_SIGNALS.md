@@ -166,7 +166,13 @@ Current scope (round 2c):
 - conservative thresholds: the rule stays silent outside `docs/operations/`, ignores `http://`, `https://`, `mailto:`, and fragment-only links, and normalizes angle-bracket targets, fragments, line suffixes, `%20`, and slash-prefixed Windows absolute paths before checking existence
 - verdict on the 11-case evaluation dataset: `accept_for_staged_promotion`
 
-The three tripwires remain a measured sanity check, not a claim of generalisation. Their datasets are author-curated and exist to prove that the tripwires can be built conservatively without creating automatic authority.
+Current scope (round 2d):
+
+- fourth tripwire: `detect_current_surface_drift` — emits `CONTEXT_AMBIGUOUS` only when the current four-doc canonical surface (`README.md`, `SYSTEM_STATE.md`, `OPPORTUNITY_MAP.md`, `PHASE_CLOSURE.md`) exposes at least two extractable `Last suite result` counts and those counts drift by at least `5`
+- conservative thresholds: the rule stays silent when fewer than two docs are present, when fewer than two docs expose an extractable `Last suite result`, or when the max pairwise drift stays below `5`
+- verdict on the 10-case evaluation dataset: `accept_for_staged_promotion`
+
+The four tripwires remain a measured sanity check, not a claim of generalisation. Their datasets are author-curated and exist to prove that the tripwires can be built conservatively without creating automatic authority.
 
 The third tripwire stays inside the same discipline: it is advisory-only, human-reviewed, and intentionally narrow to one canonical documentation surface.
 
@@ -175,6 +181,7 @@ Available derived reports now include:
 - `experiments/operational_signals/suggestions/report_latest.md` / `.json` for `detect_stale_system_state`
 - `experiments/operational_signals/suggestions/report_broken_refs_latest.md` / `.json` for `detect_broken_canonical_refs`
 - `experiments/operational_signals/suggestions/report_export_surface_latest.md` / `.json` for `detect_export_surface_gap`
+- `experiments/operational_signals/suggestions/report_surface_drift_latest.md` / `.json` for `detect_current_surface_drift`
 
 Promotion to wider use still requires:
 
@@ -203,6 +210,7 @@ Current external-validation interpretation:
 - keep `detect_stale_system_state` as a narrow advisory rule
 - keep `detect_broken_canonical_refs` as a narrow `docs/operations/` advisory rule
 - do not treat `detect_export_surface_gap` as externally validated
+- keep `detect_current_surface_drift` as a narrow Cerebro-specific advisory rule
 - do not expand the suggestion layer further until a new rule can prove value on non-curated artifacts without depending on author-invented structure
 
 For `detect_broken_canonical_refs`, the external-validation result on 2026-04-21 is intentionally scoped:
@@ -213,6 +221,18 @@ For `detect_broken_canonical_refs`, the external-validation result on 2026-04-21
 - out-of-scope corpora (`IRPF e Caixa Rural`, `estoque_pioneira`, `rpg_caminhada`, `Resolução Humaita Codex`): `4478` markdown files scanned, `0` emissions
 
 That result validates the rule as a canonical-docs guardrail, not as a broad corpus detector.
+
+For `detect_current_surface_drift`, the external-validation result on 2026-04-21 is intentionally narrower:
+
+- curated dataset verdict: `accept_for_staged_promotion`
+- external validation verdict: `narrow-Cerebro-specific`
+- real Cerebro cases checked: working tree plus commits `47802bf`, `65b16e5`, `2e9e95f`, `942756f`
+- observed live pattern: all five cases had the four docs present, but only `1/4` docs exposed an extractable `Last suite result`, so the rule stayed silent in every case
+- external corpora (`IRPF e Caixa Rural`, `estoque_pioneira`, `rpg_caminhada`, `Resolução Humaita Codex`): no comparable four-doc surface, `0` emissions
+
+That result keeps the slice as a measured inter-file detector, but shows that the live canonical surface does not yet expose the comparable field broadly enough for frequent real use.
+
+- external report: `experiments/operational_signals/suggestions/report_external_validation_surface_drift.md`
 
 ## Rule Design Heuristic
 

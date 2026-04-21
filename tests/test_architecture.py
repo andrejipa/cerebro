@@ -137,6 +137,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
                 "cli",
                 "core",
                 "docs",
+                "experiments",
                 "extensions",
                 "pyproject.toml",
                 "tests",

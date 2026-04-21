@@ -20,7 +20,12 @@
 - That external result is intentionally narrow and explicit:
   - `docs/operations/`: `28` markdown files scanned, `1` in-scope true positive
   - external corpora (`IRPF e Caixa Rural`, `estoque_pioneira`, `rpg_caminhada`, `Resolução Humaita Codex`): `4478` markdown files scanned, `0` out-of-scope emissions
-- Current next derived item: `documented candidate: detect_current_surface_drift — execute under docs/operations/SURFACE_DRIFT_TRIPWIRE_MANUAL.md`
+- The documented `surface drift` candidate was then executed on 2026-04-21: `detect_current_surface_drift` is now implemented in `experiments/operational_signals/suggestions/`, its curated dataset cleared `accept_for_staged_promotion`, and the external-validation result is `narrow-Cerebro-specific`.
+- That external result is also intentionally narrow and explicit:
+  - real Cerebro states checked: working tree plus commits `47802bf`, `65b16e5`, `2e9e95f`, `942756f`
+  - observed live pattern: all five cases had the four docs present, but only `1/4` docs exposed an extractable `Last suite result`, so the rule stayed silent in every case
+  - external corpora (`IRPF e Caixa Rural`, `estoque_pioneira`, `rpg_caminhada`, `Resolução Humaita Codex`): no comparable four-doc surface, `0` emissions
+- Current next derived item: `STOP — docs/operations/SUPERSEDES_TRIPWIRE_MANUAL.md absent`
 - The separate experimental track `experiments/recall_eval/` has now been executed against real corpora and benchmarked in multiple variants; it remains derived, read-only, non-authoritative, and not accepted as product surface.
 - Current weakness posture:
   - `CRÍTICO`: `0` open, `0` Group 6

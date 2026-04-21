@@ -19,6 +19,7 @@ from . import AUTHORITY, SCHEMA_VERSION
 
 FAILURE_MODES = {
     "CONTEXT_NOT_FOUND",
+    "CONTEXT_AMBIGUOUS",
     "STALE_INFORMATION",
     "INSUFFICIENT_EXPORT_SURFACE",
 }
@@ -43,6 +44,12 @@ REQUIRED_EXPORT_ANCHORS_RE = re.compile(
 )
 BULLET_LINE_RE = re.compile(r"^\s*-\s*(.+?)\s*$", re.MULTILINE)
 MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+SURFACE_TEXT_FIELDS = (
+    "readme_text",
+    "system_state_text",
+    "opportunity_map_text",
+    "phase_closure_text",
+)
 
 # Conservative thresholds. Anything smaller is treated as noise because
 # single-commit churn can move the live suite count by a small delta.
@@ -169,6 +176,23 @@ def _broken_ref_confidence(broken_count: int) -> str:
     raise ValueError("broken_count must be >= MIN_ABSOLUTE_BROKEN")
 
 
+def extract_current_surface_sources(case: dict[str, Any]) -> dict[str, str]:
+    return {
+        name: text
+        for name in SURFACE_TEXT_FIELDS
+        if isinstance((text := case.get(name, "")), str) and text.strip()
+    }
+
+
+def extract_current_surface_counts(case: dict[str, Any]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for name, text in extract_current_surface_sources(case).items():
+        count = _first_suite_count(text)
+        if count is not None:
+            counts[name] = count
+    return counts
+
+
 def _is_in_canonical_scope(source_artifact: str) -> bool:
     return CANONICAL_SCOPE.as_posix() in Path(source_artifact).as_posix()
 
@@ -251,6 +275,66 @@ def detect_broken_canonical_refs(
             "exist, so a reader may fail to recover the intended context cleanly."
         ),
         suggested_failure_mode="CONTEXT_NOT_FOUND",
+        supporting_signals=supporting_signals,
+        operational_cost_estimate={
+            "minutes_spent": 0,
+            "extra_files_opened": 0,
+            "manual_search_rounds": 0,
+        },
+        confidence=confidence,
+        reason_flags=reason_flags,
+        human_review_required=True,
+        authority=AUTHORITY,
+        schema_version=SCHEMA_VERSION,
+    )
+
+
+def detect_current_surface_drift(
+    *,
+    case: dict[str, Any],
+    now: datetime | None = None,
+) -> Suggestion | None:
+    sources = extract_current_surface_sources(case)
+    if len(sources) < 2:
+        return None
+
+    counts = extract_current_surface_counts(case)
+    if len(counts) < 2:
+        return None
+
+    max_drift = max(counts.values()) - min(counts.values())
+    if max_drift < MIN_ABSOLUTE_DRIFT:
+        return None
+
+    confidence = classify_confidence(max_drift)
+    anchor = now if now is not None else datetime.now(timezone.utc)
+    if anchor.tzinfo is None:
+        anchor = anchor.replace(tzinfo=timezone.utc)
+    timestamp = anchor.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    artifact_fragment = _id_fragment(case["id"])
+    suggestion_id = (
+        f"sugg-surface-drift-{anchor.astimezone(timezone.utc):%Y%m%dT%H%M%SZ}-"
+        f"{artifact_fragment}-{max_drift:04d}"
+    )
+
+    supporting_signals = tuple(
+        [*(f"{name}_suite_count={counts[name]}" for name in SURFACE_TEXT_FIELDS if name in counts)]
+        + [f"max_pairwise_drift={max_drift}"]
+    )
+    reason_flags = (
+        "cross_doc_surface_drift_detected",
+        "suite_count_mismatch_across_docs",
+    )
+    return Suggestion(
+        id=suggestion_id,
+        timestamp=timestamp,
+        source_artifact=case["id"],
+        project_context="dataset",
+        task_description=(
+            "Multiple canonical docs expose divergent current suite counts, so the "
+            "reader cannot recover a single current surface cleanly."
+        ),
+        suggested_failure_mode="CONTEXT_AMBIGUOUS",
         supporting_signals=supporting_signals,
         operational_cost_estimate={
             "minutes_spent": 0,

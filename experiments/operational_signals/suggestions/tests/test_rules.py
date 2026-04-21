@@ -10,8 +10,10 @@ from experiments.operational_signals.suggestions.rules import (
     Suggestion,
     classify_confidence,
     detect_broken_canonical_refs,
+    detect_current_surface_drift,
     detect_export_surface_gap,
     detect_stale_system_state,
+    extract_current_surface_counts,
     extract_required_export_anchors,
     extract_suite_numbers_by_section,
 )
@@ -205,6 +207,106 @@ class DetectBrokenCanonicalRefsTests(unittest.TestCase):
         self.assertNotRegex(module_source, r"(^|\n)\s*(from|import)\s+cli\b")
         self.assertNotIn("write_text(", rule_source)
         self.assertNotIn("mkdir(", rule_source)
+
+
+class DetectCurrentSurfaceDriftTests(unittest.TestCase):
+    def test_drift_between_two_docs_emits_expected_confidence(self) -> None:
+        case = {
+            "id": "surface-001",
+            "readme_text": "",
+            "system_state_text": "## Current Snapshot\n\n- Last suite result: `730` tests\n",
+            "opportunity_map_text": "## Current Snapshot\n\n- Last suite result: `720` tests\n",
+            "phase_closure_text": "",
+        }
+        suggestion = detect_current_surface_drift(case=case, now=FIXED_NOW)
+        self.assertIsInstance(suggestion, Suggestion)
+        assert suggestion is not None
+        self.assertEqual(suggestion.suggested_failure_mode, "CONTEXT_AMBIGUOUS")
+        self.assertEqual(suggestion.confidence, "medium")
+        self.assertEqual(suggestion.source_artifact, "surface-001")
+
+    def test_drift_between_three_plus_docs_emits_max_pairwise_drift(self) -> None:
+        case = {
+            "id": "surface-002",
+            "readme_text": "# README\n\n- Last suite result: `700` tests\n",
+            "system_state_text": "## Current Snapshot\n\n- Last suite result: `705` tests\n",
+            "opportunity_map_text": "## Current Snapshot\n\n- Last suite result: `701` tests\n",
+            "phase_closure_text": "## Closure\n\n- Last suite result: `703` tests\n",
+        }
+        suggestion = detect_current_surface_drift(case=case, now=FIXED_NOW)
+        assert suggestion is not None
+        self.assertEqual(suggestion.confidence, "low")
+        self.assertIn("max_pairwise_drift=5", suggestion.supporting_signals)
+        self.assertEqual(
+            extract_current_surface_counts(case),
+            {
+                "readme_text": 700,
+                "system_state_text": 705,
+                "opportunity_map_text": 701,
+                "phase_closure_text": 703,
+            },
+        )
+
+    def test_counts_that_agree_are_silent(self) -> None:
+        case = {
+            "id": "surface-003",
+            "readme_text": "",
+            "system_state_text": "## Current Snapshot\n\n- Last suite result: `730` tests\n",
+            "opportunity_map_text": "## Current Snapshot\n\n- Last suite result: `730` tests\n",
+            "phase_closure_text": "",
+        }
+        self.assertIsNone(detect_current_surface_drift(case=case, now=FIXED_NOW))
+
+    def test_less_than_two_sources_is_silent(self) -> None:
+        case = {
+            "id": "surface-004",
+            "readme_text": "",
+            "system_state_text": "## Current Snapshot\n\n- Last suite result: `730` tests\n",
+            "opportunity_map_text": "",
+            "phase_closure_text": "",
+        }
+        self.assertIsNone(detect_current_surface_drift(case=case, now=FIXED_NOW))
+
+    def test_less_than_two_extractable_counts_is_silent(self) -> None:
+        case = {
+            "id": "surface-005",
+            "readme_text": "# README\n\nNo suite count here.\n",
+            "system_state_text": "## Current Snapshot\n\n- Last suite result: `730` tests\n",
+            "opportunity_map_text": "",
+            "phase_closure_text": "",
+        }
+        self.assertIsNone(detect_current_surface_drift(case=case, now=FIXED_NOW))
+
+    def test_drift_below_minimum_is_silent(self) -> None:
+        case = {
+            "id": "surface-006",
+            "readme_text": "",
+            "system_state_text": "## Current Snapshot\n\n- Last suite result: `730` tests\n",
+            "opportunity_map_text": "## Current Snapshot\n\n- Last suite result: `727` tests\n",
+            "phase_closure_text": "",
+        }
+        self.assertIsNone(detect_current_surface_drift(case=case, now=FIXED_NOW))
+
+    def test_supporting_signals_include_one_line_per_source(self) -> None:
+        case = {
+            "id": "surface-007",
+            "readme_text": "# README\n\n- Last suite result: `720` tests\n",
+            "system_state_text": "## Current Snapshot\n\n- Last suite result: `730` tests\n",
+            "opportunity_map_text": "## Current Snapshot\n\n- Last suite result: `725` tests\n",
+            "phase_closure_text": "",
+        }
+        suggestion = detect_current_surface_drift(case=case, now=FIXED_NOW)
+        assert suggestion is not None
+        self.assertIn("readme_text_suite_count=720", suggestion.supporting_signals)
+        self.assertIn("system_state_text_suite_count=730", suggestion.supporting_signals)
+        self.assertIn("opportunity_map_text_suite_count=725", suggestion.supporting_signals)
+
+    def test_contract_guards_keep_rule_outside_core_cli_and_dot_cerebro(self) -> None:
+        module_source = inspect.getsource(rules_module)
+        rule_source = inspect.getsource(rules_module.detect_current_surface_drift)
+        self.assertNotRegex(module_source, r"(^|\n)\s*(from|import)\s+core\b")
+        self.assertNotRegex(module_source, r"(^|\n)\s*(from|import)\s+cli\b")
+        self.assertNotIn("write_text(", rule_source)
 
 
 class DetectStaleSystemStateTests(unittest.TestCase):
