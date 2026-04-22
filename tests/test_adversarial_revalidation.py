@@ -68,9 +68,11 @@ class AdversarialRevalidationTests(unittest.TestCase):
             (
                 "extra_session_key",
                 {
+                    "session_id": "session-test",
                     "opened_at": "2026-04-11T00:00:00+00:00",
                     "actor": "alice",
                     "based_on_revision": 0,
+                    "owner_claim_id": "claim-test",
                     "extra": "x",
                 },
                 {"session_invalid_schema", "invalid_session_keys"},
@@ -78,9 +80,11 @@ class AdversarialRevalidationTests(unittest.TestCase):
             (
                 "bool_based_on_revision",
                 {
+                    "session_id": "session-test",
                     "opened_at": "2026-04-11T00:00:00+00:00",
                     "actor": "alice",
                     "based_on_revision": True,
+                    "owner_claim_id": "claim-test",
                 },
                 {"session_invalid_schema", "invalid_session_based_on_revision"},
             ),
@@ -157,7 +161,7 @@ class AdversarialRevalidationTests(unittest.TestCase):
             run_init(root, None)
             store = StateStore(root)
             store.register_sources(["tracked.txt"])
-
+            session_token: str | None = None
             for iteration in range(3):
                 args = type(
                     "Args",
@@ -167,6 +171,8 @@ class AdversarialRevalidationTests(unittest.TestCase):
                         "summary": f"Summary {iteration}",
                         "next_step": f"Next {iteration}",
                         "constraint": [f"Constraint {iteration}"],
+                        "actor": "alice",
+                        "session_token": session_token,
                     },
                 )
                 checkpoint_exit = run_checkpoint(root, args)
@@ -175,9 +181,14 @@ class AdversarialRevalidationTests(unittest.TestCase):
                 before = store.read_snapshot()
                 stream = io.StringIO()
                 with redirect_stdout(stream):
-                    analyze_exit = run_analyze(root, type("Args", (), {"actor": "alice"}))
+                    analyze_exit = run_analyze(root, type("Args", (), {"actor": "alice", "emit_session_token": True}))
 
                 output = stream.getvalue()
+                session_token = next(
+                    line.split(": ", 1)[1]
+                    for line in output.splitlines()
+                    if line.startswith("session_token: ")
+                )
                 after = store.read_snapshot()
                 self.assertEqual(analyze_exit, 0)
                 self.assertEqual(after.revision, before.revision)
@@ -185,6 +196,7 @@ class AdversarialRevalidationTests(unittest.TestCase):
                 self.assertEqual(after.sources, before.sources)
                 self.assertIn(f"goal: Goal {iteration}", output)
                 self.assertIn("validation: ok", output)
+                self.assertIn("session_owner_proof: external_claim", output)
                 self.assertIn("Goal", export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
                 self.assertIn("# Impact", export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))
                 self.assertIn("- Registered sources: 1", export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00"))

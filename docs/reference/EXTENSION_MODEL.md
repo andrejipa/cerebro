@@ -23,6 +23,7 @@ Extensions may not:
 - write `.cerebro/state.json` directly
 - write `.cerebro/session.local.json` directly
 - write inside `.cerebro/` in any form
+- overwrite registered source files through explicit output paths
 - mutate state automatically on external events
 - infer or register sources without explicit user action
 - treat logs as authority

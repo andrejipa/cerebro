@@ -136,7 +136,7 @@ What the sub-layer is:
 
 - derived, read-only, non-authoritative, opt-in, advisory-only
 - a generator of `Suggestion` objects, each carrying `human_review_required = true`
-- evaluated against a hand-labelled dataset (`dataset.toml`) with an explicit verdict in `report_latest.md`
+- evaluated rule-by-rule against hand-labelled datasets with explicit checked-in verdict reports; `detect_stale_system_state` keeps the original `dataset.toml` / `report_latest.md`, while later slices use rule-specific `dataset_*` / `report_*_latest` pairs
 
 What the sub-layer is not:
 
@@ -172,7 +172,13 @@ Current scope (round 2d):
 - conservative thresholds: the rule stays silent when fewer than two docs are present, when fewer than two docs expose an extractable `Last suite result`, or when the max pairwise drift stays below `5`
 - verdict on the 10-case evaluation dataset: `accept_for_staged_promotion`
 
-The four tripwires remain a measured sanity check, not a claim of generalisation. Their datasets are author-curated and exist to prove that the tripwires can be built conservatively without creating automatic authority.
+Current scope (round 2e):
+
+- fifth tripwire: `detect_supersedes_mechanical_metadata` — emits `CONTEXT_AMBIGUOUS` only when an operator-facing markdown/text artifact exposes `supersedes=...` or `stale_parallel_approach_consolidation_record` without nearby `winner=` plus `decision:` or `basis:`
+- conservative thresholds: the rule strips inline-code and fenced-code examples before scanning, stays silent outside operator-facing markdown/text scope, and excludes intentional `out_of_scope` cases from confusion-matrix metrics instead of treating them as true negatives
+- verdict on the 10-case evaluation dataset: `accept_for_staged_promotion`
+
+The five tripwires remain a measured sanity check, not a claim of generalisation. Their datasets are author-curated and exist to prove that the tripwires can be built conservatively without creating automatic authority.
 
 The third tripwire stays inside the same discipline: it is advisory-only, human-reviewed, and intentionally narrow to one canonical documentation surface.
 
@@ -182,6 +188,7 @@ Available derived reports now include:
 - `experiments/operational_signals/suggestions/report_broken_refs_latest.md` / `.json` for `detect_broken_canonical_refs`
 - `experiments/operational_signals/suggestions/report_export_surface_latest.md` / `.json` for `detect_export_surface_gap`
 - `experiments/operational_signals/suggestions/report_surface_drift_latest.md` / `.json` for `detect_current_surface_drift`
+- `experiments/operational_signals/suggestions/report_supersedes_latest.md` / `.json` for `detect_supersedes_mechanical_metadata`
 
 Promotion to wider use still requires:
 
@@ -192,7 +199,7 @@ Promotion to wider use still requires:
 
 ## External Validation Status
 
-The two tripwires were later checked against real, non-curated artifacts from:
+The five measured rules in the suggestion layer were later checked against real, non-curated artifacts from:
 
 - the Cerebro docs themselves
 - `estoque_pioneira`
@@ -200,10 +207,13 @@ The two tripwires were later checked against real, non-curated artifacts from:
 - `Resolução Humaita Codex`
 - `IRPF e Caixa Rural`
 
-That external validation produced a mixed result:
+That external validation produced a mixed five-rule result:
 
 - `detect_stale_system_state` stayed valid, but only for a narrow structural pattern
+- `detect_broken_canonical_refs` validated narrowly on `docs/operations/`
 - `detect_export_surface_gap` did not validate on the real corpus; it stayed silent because the required-anchor structure used by the rule is not present in normal project documentation
+- `detect_current_surface_drift` stayed conservative and narrow/Cerebro-specific
+- `detect_supersedes_mechanical_metadata` stayed conservative and narrow/Cerebro-specific
 
 Current external-validation interpretation:
 
@@ -211,6 +221,7 @@ Current external-validation interpretation:
 - keep `detect_broken_canonical_refs` as a narrow `docs/operations/` advisory rule
 - do not treat `detect_export_surface_gap` as externally validated
 - keep `detect_current_surface_drift` as a narrow Cerebro-specific advisory rule
+- keep `detect_supersedes_mechanical_metadata` as a narrow Cerebro-specific advisory rule, with JSON deferred until the harness can evaluate structured objects instead of raw text serialization
 - do not expand the suggestion layer further until a new rule can prove value on non-curated artifacts without depending on author-invented structure
 
 For `detect_broken_canonical_refs`, the external-validation result on 2026-04-21 is intentionally scoped:
@@ -233,6 +244,18 @@ For `detect_current_surface_drift`, the external-validation result on 2026-04-21
 That result keeps the slice as a measured inter-file detector, but shows that the live canonical surface does not yet expose the comparable field broadly enough for frequent real use.
 
 - external report: `experiments/operational_signals/suggestions/report_external_validation_surface_drift.md`
+
+For `detect_supersedes_mechanical_metadata`, the external-validation result on 2026-04-21 is likewise intentionally narrow:
+
+- curated dataset verdict: `accept_for_staged_promotion`
+- external validation verdict: `narrow-Cerebro-specific`
+- `docs/operations/`: `29` markdown/text artifacts scanned, `0` emissions
+- external corpora (`IRPF e Caixa Rural`, `estoque_pioneira`, `rpg_caminhada`, `Resolução Humaita Codex`): `5145` markdown/text artifacts scanned, `0` emissions
+- live `status-export` validation in this workspace could not run because `.cerebro/state.json` is absent
+
+That result keeps the slice as a measured detector for a very specific Cerebro export style, but not as evidence of broad corpus coverage.
+
+- external report: `experiments/operational_signals/suggestions/report_external_validation_supersedes.md`
 
 ## Rule Design Heuristic
 

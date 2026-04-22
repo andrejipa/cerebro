@@ -12,6 +12,11 @@ from pathlib import Path
 
 from cli.commands.init import run_init
 from core.state_store import StateStore
+from extensions.context_index_export.exporter import (
+    ContextIndexExportError,
+    export_context_index_markdown,
+    write_context_index_markdown,
+)
 from extensions.handoff_export.exporter import HandoffExportError, export_handoff_markdown, write_handoff_markdown
 from extensions.impact_export.exporter import ImpactExportError, export_impact_markdown, write_impact_markdown
 from extensions.return_map_export.exporter import (
@@ -26,6 +31,7 @@ from extensions.validation_export.exporter import (
     export_validation_markdown,
     write_validation_markdown,
 )
+from tests.runtime_fixtures import seed_checkpointed_runtime
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -59,6 +65,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             for command, filename, success_code in (
                 ("handoff-export", "handoff.md", "handoff_exported"),
+                ("context-index-export", "context-index.md", "context_index_exported"),
                 ("impact-export", "impact.md", "impact_exported"),
                 ("sources-export", "sources.md", "sources_exported"),
                 ("status-export", "status.md", "status_exported"),
@@ -124,6 +131,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             for command in (
                 "handoff-export",
+                "context-index-export",
                 "impact-export",
                 "sources-export",
                 "status-export",
@@ -153,6 +161,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             for command, failure_code in (
                 ("handoff-export", "handoff_export_failed"),
+                ("context-index-export", "context_index_export_failed"),
                 ("impact-export", "impact_export_failed"),
                 ("sources-export", "sources_export_failed"),
                 ("status-export", "status_export_failed"),
@@ -181,12 +190,14 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             store.validate_state()
             store.open_session("alice")
 
+            context_index = export_context_index_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             impact = export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             sources = export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             return_map = export_return_map_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             validation = export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
+            self.assertIn("- Session file: present", context_index)
             self.assertIn("- Session file: present", impact)
             self.assertIn("- Session file: present", status)
             self.assertIn("- Session file: present", sources)
@@ -216,6 +227,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             before_revision = store.read_snapshot().revision
 
             handoff = export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            context_index = export_context_index_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             impact = export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             sources = export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
@@ -223,11 +235,17 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             validation = export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             self.assertIn("# Handoff", handoff)
+            self.assertIn("# Context Index", context_index)
             self.assertIn("# Impact", impact)
             self.assertIn("# Status", status)
             self.assertIn("# Sources", sources)
             self.assertIn("# Return Map", return_map)
             self.assertIn("# Validation", validation)
+            for output in (handoff, context_index, impact, status, sources, return_map, validation):
+                self.assertIn(
+                    "Validation basis: persisted canonical record only; exports do not rerun validate",
+                    output,
+                )
             self.assertEqual(before_revision, store.read_snapshot().revision)
             self.assertEqual(before_state, store.state_path.read_text(encoding="utf-8"))
             self.assertEqual(before_session, store.session_path.read_text(encoding="utf-8"))
@@ -236,21 +254,16 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             run_init(root, None)
-            store = StateStore(root)
-            store.update_checkpoint(
-                {
-                    "goal": "Goal",
-                    "summary": "Summary",
-                    "next_step": "Next",
-                    "constraints": [],
-                }
-            )
+            store, _ = seed_checkpointed_runtime(root)
             store.open_session("alice")
             before_state = store.state_path.read_text(encoding="utf-8")
             before_session = store.session_path.read_text(encoding="utf-8")
 
             with self.assertRaises(HandoffExportError):
                 write_handoff_markdown(root, ".cerebro/blocked.md")
+
+            with self.assertRaises(ContextIndexExportError):
+                write_context_index_markdown(root, ".cerebro/blocked.md")
 
             with self.assertRaises(ImpactExportError):
                 write_impact_markdown(root, ".cerebro/blocked.md")
@@ -269,6 +282,110 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             self.assertEqual(before_state, store.state_path.read_text(encoding="utf-8"))
             self.assertEqual(before_session, store.session_path.read_text(encoding="utf-8"))
+
+    def test_export_commands_reject_runtime_output_paths_by_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            seed_checkpointed_runtime(root)
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+
+            for command, failure_code in (
+                ("handoff-export", "handoff_export_failed"),
+                ("context-index-export", "context_index_export_failed"),
+                ("impact-export", "impact_export_failed"),
+                ("sources-export", "sources_export_failed"),
+                ("status-export", "status_export_failed"),
+                ("validation-export", "validation_export_failed"),
+                ("return-map-export", "return_map_export_failed"),
+            ):
+                with self.subTest(command=command):
+                    result = subprocess.run(
+                        [sys.executable, "-m", "cli.main", command, "--out", ".cerebro/blocked.md"],
+                        cwd=root,
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertIn(failure_code, result.stdout)
+
+    def test_export_commands_reject_registered_source_output_paths_by_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            store.update_checkpoint(
+                {
+                    "goal": "Goal",
+                    "summary": "Summary",
+                    "next_step": "Next",
+                    "constraints": [],
+                }
+            )
+            store.validate_state()
+            before_tracked = tracked.read_text(encoding="utf-8")
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+
+            for command, failure_code in (
+                ("handoff-export", "handoff_export_failed"),
+                ("context-index-export", "context_index_export_failed"),
+                ("impact-export", "impact_export_failed"),
+                ("sources-export", "sources_export_failed"),
+                ("status-export", "status_export_failed"),
+                ("validation-export", "validation_export_failed"),
+                ("return-map-export", "return_map_export_failed"),
+            ):
+                with self.subTest(command=command):
+                    result = subprocess.run(
+                        [sys.executable, "-m", "cli.main", command, "--out", "tracked.txt"],
+                        cwd=root,
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertIn(failure_code, result.stdout)
+                    self.assertEqual(before_tracked, tracked.read_text(encoding="utf-8"))
+
+    def test_export_commands_fail_explicitly_when_output_target_is_an_existing_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            seed_checkpointed_runtime(root)
+            (root / "exports").mkdir()
+            env = os.environ.copy()
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"
+
+            for command, failure_code in (
+                ("handoff-export", "handoff_export_failed"),
+                ("context-index-export", "context_index_export_failed"),
+                ("impact-export", "impact_export_failed"),
+                ("sources-export", "sources_export_failed"),
+                ("status-export", "status_export_failed"),
+                ("validation-export", "validation_export_failed"),
+                ("return-map-export", "return_map_export_failed"),
+            ):
+                with self.subTest(command=command):
+                    result = subprocess.run(
+                        [sys.executable, "-m", "cli.main", command, "--out", "exports"],
+                        cwd=root,
+                        env=env,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertIn(failure_code, result.stdout)
+                    self.assertIn("failed to write output file", result.stdout)
+                    self.assertNotIn("internal_error", result.stdout)
 
     def test_exports_do_not_leak_source_body_in_shared_fixture(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -289,6 +406,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             for output in (
                 export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
+                export_context_index_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
                 export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00"),
@@ -339,6 +457,7 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             self.assertIn("source_hash_mismatch", second_analyze.stdout)
 
             handoff = export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+            context_index = export_context_index_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             impact = export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             status = export_status_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
             sources = export_sources_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
@@ -346,11 +465,13 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
             validation = export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             self.assertIn("Validation: fail", handoff)
+            self.assertIn("- Validation: fail", context_index)
             self.assertIn("- Validation: fail", impact)
             self.assertIn("- Validation: fail", status)
             self.assertIn("- Validation: fail", sources)
             self.assertIn("- Validation: fail", return_map)
             self.assertIn("- Validation: fail", validation)
+            self.assertIn("## Validation Details", context_index)
             self.assertIn("## Validation Details", impact)
             self.assertIn("## Validation Details", status)
             self.assertIn("## Validation Details", return_map)
@@ -365,6 +486,9 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             with self.assertRaises(HandoffExportError):
                 export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            with self.assertRaises(ContextIndexExportError):
+                export_context_index_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             with self.assertRaises(ImpactExportError):
                 export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
@@ -392,6 +516,9 @@ class ReadOnlyExtensionContractTests(unittest.TestCase):
 
             with self.assertRaises(HandoffExportError):
                 export_handoff_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            with self.assertRaises(ContextIndexExportError):
+                export_context_index_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             with self.assertRaises(ImpactExportError):
                 export_impact_markdown(root, exported_at="2026-04-11T12:00:00+00:00")

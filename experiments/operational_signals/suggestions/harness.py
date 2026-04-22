@@ -72,6 +72,8 @@ def _normalize_case(raw: Any) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise DatasetError("each case must be a table")
     case_id = _require_non_empty_string(raw.get("id"), "id")
+    source_path_raw = raw.get("source_path", case_id)
+    source_path = _require_non_empty_string(source_path_raw, "source_path")
     label = _require_non_empty_string(raw.get("label"), "label")
     if label not in ALLOWED_LABELS:
         raise DatasetError(f"unsupported label for {case_id}: {label!r}")
@@ -88,6 +90,9 @@ def _normalize_case(raw: Any) -> dict[str, Any]:
     exports_text = raw.get("exports_text")
     if exports_text is not None and not isinstance(exports_text, str):
         raise DatasetError(f"{case_id}: exports_text must be a string")
+    count_in_metrics = raw.get("count_in_metrics", True)
+    if not isinstance(count_in_metrics, bool):
+        raise DatasetError(f"{case_id}: count_in_metrics must be a boolean")
     surface_fields: dict[str, str] = {}
     for field in ("readme_text", "system_state_text", "opportunity_map_text", "phase_closure_text"):
         value = raw.get(field)
@@ -99,11 +104,13 @@ def _normalize_case(raw: Any) -> dict[str, Any]:
             raise DatasetError(f"{case_id}: text or at least one *_text field is required")
     return {
         "id": case_id,
+        "source_path": source_path,
         "label": label,
         "label_reason": label_reason.strip(),
         "text": text_value if isinstance(text_value, str) else "",
         "expected_confidence": expected_confidence,
         "exports_text": exports_text if isinstance(exports_text, str) else "",
+        "count_in_metrics": count_in_metrics,
         **surface_fields,
     }
 
@@ -116,7 +123,7 @@ def _apply_rule(rule: RuleCallable, case: dict[str, Any]) -> "Suggestion | None"
     if "case" in sig.parameters:
         return rule(case=case, now=FIXED_EVAL_TIMESTAMP)
     return rule(
-        source_artifact=case["id"],
+        source_artifact=case["source_path"],
         text=case["text"],
         project_context="dataset",
         now=FIXED_EVAL_TIMESTAMP,
@@ -129,6 +136,7 @@ def evaluate_dataset(
 ) -> dict[str, Any]:
     cases = dataset if dataset is not None else load_dataset()
     tp = fp = tn = fn = 0
+    excluded_cases = 0
     confidence_matches = 0
     confidence_required = 0
     per_case: list[dict[str, Any]] = []
@@ -137,16 +145,19 @@ def evaluate_dataset(
         expected_positive = case["label"] == "positive"
         suggestion = _apply_rule(rule, case)
         actual_positive = suggestion is not None
-        outcome = _outcome_label(expected_positive, actual_positive)
-
-        if outcome == "tp":
-            tp += 1
-        elif outcome == "fp":
-            fp += 1
-        elif outcome == "tn":
-            tn += 1
+        if case["count_in_metrics"]:
+            outcome = _outcome_label(expected_positive, actual_positive)
+            if outcome == "tp":
+                tp += 1
+            elif outcome == "fp":
+                fp += 1
+            elif outcome == "tn":
+                tn += 1
+            else:
+                fn += 1
         else:
-            fn += 1
+            outcome = "excluded"
+            excluded_cases += 1
 
         confidence_expected = case.get("expected_confidence")
         confidence_actual = suggestion.confidence if suggestion is not None else None
@@ -163,6 +174,7 @@ def evaluate_dataset(
                 "expected_suggestion": expected_positive,
                 "actual_suggestion": actual_positive,
                 "outcome": outcome,
+                "count_in_metrics": case["count_in_metrics"],
                 "expected_confidence": confidence_expected,
                 "actual_confidence": confidence_actual,
                 "suggestion": suggestion_as_dict(suggestion) if suggestion is not None else None,
@@ -175,7 +187,9 @@ def evaluate_dataset(
     f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) else 0.0
 
     metrics = {
+        "dataset_cases": len(cases),
         "total_cases": total,
+        "excluded_cases": excluded_cases,
         "tp": tp,
         "fp": fp,
         "tn": tn,

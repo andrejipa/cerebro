@@ -32,7 +32,7 @@ def load_projects() -> list[dict[str, str]]:
 
 def register_or_update_project(root: Path) -> list[dict[str, str]]:
     """Register a project root or refresh its metadata, then persist it atomically."""
-    resolved_root = root.expanduser().resolve()
+    resolved_root = _validate_project_root(root)
     timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
     entry = {
         "name": resolved_root.name or str(resolved_root),
@@ -59,9 +59,18 @@ def save_projects(projects: list[dict[str, str]]) -> None:
     authoritative over the runtime root, but concurrent writers still need
     serialization so updates are not silently lost.
     """
+    validated_projects = []
+    for item in projects:
+        validated_projects.append(
+            {
+                "name": item["name"],
+                "path": str(_validate_project_root(Path(item["path"]))),
+                "last_used": item["last_used"],
+            }
+        )
     path = registry_path()
     with _project_registry_lock(path):
-        _save_projects_unlocked(path, projects)
+        _save_projects_unlocked(path, validated_projects)
 
 
 def _load_projects_unlocked(path: Path) -> list[dict[str, str]]:
@@ -109,11 +118,20 @@ def _project_registry_lock(path: Path, *, timeout_seconds: float = 5.0, poll_sec
             time.sleep(poll_seconds)
         except OSError as exc:
             raise ProjectRegistryError(f"failed to acquire project registry lock: {lock_path}") from exc
+    body_error: Exception | None = None
     try:
         os.close(lock_fd)
         yield
+    except Exception as exc:
+        body_error = exc
+        raise
     finally:
-        lock_path.unlink(missing_ok=True)
+        try:
+            lock_path.unlink(missing_ok=True)
+        except OSError as exc:
+            if body_error is None:
+                raise ProjectRegistryError(f"failed to release project registry lock: {lock_path}") from exc
+            raise ProjectRegistryError(f"{body_error}; failed to release project registry lock: {lock_path}") from exc
 
 
 def _normalize_projects(data: object, path: Path) -> list[dict[str, str]]:
@@ -139,6 +157,13 @@ def _normalize_projects(data: object, path: Path) -> list[dict[str, str]]:
             }
         )
     return projects
+
+
+def _validate_project_root(root: Path) -> Path:
+    resolved_root = root.expanduser().resolve()
+    if not resolved_root.exists() or not resolved_root.is_dir():
+        raise ProjectRegistryError(f"project root is invalid: {resolved_root}")
+    return resolved_root
 
 
 def _render_projects_toml(projects: list[dict[str, str]]) -> str:

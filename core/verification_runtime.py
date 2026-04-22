@@ -11,7 +11,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from core.agent_runtime import MAX_VERIFICATION_CHECKS, build_command_registry_map
-from core.command_sandbox import capture_tree_manifest, prepare_project_sandbox, summarize_manifest_diff
+from core.command_sandbox import (
+    capture_tree_manifest,
+    has_meaningful_manifest_change,
+    prepare_project_sandbox,
+    summarize_manifest_diff,
+)
 from core.execution_policy import ExecutionPolicyError, ensure_command_allowed
 from core.state_store import SESSION_CLAIMS_DIR_ENV_VAR, SESSION_LIVE_PROOFS_DIR_ENV_VAR, StateStoreError
 
@@ -47,6 +52,96 @@ def _artifact_relpath(*parts: str) -> str:
 
 def _sha256_text(content: str) -> str:
     return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def _guarded_runtime_relative_paths(root: Path, snapshots: list[dict]) -> set[str]:
+    guarded: set[str] = set()
+    root_resolved = root.resolve()
+    for snapshot in snapshots:
+        if not isinstance(snapshot, dict):
+            continue
+        path = snapshot.get("path")
+        if not isinstance(path, Path):
+            continue
+        try:
+            relative = path.resolve().relative_to(root_resolved).as_posix()
+        except ValueError:
+            continue
+        guarded.add(relative)
+    return guarded
+
+
+def _capture_live_project_manifest(
+    root: Path,
+    *,
+    ignored_prefixes: tuple[str, ...] = (),
+    ignored_relatives: set[str] | None = None,
+) -> dict[str, tuple]:
+    ignored = ignored_relatives or set()
+    manifest: dict[str, tuple] = {}
+    for relative, marker in capture_tree_manifest(root).items():
+        if relative in ignored:
+            continue
+        if any(relative == prefix or relative.startswith(f"{prefix}/") for prefix in ignored_prefixes):
+            continue
+        manifest[relative] = marker
+    return manifest
+
+
+def _manifest_changed_paths(before: dict[str, tuple], after: dict[str, tuple]) -> list[str]:
+    changed: list[str] = []
+    for relative in sorted(set(before).union(after)):
+        if has_meaningful_manifest_change(before.get(relative), after.get(relative)):
+            changed.append(relative)
+    return changed
+
+
+def _remove_live_project_path(path: Path) -> None:
+    if not path.exists() and not path.is_symlink():
+        return
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+        return
+    path.unlink()
+
+
+def _restore_live_project_changes(
+    snapshot_root: Path,
+    live_root: Path,
+    changed_paths: list[str],
+) -> list[tuple[str, OSError]]:
+    candidates = [relative for relative in changed_paths if relative != "."]
+    errors: list[tuple[str, OSError]] = []
+
+    for relative in sorted(candidates, key=lambda item: (item.count("/"), item), reverse=True):
+        target = live_root / relative
+        try:
+            _remove_live_project_path(target)
+        except OSError as exc:
+            errors.append((relative, exc))
+
+    for relative in sorted(candidates, key=lambda item: (item.count("/"), item)):
+        source = snapshot_root / relative
+        target = live_root / relative
+        try:
+            if source.is_dir():
+                target.mkdir(parents=True, exist_ok=True)
+            elif source.exists():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, target)
+        except OSError as exc:
+            errors.append((relative, exc))
+
+    return errors
+
+
+def _format_restore_errors(errors: list[tuple[str, OSError]]) -> str:
+    if not errors:
+        return ""
+    preview = "; ".join(f"{relative}: {exc}" for relative, exc in errors[:3])
+    if len(errors) > 3:
+        preview = f"{preview}; +{len(errors) - 3} more"
+    return preview
 
 
 def _lookup_host_env(base_env: dict[str, str], key: str) -> str:
@@ -349,9 +444,13 @@ def run_verification_commands(
 
     run_id = f"verify-{_timestamp_now().replace(':', '-').replace('+00:00', 'Z')}"
     run_dir: Path | None = None
+    restore_dir = None
     try:
         sandbox_dir, sandbox_root = prepare_project_sandbox(root)
+        restore_dir, restore_root = prepare_project_sandbox(root)
     except OSError as exc:
+        if restore_dir is not None:
+            restore_dir.cleanup()
         detail = str(exc).strip() or exc.__class__.__name__
         message = f"failed to prepare verification sandbox: {detail}"
         _record_verification_preflight_failure_event(
@@ -374,6 +473,13 @@ def run_verification_commands(
         }
     baseline_manifest = capture_tree_manifest(sandbox_root)
     guarded_runtime_files = store.capture_verify_authority_guard()
+    ignored_live_prefixes = (".cerebro/artifacts/verification",)
+    ignored_live_relatives = _guarded_runtime_relative_paths(root, guarded_runtime_files)
+    baseline_live_project_manifest = _capture_live_project_manifest(
+        root,
+        ignored_prefixes=ignored_live_prefixes,
+        ignored_relatives=ignored_live_relatives,
+    )
     host_env = os.environ.copy()
     artifact_redactions = _collect_verify_artifact_redactions(host_env)
 
@@ -445,6 +551,28 @@ def run_verification_commands(
                 baseline_manifest,
                 capture_tree_manifest(sandbox_root),
             )
+            live_project_manifest = _capture_live_project_manifest(
+                root,
+                ignored_prefixes=ignored_live_prefixes,
+                ignored_relatives=ignored_live_relatives,
+            )
+            live_project_changed_paths = _manifest_changed_paths(
+                baseline_live_project_manifest,
+                live_project_manifest,
+            )
+            live_project_mutation_summary = summarize_manifest_diff(
+                baseline_live_project_manifest,
+                live_project_manifest,
+            )
+            live_project_restore_errors = (
+                _restore_live_project_changes(
+                    restore_root,
+                    root,
+                    live_project_changed_paths,
+                )
+                if live_project_changed_paths
+                else []
+            )
             authority_mutation_summary = store.restore_verify_authority_guard_if_changed(guarded_runtime_files)
             stdout_text = _redact_verify_artifact_text(result.stdout, artifact_redactions)
             stderr_text = _redact_verify_artifact_text(result.stderr, artifact_redactions)
@@ -465,6 +593,15 @@ def run_verification_commands(
                 if mutation_summary:
                     failure_reasons.append(
                         f"verify command mutated the observed sandbox state: {mutation_summary}"
+                    )
+                if live_project_mutation_summary:
+                    failure_reasons.append(
+                        f"verify command mutated the live project outside the sandbox: {live_project_mutation_summary}"
+                    )
+                if live_project_restore_errors:
+                    failure_reasons.append(
+                        "failed to restore the live project after verify mutation: "
+                        + _format_restore_errors(live_project_restore_errors)
                     )
                 if authority_mutation_summary:
                     failure_reasons.append(authority_mutation_summary)
@@ -491,6 +628,15 @@ def run_verification_commands(
                 failure_reasons.append(
                     f"verify command mutated the observed sandbox state: {mutation_summary}"
                 )
+            if live_project_mutation_summary:
+                failure_reasons.append(
+                    f"verify command mutated the live project outside the sandbox: {live_project_mutation_summary}"
+                )
+            if live_project_restore_errors:
+                failure_reasons.append(
+                    "failed to restore the live project after verify mutation: "
+                    + _format_restore_errors(live_project_restore_errors)
+                )
             if authority_mutation_summary:
                 failure_reasons.append(authority_mutation_summary)
             checks.append(
@@ -516,6 +662,7 @@ def run_verification_commands(
                     break
     finally:
         sandbox_dir.cleanup()
+        restore_dir.cleanup()
 
     return {
         "required_command_ids": required_command_ids,

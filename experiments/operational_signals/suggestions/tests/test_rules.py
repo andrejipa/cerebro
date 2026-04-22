@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import inspect
+import os
+from pathlib import Path
 import unittest
 
 from experiments.operational_signals.suggestions import rules as rules_module
@@ -13,10 +15,12 @@ from experiments.operational_signals.suggestions.rules import (
     detect_current_surface_drift,
     detect_export_surface_gap,
     detect_stale_system_state,
+    detect_supersedes_mechanical_metadata,
     extract_current_surface_counts,
     extract_required_export_anchors,
     extract_suite_numbers_by_section,
 )
+from experiments.operational_signals.suggestions.tests._workspace_temp import workspace_tempdir
 
 
 FIXED_NOW = datetime(2026, 4, 20, 0, 0, 0, tzinfo=timezone.utc)
@@ -112,6 +116,21 @@ class DetectBrokenCanonicalRefsTests(unittest.TestCase):
             )
         )
 
+    def test_valid_link_is_silent_outside_repo_cwd(self) -> None:
+        original_cwd = Path.cwd()
+        with workspace_tempdir() as temp_root:
+            os.chdir(temp_root)
+            try:
+                self.assertIsNone(
+                    detect_broken_canonical_refs(
+                        source_artifact="docs/operations/BROKEN_REFS_TRIPWIRE_MANUAL.md",
+                        text="See [state](SYSTEM_STATE.md).",
+                        now=FIXED_NOW,
+                    )
+                )
+            finally:
+                os.chdir(original_cwd)
+
     def test_external_mailto_and_fragment_only_refs_are_ignored(self) -> None:
         self.assertIsNone(
             detect_broken_canonical_refs(
@@ -200,6 +219,15 @@ class DetectBrokenCanonicalRefsTests(unittest.TestCase):
             )
         )
 
+    def test_sibling_path_that_only_shares_prefix_is_out_of_scope(self) -> None:
+        self.assertIsNone(
+            detect_broken_canonical_refs(
+                source_artifact="docs/operationsX/BROKEN_REFS_TRIPWIRE_MANUAL.md",
+                text="See [ghost](DOES_NOT_EXIST.md).",
+                now=FIXED_NOW,
+            )
+        )
+
     def test_contract_guards_keep_rule_outside_core_and_cli(self) -> None:
         module_source = inspect.getsource(rules_module)
         rule_source = inspect.getsource(rules_module.detect_broken_canonical_refs)
@@ -230,7 +258,7 @@ class DetectCurrentSurfaceDriftTests(unittest.TestCase):
             "id": "surface-002",
             "readme_text": "# README\n\n- Last suite result: `700` tests\n",
             "system_state_text": "## Current Snapshot\n\n- Last suite result: `705` tests\n",
-            "opportunity_map_text": "## Current Snapshot\n\n- Last suite result: `701` tests\n",
+            "opportunity_map_text": "## Current Snapshot\n\n- Last suite result: `700` tests\n",
             "phase_closure_text": "## Closure\n\n- Last suite result: `703` tests\n",
         }
         suggestion = detect_current_surface_drift(case=case, now=FIXED_NOW)
@@ -240,10 +268,8 @@ class DetectCurrentSurfaceDriftTests(unittest.TestCase):
         self.assertEqual(
             extract_current_surface_counts(case),
             {
-                "readme_text": 700,
                 "system_state_text": 705,
-                "opportunity_map_text": 701,
-                "phase_closure_text": 703,
+                "opportunity_map_text": 700,
             },
         )
 
@@ -297,13 +323,170 @@ class DetectCurrentSurfaceDriftTests(unittest.TestCase):
         }
         suggestion = detect_current_surface_drift(case=case, now=FIXED_NOW)
         assert suggestion is not None
-        self.assertIn("readme_text_suite_count=720", suggestion.supporting_signals)
         self.assertIn("system_state_text_suite_count=730", suggestion.supporting_signals)
         self.assertIn("opportunity_map_text_suite_count=725", suggestion.supporting_signals)
+        self.assertNotIn("readme_text_suite_count=720", suggestion.supporting_signals)
+
+    def test_readme_and_phase_closure_are_ignored_as_live_surface_sources(self) -> None:
+        case = {
+            "id": "surface-008",
+            "readme_text": "# README\n\n- Last suite result: `610` tests\n",
+            "system_state_text": "## Current Snapshot\n\n- Last suite result: `730` tests\n",
+            "opportunity_map_text": "## Current Snapshot\n\n- Last suite result: `730` tests\n",
+            "phase_closure_text": "## Closure\n\n- Last suite result: `605` tests\n",
+        }
+        self.assertEqual(
+            extract_current_surface_counts(case),
+            {
+                "system_state_text": 730,
+                "opportunity_map_text": 730,
+            },
+        )
+        self.assertIsNone(detect_current_surface_drift(case=case, now=FIXED_NOW))
 
     def test_contract_guards_keep_rule_outside_core_cli_and_dot_cerebro(self) -> None:
         module_source = inspect.getsource(rules_module)
         rule_source = inspect.getsource(rules_module.detect_current_surface_drift)
+        self.assertNotRegex(module_source, r"(^|\n)\s*(from|import)\s+core\b")
+        self.assertNotRegex(module_source, r"(^|\n)\s*(from|import)\s+cli\b")
+        self.assertNotIn("write_text(", rule_source)
+
+
+class DetectSupersedesMechanicalMetadataTests(unittest.TestCase):
+    def test_emits_on_supersedes_token_without_nearby_rationale(self) -> None:
+        suggestion = detect_supersedes_mechanical_metadata(
+            source_artifact="exports/status_export/task-019.md",
+            text=(
+                "- task task-019: id=cons-002; winner=approach-b; supersedes=cons-001; "
+                "compared=approach-a, approach-b"
+            ),
+            now=FIXED_NOW,
+        )
+        self.assertIsInstance(suggestion, Suggestion)
+        assert suggestion is not None
+        self.assertEqual(suggestion.suggested_failure_mode, "CONTEXT_AMBIGUOUS")
+        self.assertEqual(suggestion.confidence, "low")
+        self.assertIn("ambiguous_token=supersedes=cons-001", suggestion.supporting_signals)
+        self.assertIn("missing_context=rationale", suggestion.supporting_signals)
+        self.assertEqual(suggestion.reason_flags, ("mechanical_supersedes_metadata",))
+
+    def test_stale_record_without_winner_or_rationale_emits_high(self) -> None:
+        suggestion = detect_supersedes_mechanical_metadata(
+            source_artifact="exports/status_export/recent-events.md",
+            text=(
+                "stale_parallel_approach_consolidation_record | subject=task:task-021 | "
+                "consolidation=cons-001 | target=current=cons-002"
+            ),
+            now=FIXED_NOW,
+        )
+        assert suggestion is not None
+        self.assertEqual(suggestion.confidence, "high")
+        self.assertIn(
+            "ambiguous_token=stale_parallel_approach_consolidation_record",
+            suggestion.supporting_signals,
+        )
+        self.assertIn("missing_context=winner,rationale", suggestion.supporting_signals)
+
+    def test_contextualized_status_export_fragment_is_silent(self) -> None:
+        self.assertIsNone(
+            detect_supersedes_mechanical_metadata(
+                source_artifact="exports/status_export/task-019.md",
+                text="""
+- task task-019: id=cons-002; winner=approach-b (approach B); supersedes=cons-001; compared=approach-a, approach-b; rejected=approach-a
+  basis: lower rollback cost; stronger verify coverage
+  decision: selected approach B after comparing reversibility and verification cost
+""",
+                now=FIXED_NOW,
+            )
+        )
+
+    def test_conceptual_prose_is_silent(self) -> None:
+        self.assertIsNone(
+            detect_supersedes_mechanical_metadata(
+                source_artifact="docs/operations/PROJECT_OS_BACKLOG.md",
+                text="The operator must explicitly supersede the current head after the review.",
+                now=FIXED_NOW,
+            )
+        )
+
+    def test_docs_inline_code_examples_are_stripped_before_scanning(self) -> None:
+        self.assertIsNone(
+            detect_supersedes_mechanical_metadata(
+                source_artifact="docs/operations/SUPERSEDES_TRIPWIRE_MANUAL.md",
+                text="""
+The rule documents `supersedes=cons-001` as an example.
+
+```text
+stale_parallel_approach_consolidation_record | target=current=cons-002
+```
+""",
+                now=FIXED_NOW,
+            )
+        )
+
+    def test_out_of_scope_source_is_silent(self) -> None:
+        self.assertIsNone(
+            detect_supersedes_mechanical_metadata(
+                source_artifact="tests/test_status_export.py",
+                text='self.assertIn("supersedes_consolidation_id", payload)',
+                now=FIXED_NOW,
+            )
+        )
+
+    def test_json_artifact_is_deferred_until_structured_support_exists(self) -> None:
+        self.assertIsNone(
+            detect_supersedes_mechanical_metadata(
+                source_artifact="exports/status_export/status.json",
+                text='{"winner_id":"approach-b","supersedes_consolidation_id":"cons-001"}',
+                now=FIXED_NOW,
+            )
+        )
+
+    def test_confidence_tier_follows_ambiguous_token_count(self) -> None:
+        medium = detect_supersedes_mechanical_metadata(
+            source_artifact="exports/status_export/batch-compare.md",
+            text="""
+- task task-020: id=cons-010; winner=approach-a; supersedes=cons-009
+- task task-021: id=cons-011; winner=approach-c; supersedes=cons-010
+""",
+            now=FIXED_NOW,
+        )
+        high = detect_supersedes_mechanical_metadata(
+            source_artifact="exports/status_export/multi-subject.txt",
+            text="""
+- task task-031: id=cons-101; winner=approach-a; supersedes=cons-100
+- task task-032: id=cons-102; winner=approach-b; supersedes=cons-101
+- task task-033: id=cons-103; winner=approach-c; supersedes=cons-102
+""",
+            now=FIXED_NOW,
+        )
+        assert medium is not None and high is not None
+        self.assertEqual(medium.confidence, "medium")
+        self.assertEqual(high.confidence, "high")
+
+    def test_ids_stay_unique_when_paths_share_truncated_fragment(self) -> None:
+        first = detect_supersedes_mechanical_metadata(
+            source_artifact="exports/status_export/recent-events.txt",
+            text=(
+                "stale_parallel_approach_consolidation_record | subject=task:task-021 | "
+                "consolidation=cons-001 | target=current=cons-002"
+            ),
+            now=FIXED_NOW,
+        )
+        second = detect_supersedes_mechanical_metadata(
+            source_artifact="exports/status_export/recent-events-high.md",
+            text=(
+                "stale_parallel_approach_consolidation_record | subject=task:task-022 | "
+                "consolidation=cons-050 | target=current=cons-051"
+            ),
+            now=FIXED_NOW,
+        )
+        assert first is not None and second is not None
+        self.assertNotEqual(first.id, second.id)
+
+    def test_contract_guards_keep_rule_outside_core_cli_and_writes(self) -> None:
+        module_source = inspect.getsource(rules_module)
+        rule_source = inspect.getsource(rules_module.detect_supersedes_mechanical_metadata)
         self.assertNotRegex(module_source, r"(^|\n)\s*(from|import)\s+core\b")
         self.assertNotRegex(module_source, r"(^|\n)\s*(from|import)\s+cli\b")
         self.assertNotIn("write_text(", rule_source)

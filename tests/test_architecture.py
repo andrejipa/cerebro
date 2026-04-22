@@ -1580,6 +1580,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
             "import-context",
             "checkpoint",
             "plan",
+            "residuals-view",
             "resume",
             "rollback",
             "session-discard",
@@ -1591,6 +1592,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
             "validation-export",
             "validate",
             "verify",
+            "worktree",
         }
 
         self.assertEqual(set(subparsers.choices), expected)

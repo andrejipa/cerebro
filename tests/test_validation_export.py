@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import subprocess
 import sys
@@ -14,9 +15,11 @@ from cli.commands.validation_export import run_validation_export
 from core.state_store import StateStore
 from extensions.validation_export.exporter import (
     ValidationExportError,
+    export_validation_json,
     export_validation_markdown,
     write_validation_markdown,
 )
+from tests.runtime_fixtures import seed_registered_source
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -46,6 +49,7 @@ class ValidationExportTests(unittest.TestCase):
             self.assertIn("# Validation", output)
             self.assertIn("- Exported at: 2026-04-11T12:00:00+00:00", output)
             self.assertIn("- Validation: ok", output)
+            self.assertIn("- Validation basis: persisted canonical record only; exports do not rerun validate", output)
             self.assertIn("- Risk: low", output)
             self.assertIn("- Session file: present", output)
             self.assertIn("- Revision: 2", output)
@@ -53,6 +57,44 @@ class ValidationExportTests(unittest.TestCase):
             self.assertIn("- Validated at:", output)
             self.assertIn("- Validation details: 0", output)
         self.assertIn("## Validation Details", output)
+
+    def test_export_json_contains_expected_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("secret-content", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            store.update_checkpoint(
+                {
+                    "goal": "Ship fix",
+                    "summary": "Checkpoint is ready.",
+                    "next_step": "Open tracked.txt and continue.",
+                    "constraints": ["Do not change API"],
+                }
+            )
+            store.validate_state()
+            store.open_session("alice")
+
+            payload = export_validation_json(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            self.assertEqual(payload["schema_version"], "1")
+            self.assertEqual(payload["export_kind"], "validation")
+            self.assertEqual(payload["exported_at"], "2026-04-11T12:00:00+00:00")
+            self.assertEqual(payload["revision"], 2)
+            self.assertEqual(len(payload["root_sha256"]), 64)
+            self.assertEqual(payload["payload"]["validation"], "ok")
+            self.assertEqual(
+                payload["payload"]["validation_basis"],
+                "persisted canonical record only; exports do not rerun validate",
+            )
+            self.assertEqual(payload["payload"]["risk"], "low")
+            self.assertEqual(payload["payload"]["session_file"], "present")
+            self.assertEqual(payload["payload"]["registered_sources"], 1)
+            self.assertIsNotNone(payload["payload"]["validated_at"])
+            self.assertEqual(payload["payload"]["details_count"], 0)
+            self.assertEqual(payload["payload"]["details"], [])
 
     def test_export_reports_fail_and_high_risk_for_inconsistent_sources(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -69,6 +111,7 @@ class ValidationExportTests(unittest.TestCase):
             output = export_validation_markdown(root, exported_at="2026-04-11T12:00:00+00:00")
 
             self.assertIn("- Validation: fail", output)
+            self.assertIn("- Validation basis: persisted canonical record only; exports do not rerun validate", output)
             self.assertIn("- Risk: high", output)
             self.assertIn("- Validation details: 1", output)
             self.assertIn("- source_hash_mismatch", output)
@@ -109,6 +152,9 @@ class ValidationExportTests(unittest.TestCase):
             with self.assertRaises(ValidationExportError):
                 export_validation_markdown(root)
 
+            with self.assertRaises(ValidationExportError):
+                export_validation_json(root)
+
     def test_export_does_not_change_revision_or_runtime_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -136,7 +182,7 @@ class ValidationExportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             run_init(root, None)
-            store = StateStore(root)
+            store, _ = seed_registered_source(root)
             store.open_session("alice")
             before_state = store.state_path.read_text(encoding="utf-8")
             before_session = store.session_path.read_text(encoding="utf-8")
@@ -168,6 +214,21 @@ class ValidationExportTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertIn("# Validation", output)
         self.assertIn("## Validation Details", output)
+
+    def test_cli_exports_json_to_stdout(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            store.validate_state()
+            stream = io.StringIO()
+
+            with redirect_stdout(stream):
+                exit_code = run_validation_export(root, type("Args", (), {"out": None, "format": "json"}))
+
+            payload = json.loads(stream.getvalue())
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(payload["export_kind"], "validation")
 
     def test_cli_exports_to_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

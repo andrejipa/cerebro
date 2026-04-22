@@ -1,8 +1,10 @@
 # Weakness Report
 
+Structured residual index: `docs/operations/residuals.toml` is the canonical structured inventory for accepted or blocked residual entries. This report remains the narrative companion and evidence trail; when the two surfaces diverge, reconcile the TOML entry first and then restate the narrative here.
+
 ## Resumo executivo
 
- O Cerebro está operacionalmente estável e a suíte principal segue verde. Nesta sessão, o último débito crítico remanescente do `Grupo 6` foi fechado: approval agora é decidido por efeito destrutivo real ou projetado em `fs.create_file overwrite=true`, não apenas por `kind`. O sentinel sintético `check-state` já havia sido removido do contrato persistido de `verification`, e `verify` já havia deixado de herdar o ambiente amplo do host. Fora disso, a base ainda mostra um padrão claro de dívida concentrada: `StateStore` supercarregado, contratos implícitos entre módulos, e cobertura forte nos fluxos principais mas desigual em alguns helpers e cenários de bootstrap/corrupção.
+ O Cerebro está operacionalmente estável e a suíte principal segue verde. Nesta sessão, o último débito crítico remanescente do `Grupo 6` foi fechado: approval agora é decidido por efeito destrutivo real ou projetado em `fs.create_file overwrite=true`, não apenas por `kind`. O sentinel sintético `check-state` já havia sido removido do contrato persistido de `verification`, e `verify` já havia deixado de herdar o ambiente amplo do host. A auditoria pós-hardening posterior também fechou dois escapes residuais: o boundary direto de `apply_action()` voltou a exigir approval para mutações governadas, e `verify` passou a falhar fechado e restaurar o live workspace quando um comando tenta escrever fora do sandbox descartável. Fora disso, a base ainda mostra um padrão claro de dívida concentrada: `StateStore` supercarregado, contratos implícitos entre módulos, e cobertura forte nos fluxos principais mas desigual em alguns helpers e cenários de bootstrap/corrupção.
 
 ## Achados confirmados pelos debates
 
@@ -32,6 +34,17 @@
   e cristalizado por
   [tests/test_action_runtime.py](</d:/projetos_cli/cerebro/tests/test_action_runtime.py:95>).
   O runtime agora converte falha de persistência de `stdout.txt`/`stderr.txt` em `action_record` canônico com `status == "failed"`, sem deixar o CLI cair em `internal_error`.
+
+- Fechamento da auditoria pós-hardening: o boundary direto de `apply_action()` agora reaplica approval no core para mutações governadas, então `fs.create_file overwrite=true` e `fs.move` destrutivos não conseguem mais bypassar a policy quando o runtime é chamado sem o preflight do CLI.
+  Evidência do fechamento:
+  [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:179>),
+  [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:755>),
+  [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:780>),
+  [core/action_runtime.py](</d:/projetos_cli/cerebro/core/action_runtime.py:825>),
+  [tests/test_action_runtime.py](</d:/projetos_cli/cerebro/tests/test_action_runtime.py:299>),
+  [tests/test_action_runtime.py](</d:/projetos_cli/cerebro/tests/test_action_runtime.py:330>),
+  [tests/test_execution_policy.py](</d:/projetos_cli/cerebro/tests/test_execution_policy.py:62>).
+  Prova operacional: a chamada direta ao runtime agora devolve `approval_required` antes da mutação quando o alvo já existe, enquanto `create` benigno em alvo ausente continua passando sem fatigue nova. A suíte ampla permaneceu verde ao final da auditoria com `704` testes, `0` falhas e `6` skips; `tests.test_architecture` seguiu verde com `51` testes.
 
 ### ALTO
 
@@ -190,6 +203,17 @@
   [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1152>).
   Prova operacional: reproduções manuais com `INV2_SECRET`, `PYTHONIOENCODING` e `HOST-PATH-SEGMENT-SENTINEL` deixaram de reaparecer em `artifacts/verification/...`, inclusive quando o comando tenta derivar apenas o nome do primeiro segmento do `PATH`. O helper mínimo via comando resolvido continua executável, e `SYSTEMDRIVE` saiu do scrub para preservar `C:` legítimo em `stdout/stderr`.
   Residual remanescente: `verify` ainda preserva um subconjunto mínimo de compatibilidade (`COMSPEC`, `PATHEXT`, `SYSTEMDRIVE`, `SYSTEMROOT`, `WINDIR`), mas o caminho original de exfiltração persistida via host env amplo ficou fechado.
+
+- Fechamento da auditoria pós-hardening: `verify` agora detecta mutação do live project fora do sandbox descartável, restaura os caminhos alterados a partir de um snapshot pristino separado e falha fechado em vez de reportar verde com side effect host-side.
+  Evidência do fechamento:
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:57>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:74>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:108>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:450>),
+  [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:568>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1025>),
+  [tests/test_alpha_runtime.py](</d:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1082>).
+  Prova operacional: a reprodução com escrita por path absoluto no workspace real agora retorna `verification_failed`, restaura o conteúdo original do arquivo vivo e continua válida mesmo quando o comando tenta envenenar simultaneamente o arquivo do sandbox e o arquivo real. A suíte ampla permaneceu verde ao final da auditoria com `704` testes, `0` falhas e `6` skips.
 
 - Fechamento desta sessão: `runtime.lock` agora trata probes de PID inválido no Windows (`WinError 87`) como dono inativo, então locks órfãos com owner PID morto passam a ser recuperados em vez de esperar até timeout; o timeout fica explícito apenas para o caso em que o owner PID ainda parece vivo.
   Evidência:

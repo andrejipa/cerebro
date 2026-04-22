@@ -22,11 +22,11 @@ This rule is intentionally narrow:
 
 ## Corpus Used
 
-- `D:/projetos_cli/cerebro/docs/operations/` (`28` markdown files)
-- `D:/projetos_cli/escritorio/IRPF e Caixa Rural` (`202` markdown files)
-- `D:/projetos_cli/estoque_pioneira` (`579` markdown files)
-- `D:/projetos_cli/pessoais/rpg_caminhada` (`1203` markdown files)
-- `D:/projetos_cli/Portal/Resolução Humaita Codex` (`2494` markdown files)
+- `docs/operations/` (`28` markdown files)
+- `IRPF e Caixa Rural` (`202` markdown files)
+- `estoque_pioneira` (`579` markdown files)
+- `rpg_caminhada` (`1203` markdown files)
+- `Resolução Humaita Codex` (`2494` markdown files)
 
 ## Observed Suggestions
 
@@ -37,7 +37,7 @@ This rule is intentionally narrow:
 
 - `docs/operations/BROKEN_REFS_TRIPWIRE_MANUAL.md`
   - confidence: `low`
-  - signal: `broken_ref=D:/projetos_cli/cerebro/docs/operations/path`
+  - signal: `broken_ref=docs/operations/path`
   - interpretation: the manual currently contains a literal markdown example (`[text](path)`) that resolves as a broken local link inside canonical scope
 
 ## Interpretation

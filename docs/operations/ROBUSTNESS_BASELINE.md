@@ -1,6 +1,7 @@
 # Robustness Baseline
 
 This document records the permanent robustness baseline confirmed by the adversarial revalidation completed on April 11, 2026.
+Updated on April 19, 2026 after the post-hardening audit.
 
 No critical or moderate failures were found in that cycle.
 The baseline below is now part of the expected contract for future evolution.
@@ -76,6 +77,8 @@ The baseline below is now part of the expected contract for future evolution.
 - `verify` proves ownership of the active session before spawning any verification command, so a missing or invalid `session_token` fails closed with no subprocess side effects and no premature verification mutation
 - `verify` also fail-closes when sandbox preparation breaks before the first command, recording `verify_failed` plus a canonical failed verification record instead of aborting without audit evidence
 - `verify` also fail-closes before execution when the selected command set would overflow the real `verification.checks` budget; `state_check` is now persisted separately, so the runtime accepts the full command budget without a synthetic `check-state` slot and still rejects true overflows instead of leaking `invalid_agent_verification_checks`
+- effect-based approval is enforced both at CLI preflight and at the core mutation boundary, so destructive `fs.create_file overwrite=true` and `fs.move` against an existing target fail closed without an approved `approval_id`, while benign create-on-missing-target remains approval-free
+- `verify` now snapshots the live project outside the disposable sandbox, fails closed when a command mutates the live workspace, and restores the changed live paths from a pristine clone before finalizing the failed verification result
 - `runtime.lock` recovers stale owners whose PID probe resolves to “inactive” (`ProcessLookupError`, `errno.ESRCH`, or Windows `WinError 87`) and reserves timeout only for owners that still appear alive
 - `command_registry.commands[*].cwd` is only validated as a non-empty string in `validate_state_data`; the root boundary remains enforced later by `apply` and `verify`, which fail closed when a command `cwd` resolves outside the project
 - `prepare_project_sandbox()` clones the workspace into a disposable tree without mutating the original project, and command-sandbox manifest diffs ignore pure directory `mtime` churn while still surfacing observable file drift
@@ -106,6 +109,7 @@ The baseline below is now part of the expected contract for future evolution.
 - exports do not open a second validation gate and do not attempt runtime repair
 - CLI command names remain canonical; aliases require an explicit architecture decision
 - hardening remains external to the core unless a future concrete gap cannot be stopped by tests and governance
+- `verify` remains a disposable workspace-clone boundary with live-project mutation detection/restoration, not a full host jail; commands can still reference explicit absolute paths, but observable live-project mutation now fails closed and is reverted from a pristine snapshot
 - the current CLI regression layer for `import-context` and `checkpoint` now exercises real `Path.unlink` failure on `session.local.json` and real `os.replace` failure on `state.json` in `tests/test_validate.py`; this baseline still does not claim arbitrary host-level filesystem fault injection beyond those explicit rollback boundaries
 
 ## Permanent Defense Layers

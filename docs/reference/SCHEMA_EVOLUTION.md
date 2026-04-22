@@ -2,7 +2,7 @@
 
 ## Current Policy
 
-- current schema version: `1`
+- current schema version: `2`
 - supported schema versions are defined by the runtime
 - the runtime rejects unsupported schema versions explicitly
 
@@ -17,6 +17,7 @@
 - if `state.json` contains an unsupported version, validation fails
 - no automatic migration is attempted
 - no silent fallback is allowed
+- schema `2` adds the `agent_runtime` block for alpha planning, policy, actions, verification, memory, and audit
 
 ## Future Rule
 

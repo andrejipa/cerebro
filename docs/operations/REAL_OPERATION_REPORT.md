@@ -6,6 +6,7 @@
 ## Scope
 
 This report records real use of Cerebro as a working continuity system, not as an engineering prototype.
+This is a historical record; the role names below are non-canonical labels from the external round, not current runtime roles.
 
 No new capability was added.
 No core change was made.
@@ -14,47 +15,59 @@ No new next-layer work was authorized.
 ## Protocol Discipline
 
 The round was executed under the external agent protocol:
+The role and approval labels in this section are historical descriptions of that round only.
+They are non-canonical for current operation and do not override the current role set or approval model.
 
-- Coordenador de Rodada kept sequence and front ownership explicit.
-- Estressador searched for remaining practical gaps and real friction.
-- Triador de Casos reduced noisy findings before contract review.
-- Avaliador de Evidencia separated demonstrated issues from unproven speculation.
-- Guardião de Contrato classified limits and blocked any move toward new semantics.
-- Corretor made no product changes because no safe improvement was authorized in this phase.
+- Orquestrador kept context, sequence, and closure explicit.
+- Mapeador entered only when the surface was broad or collision-prone.
+- Quebrador searched for remaining practical gaps and real friction.
+- Organizador reduced noisy findings before proof and approval work.
+- Comprovador separated what was demonstrated from what remained only probable or hypothetical.
+- Explorador de Solucoes was used only when multiple plausible paths needed to stay conditional.
+- Avaliador de Risco was used only when the round had material risk or chain effects.
+- Guardião judged what could exist inside the contract before any execution.
+- Executor and Testador stayed subordinate to the approved slice only.
 - Auditor validated operational correctness against the current contract.
-- Visionário separated false incompleteness from real next-layer demand.
-- Validador de Fluxo was used through real subprocess and multi-project operational flow.
+- Planejador preserved residual risk and next-step posture instead of leaving closure implicit.
 
 No role acquired authority over runtime state.
 No role bypassed the canonical flow.
+No role decided canonical context.
+No external tool competed with `analyze`.
 
-## Refined Agent Team Validation
+## Revised Operational Model Validation
 
-After the role model was sharpened, one full external round was executed specifically to validate whether `Triador de Casos` and `Avaliador de Evidencia` add real operational value.
+After real use exposed where the old role wording was still too soft, one full external round was executed to baseline the revised layer-checkpoint model.
+The findings below remain historical evidence from that round.
+References to `Guardião`, `Avaliador de Risco`, and related labels are not current canonical runtime roles or gates.
 
 Raw findings entering the round:
-- missing real-use proof for the two new auxiliary roles
-- board drift relative to the refined protocol
-- no explicit handoff capturing refined-team validation
-- no documentary regression test protecting that proof
-- speculative pressure to add even more specialist roles
+- no mandatory explicit context gate between `cerebro` and `caso`
+- no formal `comprovado` / `provavel` / `hipotese` checkpoint before path exploration
+- no explicit `permitido com aprovacao humana` state in Guardião output
+- tracing still acting like documentation residue instead of required closure
+- pressure to widen rewrites beyond the minimum safe documentary slice
 
 Observed role value:
-- `Triador de Casos` reduced five raw findings to three cases by merging the first three items into one operational-proof case and keeping the role-growth pressure separate as a distinct non-actionable idea.
-- `Avaliador de Evidencia` then marked two cases as demonstrated by repository evidence and one as insufficient-evidence, which prevented Guardião and Corretor from spending effort on ornamental team growth.
-- `Guardião de Contrato` approved only the external-safe slice: board/report/handoff synchronization plus one documentary guardrail.
-- `Corretor` updated only external documentation and tests.
-- `Auditor` validated the architecture slice first and then the full suite.
-- `Visionário` confirmed that the new roles improved noise reduction and proof quality, but did not justify any further team expansion.
+- `Organizador` reduced protocol drift into a small set of executable documentary cases instead of a broad historical rewrite.
+- `Comprovador` marked the protocol gaps as demonstrated by repository evidence and kept broader speculative rewrites out of the safe slice.
+- `Explorador de Solucoes` kept the minimal sync path separate from the more expansive rewrite path instead of turning either path into premature truth.
+- `Avaliador de Risco` confirmed that the minimal sync path had low risk while the broader rewrite path carried unnecessary churn and history-distortion risk.
+- `Guardião` approved only the external-safe slice: roles, protocol, board/report/handoff synchronization, and documentary architecture-test updates.
+- `Executor` updated only external documentation and tests.
+- `Auditor` validated the architecture slice first and then the focused documentation suite.
+- `Planejador` recorded the remaining risk as wording drift rather than another open execution front.
 
 Operational comparison against the previous team shape:
-- less noise reached Guardião because duplicates and adjacent symptoms were grouped first
-- less speculative work reached Corretor because weakly evidenced concerns were filtered earlier
-- round closure was cleaner because the board and handoff now record exactly what the new auxiliary roles proved
+- context ambiguity is now blocked at the door instead of surfacing later as debate
+- evidence quality is now explicit before solution exploration begins
+- human approval is now a formal Guardião state rather than an implied caution note
+- round closure is cleaner because tracing is part of the flow instead of a trailing documentation concern
 
 Result:
-- the refined team improved execution quality in a real round
-- `Triador de Casos` and `Avaliador de Evidencia` are justified as auxiliary roles
+- the revised protocol improved execution clarity without opening a new layer
+- `Avaliador de Risco` is justified as a conditional role, especially in fiscal cases like `Portal`
+- this should be read as a historical conclusion from that validation round, not as current canonical role authority
 - no further permanent role is justified by this validation round
 
 ## Scenarios Executed
@@ -101,6 +114,8 @@ Result:
 - `import-context` confirmed the already chosen canonical files.
 - `analyze` restored a strong operational point even in a noisy, living project.
 - exports remained coherent and stable after interruption and resume.
+- the revised external protocol would treat this class of fiscal work as a natural trigger for `Avaliador de Risco` because multiple paths can carry fiscal and chain-effect consequences.
+- this remained a round-specific historical conclusion, not a live baseline outside the report.
 
 Result:
 - strongest real-world midstream continuity case in this round

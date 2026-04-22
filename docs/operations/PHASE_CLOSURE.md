@@ -1,5 +1,13 @@
 # Phase Closure
 
+## Current Snapshot — 2026-04-22
+
+- Live closure state: `closed`.
+- Freeze posture: no closure item in this file reopens the freeze by itself.
+- Authority note: the sections below are archival closure evidence only unless a current snapshot explicitly promotes something back to live state.
+
+## Historical Closure Record
+
 ## Data e estado final
 
 - Data: 2026-04-16
@@ -546,4 +554,57 @@ O protocolo de referencia para essa reabertura continua sendo o `Formal Resume T
 - `HARDENING ARQUITETURAL CONCLUÍDO.`
 - `Débitos do Grupo 6 fechados com evidência dupla.`
 - `Sistema em estado operacional com policy por efeito.`
+- `Retorne para próxima fase ou novo problema confirmado.`
+
+## Encerramento Formal Da Auditoria Pós-Hardening — 2026-04-19
+
+### Data e estado final
+
+- Data: `2026-04-19`
+- Estado final da auditoria: `closed`
+- Suite final desta auditoria: `704` testes passando, `6` skips
+- Gate arquitetural final: `python -m unittest tests.test_architecture -v` verde com `51` testes
+- `ROBUSTNESS_BASELINE.md`: `atualizado`
+- `COST_TOPOLOGY.md`: `atualizado`
+
+### Contagem de testes da auditoria
+
+- Início desta auditoria: `700`
+- Fim desta auditoria: `704`
+- Delta: `+4`
+
+### Problemas confirmados e corrigidos
+
+- Bypass residual no boundary direto de `apply_action()`:
+  [core/action_runtime.py](</D:/projetos_cli/cerebro/core/action_runtime.py:179>),
+  [core/action_runtime.py](</D:/projetos_cli/cerebro/core/action_runtime.py:755>),
+  [core/action_runtime.py](</D:/projetos_cli/cerebro/core/action_runtime.py:780>),
+  [core/action_runtime.py](</D:/projetos_cli/cerebro/core/action_runtime.py:825>),
+  [tests/test_action_runtime.py](</D:/projetos_cli/cerebro/tests/test_action_runtime.py:299>) e
+  [tests/test_action_runtime.py](</D:/projetos_cli/cerebro/tests/test_action_runtime.py:330>).
+  Critério satisfeito: mutações governadas não conseguem mais contornar approval chamando o runtime sem o preflight do CLI.
+- Escape residual de `verify` no live workspace e restore envenenável:
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:57>),
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:108>),
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:450>),
+  [core/verification_runtime.py](</D:/projetos_cli/cerebro/core/verification_runtime.py:568>),
+  [tests/test_alpha_runtime.py](</D:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1025>) e
+  [tests/test_alpha_runtime.py](</D:/projetos_cli/cerebro/tests/test_alpha_runtime.py:1082>).
+  Critério satisfeito: `verify` falha fechado quando toca o workspace real fora do sandbox e restaura os caminhos vivos a partir de clone pristino separado.
+
+### Problemas descartados com razão
+
+- Import absoluto do repositório real via `sys.path.insert(...)` durante `verify`: investigado e descartado como novo bug corretivo nesta auditoria; reflete o limite já aceito do modelo de clone descartável, não uma regressão silenciosa nova.
+- Evento ou `reason_code` dedicado apenas para live-project guard: investigado e descartado como bloqueador; a trilha auditável atual já preserva a causa e o restore no resultado canônico.
+
+### Timeouts desta sessão
+
+- Nenhum timeout ocorreu na rodada final da auditoria pós-hardening.
+
+### Estado operacional final
+
+- `AUDITORIA PÓS-HARDENING CONCLUÍDA.`
+- `Sistema em estado operacional.`
+- `Policy por efeito verificada. Isolation verificado.`
+- `Contrato de verificação limpo e testado.`
 - `Retorne para próxima fase ou novo problema confirmado.`

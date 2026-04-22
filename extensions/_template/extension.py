@@ -3,6 +3,7 @@
 Do not read runtime JSON directly.
 Do not import from core internals.
 Do not write inside the runtime directory.
+Do not overwrite registered source files through output paths.
 Do not create a second source of truth.
 """
 
@@ -44,6 +45,10 @@ def write_extension_output(root: str | Path, output_path: str | Path) -> Path:
 
     if store.is_runtime_path(target):
         raise ExtensionError(f"output path is reserved for runtime files: {target}")
+    snapshot = store.read_snapshot()
+    registered_source_paths = {(store.root / source.path).resolve() for source in snapshot.sources}
+    if target in registered_source_paths:
+        raise ExtensionError(f"output path is reserved for registered source files: {target}")
 
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(render_extension_output(root), encoding="utf-8", newline="\n")

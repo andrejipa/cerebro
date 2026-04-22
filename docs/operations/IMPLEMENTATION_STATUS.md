@@ -1,10 +1,25 @@
 # Implementation Status — External Cerebro Model
 
+## Current Live Gate — 2026-04-22
+
+- Suite gate: `730` tests, `1` failure, `8` skips via the exact AGENTS-equivalent workspace-local-temp runner
+- Architecture gate: `51` tests, `0` failures
+- Derived `recall_eval` gate: `49` tests, `0` failures in `experiments/recall_eval/tests`
+- Derived `operational_signals` base gate: `31` tests, `0` failures in `experiments/operational_signals/tests`
+- Derived `operational_signals/suggestions` gate: `97` tests, `0` failures in `experiments/operational_signals/suggestions/tests`
+- Canonical-runtime posture: deliberate freeze remains active for new core capability growth
+- Canonical-runtime status: queue clean under freeze; continue only with bounded derived corrective maintenance, docs/governance hardening, or planning-only preparation
+- Derived-track posture:
+  - `experiments/recall_eval/` has been implemented and benchmarked against real corpora; it remains experimental, derived, and not promoted
+  - `experiments/operational_signals/` has been implemented and is ready for opt-in derived use; its initial registry is currently empty, which is the correct state until real insufficiency signals are observed
+
+The per-slice suite counts recorded below remain historical implementation evidence from the moment each slice closed. They do not replace the live suite gate above or the AGENTS-equivalent runner authority for this shell.
+
 ## Hardening Arquitetural — Grupo 6
 
 - Estado do Grupo 6: `encerrado`
 - Prova de parada: `P1-P5` limpa em `2026-04-19`
-- Próximo passo: `nenhum — aguardar Formal Resume Trigger ou novo problema confirmado`
+- Próximo passo: `nenhum para o runtime canônico — operar sob freeze; trilhas derivadas aprovadas permanecem externas e não autoritativas`
 
 - Débito 3: `verify` host-trusting
   - Estado: `fechado`
@@ -74,6 +89,42 @@
     - `validate` e `rollback` reaplicam o mesmo contrato sobre o histórico persistido
     - `python -m unittest discover -s tests -v` -> `700` testes, `0` falhas, `6` skips
     - `python -m unittest tests.test_architecture -v` -> `51` testes, `0` falhas
+
+## Auditoria Pós-Hardening — 2026-04-19
+
+- Estado: `encerrada`
+- Prova de parada: `limpa`
+- Próximo passo: `nenhum para o runtime canônico — operar sob freeze; trilhas derivadas aprovadas permanecem externas e não autoritativas`
+
+- Correção 1: `approval-by-effect` reaplicado no boundary direto do core
+  - Estado: `fechado`
+  - Arquivos alterados:
+    - `core/action_runtime.py:179-187`
+    - `core/action_runtime.py:755-825`
+    - `tests/test_action_runtime.py:299-339`
+    - `tests/test_execution_policy.py:62-172`
+  - Critério satisfeito: `sim`
+  - Evidência:
+    - `apply_action()` volta a exigir approval para mutações governadas mesmo sem o preflight do CLI
+    - `fs.create_file overwrite=true` e `fs.move` destrutivos falham fechados quando chamados diretamente
+    - `create` benigno em alvo ausente continua livre
+
+- Correção 2: `verify` live-project guard + restore pristino
+  - Estado: `fechado`
+  - Arquivos alterados:
+    - `core/verification_runtime.py:57-108`
+    - `core/verification_runtime.py:450-599`
+    - `tests/test_alpha_runtime.py:1025-1080`
+    - `tests/test_alpha_runtime.py:1082-1136`
+  - Critério satisfeito: `sim`
+  - Evidência:
+    - `verify` falha fechado quando um comando tenta escrever no workspace real fora do sandbox
+    - o restore usa clone pristino separado do sandbox de execução, impedindo restore envenenado
+    - o conteúdo vivo é restaurado antes da finalização do resultado `failed`
+
+- Suite da auditoria:
+  - `python -m unittest discover -s tests -v` -> `704` testes, `0` falhas, `6` skips
+  - `python -m unittest tests.test_architecture -v` -> `51` testes, `0` falhas
 
 ## Fatias concluídas
 

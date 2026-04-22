@@ -1008,6 +1008,142 @@ class AlphaRuntimeTests(unittest.TestCase):
             self.assertNotEqual(store.load_state()["checkpoint"]["summary"], "tampered by verify")
             self.assertTrue(store.validate_state()["ok"])
 
+    def test_verify_fails_and_restores_live_workspace_after_absolute_path_write(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            victim = root / "victim.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            victim.write_text("before\n", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            validation = store.validate_state()
+            store.update_agent_plan(
+                {
+                    "goal": "Verify sandbox escape",
+                    "summary": "Verify must fail closed and restore the live project after absolute path tamper.",
+                    "tasks": [
+                        {
+                            "id": "task-001",
+                            "title": "Tamper live workspace",
+                            "status": "ready",
+                            "details": "Tamper live workspace",
+                            "depends_on": [],
+                            "working_set": ["tracked.txt"],
+                            "acceptance_criteria": ["verify fails and restores the live project"],
+                            "action_ids": [],
+                        }
+                    ],
+                    "command_registry": [
+                        {
+                            "id": "cmd-001",
+                            "argv": [
+                                "python",
+                                "-c",
+                                (
+                                    f"from pathlib import Path; "
+                                    f"Path({str(root)!r}).joinpath('victim.txt').write_text('pwned\\n', encoding='utf-8'); "
+                                    "print('ok')"
+                                ),
+                            ],
+                            "cwd": ".",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "read_only",
+                            "risk": "low",
+                            "allow_in_verify": True,
+                        }
+                    ],
+                    "required_command_ids": ["cmd-001"],
+                    "autonomy_level": "A2",
+                    "protected_paths": [".cerebro/**", ".git/**"],
+                    "blocked_command_prefixes": ["rm"],
+                    "approval_required_kinds": ["fs.write_patch"],
+                },
+                validated_revision=validation["revision"],
+            )
+
+            self.assertEqual(run_verify(root, type("Args", (), {"command_id": []})), 1)
+
+            runtime = store.read_agent_runtime()
+            self.assertEqual(runtime["verification"]["status"], "failed")
+            self.assertIn(
+                "verify command mutated the live project outside the sandbox:",
+                runtime["verification"]["checks"][0]["message"],
+            )
+            self.assertIn(
+                "changed victim.txt",
+                runtime["verification"]["checks"][0]["message"],
+            )
+            self.assertEqual(victim.read_text(encoding="utf-8"), "before\n")
+            self.assertTrue(store.validate_state()["ok"])
+
+    def test_verify_restores_live_workspace_from_pristine_snapshot_after_dual_tamper(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            victim = root / "victim.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            victim.write_text("before\n", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            validation = store.validate_state()
+            store.update_agent_plan(
+                {
+                    "goal": "Verify restore integrity",
+                    "summary": "Verify must restore from a pristine snapshot even when sandbox and live files are both tampered.",
+                    "tasks": [
+                        {
+                            "id": "task-001",
+                            "title": "Poison restore source",
+                            "status": "ready",
+                            "details": "Poison restore source",
+                            "depends_on": [],
+                            "working_set": ["tracked.txt"],
+                            "acceptance_criteria": ["verify restores the original live file bytes"],
+                            "action_ids": [],
+                        }
+                    ],
+                    "command_registry": [
+                        {
+                            "id": "cmd-001",
+                            "argv": [
+                                "python",
+                                "-c",
+                                (
+                                    f"from pathlib import Path; "
+                                    "Path('victim.txt').write_text('sandbox\\n', encoding='utf-8'); "
+                                    f"Path({str(root)!r}).joinpath('victim.txt').write_text('live\\n', encoding='utf-8'); "
+                                    "print('ok')"
+                                ),
+                            ],
+                            "cwd": ".",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "read_only",
+                            "risk": "low",
+                            "allow_in_verify": True,
+                        }
+                    ],
+                    "required_command_ids": ["cmd-001"],
+                    "autonomy_level": "A2",
+                    "protected_paths": [".cerebro/**", ".git/**"],
+                    "blocked_command_prefixes": ["rm"],
+                    "approval_required_kinds": ["fs.write_patch"],
+                },
+                validated_revision=validation["revision"],
+            )
+
+            self.assertEqual(run_verify(root, type("Args", (), {"command_id": []})), 1)
+
+            runtime = store.read_agent_runtime()
+            self.assertEqual(runtime["verification"]["status"], "failed")
+            self.assertIn("changed victim.txt", runtime["verification"]["checks"][0]["message"])
+            self.assertEqual(victim.read_text(encoding="utf-8"), "before\n")
+            self.assertTrue(store.validate_state()["ok"])
+
     def test_verify_redirects_session_authority_env_and_scrubs_session_token_for_subprocesses(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir, tempfile.TemporaryDirectory() as claims_dir:
             root = Path(tmp_dir)

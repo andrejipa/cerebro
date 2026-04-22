@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from core.agent_runtime import build_initial_agent_runtime
 from core.schema_policy import CURRENT_SCHEMA_VERSION
 
 SCHEMA_VERSION = CURRENT_SCHEMA_VERSION
 
 ROOT_KEYS = {
+    "agent_runtime",
     "version",
     "revision",
     "sources",
@@ -42,9 +44,11 @@ DETAIL_KEYS = {
 VALID_RESULTS = {"ok", "fail"}
 VALID_SOURCE_ROLES = {"primary", "reference"}
 SESSION_KEYS = {
+    "session_id",
     "opened_at",
     "actor",
     "based_on_revision",
+    "owner_claim_id",
 }
 
 MAX_SOURCES = 32
@@ -79,4 +83,5 @@ def build_initial_state() -> dict:
                 }
             ],
         },
+        "agent_runtime": build_initial_agent_runtime(),
     }

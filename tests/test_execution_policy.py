@@ -138,6 +138,46 @@ class ExecutionPolicyTests(unittest.TestCase):
             ),
             "kind fs.create_file requires a non-empty approval_id under execution policy",
         )
+        self.assertEqual(
+            required_action_approval_error(
+                {"kind": "fs.create_file", "overwrite": True},
+                "",
+                {},
+                approval_required_kinds,
+                target_exists=False,
+            ),
+            "",
+        )
+        self.assertEqual(
+            required_action_approval_error(
+                {"kind": "fs.create_file", "overwrite": True},
+                "",
+                {},
+                approval_required_kinds,
+                target_exists=True,
+            ),
+            "kind fs.create_file requires a non-empty approval_id under execution policy",
+        )
+        self.assertEqual(
+            required_action_approval_error(
+                {"kind": "fs.move", "overwrite": True},
+                "",
+                {},
+                ["fs.write_patch"],
+                target_exists=False,
+            ),
+            "",
+        )
+        self.assertEqual(
+            required_action_approval_error(
+                {"kind": "fs.move", "overwrite": True},
+                "",
+                {},
+                ["fs.write_patch"],
+                target_exists=True,
+            ),
+            "kind fs.move requires a non-empty approval_id under execution policy",
+        )
 
 
 if __name__ == "__main__":

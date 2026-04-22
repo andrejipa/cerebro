@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 from core import StateStoreError, StateValidationError, iter_command_checks
@@ -505,6 +506,299 @@ def _recent_flow_control(agent_runtime: dict) -> tuple[list[str], list[str]]:
         )
 
     return approval_lines, batch_lines
+
+
+def export_status_json(root: str | Path, exported_at: str | None = None) -> dict:
+    """Render a structured operational status panel from the current snapshot."""
+    store, snapshot, agent_runtime = read_snapshot_and_runtime(root, StatusExportError)
+    recent_events_error = ""
+    task_assessments_error = ""
+    selection_consistency_error = ""
+    consolidation_error = ""
+    task_profiles_error = ""
+    recent_events: tuple[dict, ...] = ()
+    recent_events_for_display: tuple[dict, ...] = ()
+    current_plan_recent_events: tuple[dict, ...] = ()
+    trace_observability = store.read_trace_observability(agent_runtime=agent_runtime)
+    trace_status_degraded = trace_observability["trace_status"] != "healthy"
+    trace_integrity_partial = trace_observability["trace_integrity"] != "reliable"
+    trace_partial = trace_status_degraded or trace_integrity_partial
+
+    try:
+        recent_events = _load_recent_events(store)
+        recent_events_for_display = recent_events[-5:]
+        current_plan_recent_events = _events_since_latest_plan_update(recent_events)
+    except StatusExportError as exc:
+        recent_events = ()
+        recent_events_for_display = ()
+        current_plan_recent_events = ()
+        recent_events_error = str(exc)
+    sanitized_recent_events: tuple[dict, ...] = ()
+
+    try:
+        consolidations, consolidation_head_map = _load_parallel_consolidation_view(store, recent_events_for_display)
+    except StatusExportError as exc:
+        consolidations = ()
+        consolidation_head_map = {}
+        consolidation_error = str(exc)
+
+    try:
+        task_assessments = _load_task_assessments(
+            store,
+            agent_runtime,
+            current_plan_recent_events if not recent_events_error else (),
+        )
+    except StatusExportError as exc:
+        task_assessments = ()
+        task_assessments_error = str(exc)
+
+    if task_assessments_error:
+        selection_consistency = {}
+        selection_consistency_error = "task assessment surface unavailable"
+    else:
+        try:
+            selection_consistency = _load_task_selection_consistency(
+                store,
+                agent_runtime,
+                current_plan_recent_events if not recent_events_error else (),
+                task_assessments,
+            )
+        except StatusExportError as exc:
+            selection_consistency = {}
+            selection_consistency_error = str(exc)
+
+    try:
+        task_profiles = _load_task_work_profiles(store, agent_runtime)
+    except StatusExportError as exc:
+        task_profiles = ()
+        task_profiles_error = str(exc)
+
+    validation = snapshot.last_validation
+    exported_at_value = exported_timestamp(exported_at)
+    root_sha256 = hashlib.sha256(str(store.root).encode("utf-8")).hexdigest()
+
+    tasks = [
+        task
+        for task in agent_runtime["plan"]["tasks"]
+        if isinstance(task, dict)
+    ]
+    task_counts = _task_counts(tasks)
+    approvals = [
+        approval
+        for approval in agent_runtime["approvals"]["items"]
+        if isinstance(approval, dict)
+    ]
+    notes = [
+        note
+        for note in agent_runtime["memory"]["notes"]
+        if isinstance(note, dict)
+    ]
+    task_profiles_by_id = {
+        profile["id"]: profile
+        for profile in task_profiles
+        if isinstance(profile, dict) and isinstance(profile.get("id"), str) and profile.get("id")
+    }
+    workload_counts = _workload_counts(task_profiles)
+    diagnostics, next_actions = _runtime_diagnostics(
+        agent_runtime,
+        current_plan_recent_events if not trace_partial else (),
+        task_profiles_by_id,
+    )
+    approval_lines, batch_lines = _recent_flow_control(agent_runtime)
+    cycle_cost_summary = _cycle_cost_summary(
+        agent_runtime,
+        current_plan_recent_events if not trace_partial else (),
+        task_counts,
+    )
+    current_task_id = agent_runtime["plan"]["current_task_id"] or "none"
+    plan_status = agent_runtime["plan"]["status"]
+    command_count = len(agent_runtime["command_registry"]["commands"])
+    action_count = len(agent_runtime["actions"])
+    pending_approval_count = len([approval for approval in approvals if approval["status"] == "pending"])
+    pending_verification_count = len(agent_runtime["verification"]["pending_action_ids"])
+    memory_note_count = len(notes)
+    consolidation_count = len(consolidations)
+
+    if trace_status_degraded:
+        diagnostics.append("trace_degraded")
+        next_actions.append("restore trace append health before relying on event-derived diagnostics or cycle pressure")
+
+    if trace_integrity_partial:
+        diagnostics.append("trace_integrity_partial")
+        next_actions.append("treat event-derived diagnostics as partial until a fresh trace thread restores analytical confidence")
+
+    if trace_partial:
+        diagnostics.append("runtime_diagnostics_partial")
+
+    if recent_events_error:
+        diagnostics.append("runtime_event_log_unavailable")
+        next_actions.append("inspect the runtime event log path and restore recent-event reads")
+
+    if task_assessments_error:
+        diagnostics.append("task_assessment_surface_unavailable")
+        next_actions.append("restore task assessment derivation before relying on prioritized execution guidance")
+
+    if selection_consistency_error:
+        diagnostics.append("task_selection_replay_unavailable")
+        next_actions.append("restore task-selection replay before relying on decision-consistency diagnostics")
+    elif selection_consistency.get("status") == "mismatch":
+        diagnostics.append("task_selection_replay_mismatch")
+        next_actions.append("refresh current_task_id from the current decision surface before relying on execution guidance")
+
+    if task_profiles_error:
+        diagnostics.append("task_profile_surface_unavailable")
+        next_actions.append("restore derived work-profile reads before relying on lightweight versus governed diagnostics")
+
+    if consolidation_error:
+        diagnostics.append("parallel_consolidation_surface_unavailable")
+        next_actions.append("restore parallel consolidation reads before relying on consolidation audit output")
+
+    if cycle_cost_summary["rising_without_closure"]:
+        diagnostics.append("cycle_cost_rising_without_closure")
+        next_actions.append("reduce scope or replan before adding more actions to a cycle that is not closing")
+
+    if recent_events_for_display and not recent_events_error:
+        if consolidation_error:
+            sanitized_recent_events = recent_events_for_display
+        else:
+            try:
+                sanitized_recent_events = _sanitize_recent_events_for_display(
+                    store,
+                    recent_events_for_display,
+                    consolidation_head_map,
+                )
+            except StateStoreError as exc:
+                sanitized_recent_events = ()
+                recent_events_error = f"failed to sanitize runtime event log: {exc}"
+                diagnostics.append("runtime_event_log_unavailable")
+                next_actions.append("inspect the runtime event log path and restore recent-event reads")
+    else:
+        sanitized_recent_events = recent_events_for_display
+
+    selected = None
+    if agent_runtime["plan"]["current_task_id"]:
+        selected = next(
+            (
+                item
+                for item in task_assessments
+                if item["id"] == agent_runtime["plan"]["current_task_id"]
+            ),
+            None,
+        )
+
+    if selection_consistency:
+        decision_replay = {
+            "status": selection_consistency["status"],
+            "current_task_id": selection_consistency["current_task_id"],
+            "derived_task_id": selection_consistency["derived_task_id"],
+            "reason": selection_consistency["reason"],
+            "priority_gap": selection_consistency["priority_gap"],
+        }
+    elif selection_consistency_error:
+        decision_replay = {
+            "status": "unavailable",
+            "current_task_id": None,
+            "derived_task_id": None,
+            "reason": selection_consistency_error,
+            "priority_gap": None,
+        }
+    else:
+        decision_replay = {
+            "status": "not_available",
+            "current_task_id": None,
+            "derived_task_id": None,
+            "reason": "selection replay not available",
+            "priority_gap": None,
+        }
+
+    if selected is not None:
+        task_decision = {
+            "selected_task_id": selected["id"],
+            "workload_mode": selected["workload_mode"],
+            "work_unit_kind": selected["work_unit_kind"],
+            "decision_basis": {
+                "impact": selected["impact"],
+                "cost": selected["cost"],
+                "risk": selected["risk"],
+                "priority": selected["priority"],
+            },
+            "evidence": list(selected["evidence"][:3]),
+            "evidence_event_ids": list(selected.get("evidence_event_ids", [])[:5]),
+        }
+    else:
+        task_decision = {
+            "selected_task_id": None,
+            "workload_mode": None,
+            "work_unit_kind": None,
+            "decision_basis": None,
+            "evidence": [],
+            "evidence_event_ids": [],
+            "reason": "no executable task is available from the current runtime state",
+        }
+
+    recent_notes = sorted(notes, key=lambda note: note["updated_at"], reverse=True)[:5]
+
+    return {
+        "schema_version": "1",
+        "export_kind": "status",
+        "exported_at": exported_at_value,
+        "revision": snapshot.revision,
+        "root_sha256": root_sha256,
+        "payload": {
+            "validation": {
+                "result": validation.result,
+                "basis": "persisted canonical record only; exports do not rerun validate",
+                "risk": validation_risk_level(validation.result, validation.details),
+                "validated_at": validation.validated_at,
+                "details": [{"code": detail.code} for detail in validation.details],
+            },
+            "session_file": session_file_presence(store),
+            "sources_count": len(snapshot.sources),
+            "updated_at": snapshot.checkpoint.updated_at,
+            "runtime": {
+                "plan_status": plan_status,
+                "current_task_id": current_task_id,
+                "tasks_total": len(tasks),
+                "task_counts": task_counts,
+                "registered_commands": command_count,
+                "actions_recorded": action_count,
+                "pending_approvals": pending_approval_count,
+                "pending_verification_actions": pending_verification_count,
+                "memory_notes": memory_note_count,
+                "parallel_consolidations": consolidation_count,
+                "workload_modes": workload_counts,
+            },
+            "trace": dict(trace_observability),
+            "runtime_diagnostics": diagnostics,
+            "recommended_next_actions": next_actions,
+            "cycle_cost": dict(cycle_cost_summary),
+            "prioritized_tasks": list(task_assessments[:5]),
+            "task_decision": task_decision,
+            "decision_replay": decision_replay,
+            "flow_control": {
+                "approval_lines": approval_lines,
+                "batch_lines": batch_lines,
+            },
+            "recent_memory_notes": [
+                {
+                    "kind": note["kind"],
+                    "summary": note["summary"],
+                    "source": note["source"],
+                    "updated_at": note["updated_at"],
+                }
+                for note in recent_notes
+            ],
+            "parallel_consolidations": list(consolidations),
+            "recent_runtime_events": list(sanitized_recent_events),
+            "surface_errors": {
+                "recent_events_error": recent_events_error or None,
+                "task_assessments_error": task_assessments_error or None,
+                "selection_consistency_error": selection_consistency_error or None,
+                "consolidation_error": consolidation_error or None,
+                "task_profiles_error": task_profiles_error or None,
+            },
+        },
+    }
 
 
 def export_status_markdown(root: str | Path, exported_at: str | None = None) -> str:

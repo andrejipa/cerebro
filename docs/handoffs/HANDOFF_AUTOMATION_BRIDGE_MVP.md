@@ -29,7 +29,7 @@ The bridge may not:
 
 ## Architecture Options
 
-## Option 1: Local Orchestrator With Agents SDK Plus Codex Executor Over MCP
+## Option 1: Local Orquestrador With Agents SDK Plus Codex Executor Over MCP
 
 - What it solves:
   - rich multi-agent orchestration with formal handoffs, tools, and guardrails
@@ -63,7 +63,7 @@ The bridge may not:
 - Verdict:
   - not the right first move
 
-## Option 3: Minimal Local Orchestrator Using `codex exec`, Structured Logs, And Disposable Run Dirs
+## Option 3: Minimal Local Orquestrador Using `codex exec`, Structured Logs, And Disposable Run Dirs
 
 - What it solves:
   - replaces the mechanical copy-paste loop immediately
@@ -84,7 +84,7 @@ The bridge may not:
 ## Recommendation
 
 - Recommended architecture:
-  - Option 3, a minimal local orchestrator built around `codex exec`
+  - Option 3, a minimal local Orquestrador built around `codex exec`
 
 ## Reason
 
@@ -95,38 +95,38 @@ The bridge may not:
 
 ## Operational Flow
 
-1. Human coordinator writes or triggers one task.
-2. Orchestrator creates one disposable run directory outside `.cerebro/`.
-3. Orchestrator records:
+1. Human operator writes or triggers one task.
+2. Orquestrador creates one disposable run directory outside `.cerebro/`.
+3. Orquestrador records:
    - task id
    - target project root
    - explicit context paths
    - role or round label
    - approval mode for this run
-4. Orchestrator builds a context packet and a prompt envelope.
-5. Orchestrator invokes Codex as the subordinate executor with:
+4. Orquestrador builds a context packet and a prompt envelope.
+5. Orquestrador invokes Codex as the subordinate Executor with:
    - explicit project root
    - structured output schema
    - JSONL event capture
    - ephemeral mode when hidden session persistence is not wanted
 6. Executor reads, inspects, optionally runs safe commands, and returns a structured result.
-7. Orchestrator captures:
+7. Orquestrador captures:
    - request metadata
    - prompt sent
    - raw JSONL event stream
    - final structured result
    - stderr and exit status
-8. Human or higher-level coordinator decides:
+8. Human operator or higher-level Orquestrador decides:
    - close the round
    - ask for another round
    - escalate to explicit approval for write-capable work
-9. If the work affects Cerebro governance, the coordinator updates board or handoffs explicitly. The bridge never treats those updates as automatic truth.
+9. If the work affects Cerebro governance, the human operator updates board or handoffs explicitly. The bridge never treats those updates as automatic truth.
 
 ## Components
 
 - `task envelope`: one explicit task payload
 - `context packet builder`: packages project root and explicit context paths
-- `Codex executor adapter`: shells out to `codex exec`
+- `Codex Executor adapter`: shells out to `codex exec`
 - `result schema`: defines the final structured output shape
 - `run logger`: writes request, prompt, JSONL events, final JSON, and stderr
 - `approval gate`: blocks write-capable or core-sensitive work until a human approves
@@ -183,7 +183,7 @@ This MVP does not:
 ## Exact Implementation Sequence
 
 1. Keep the bridge outside tracked product code during incubation.
-2. Create one disposable local orchestrator under `_local/automation_bridge/`.
+2. Create one disposable local Orquestrador under `_local/automation_bridge/`.
 3. Start with read-only execution only.
 4. Require structured final output via JSON Schema.
 5. Capture full JSONL event logs for each run.

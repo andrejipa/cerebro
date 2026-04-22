@@ -1,12 +1,14 @@
 # Handoff: Next Layer Decision
 
 - State: deliberate freeze approved and baselined
+- Note: historical handoff; the options below record a frozen next-step decision and do not authorize runtime change.
+- Note: treat the sections below as frozen decision records only; they do not override current canonical guidance in `docs/operations/*`.
 
 ## Phase Closure
 
-- The low-risk read-only export regime is exhausted under the current contract.
+- The low-risk read-only export regime is exhausted under the current contract after one additional justified navigation export.
 - The boundary between core and extensions is hardened by tests, docs, and repeated adversarial validation.
-- External-analysis preparation reached the safe conceptual limit without implementing analysis behavior.
+- One minimum read-only external-analysis classifier was implemented without contaminating the runtime, and live acquisition remains blocked.
 - `alignment-export` remains correctly blocked because the contract still has no canonical alignment artifact.
 - The external agent protocol is now explicit, but it does not open the next product layer by itself.
 
@@ -19,7 +21,7 @@
 - agents or integrations with authority over state
 - any second source of truth
 
-## Option 1: First Concrete External Analysis
+## Option 1: Additional Concrete External Analysis
 
 - What real problem it solves:
   - adds one richer derived diagnostic that current exports cannot express cleanly without becoming repetitive
@@ -78,17 +80,17 @@
 - Accept only if:
   - no concrete demand currently justifies analysis or graph semantics
 - Reject if:
-  - a real recurring use case exists that current exports cannot satisfy cleanly
+  - a real recurring use case exists that the current approved operational surface cannot satisfy cleanly
 - Central risk:
   - the project can remain correct but look artificially stagnant if real demand is already present
 
 ## Recommendation
 
 - Recommended option now:
-  - Option 3, deliberate freeze until a concrete external-analysis use case is named
+  - Option 3, deliberate freeze after the first minimum external-analysis increment
 - Reason:
-  - the project already exhausted autonomous low-risk growth; the next step is no longer implementation work, but semantic selection
-  - opening analysis without a concrete use case would be continuation by momentum, not by need
+  - the project already exhausted autonomous low-risk growth and already implemented one minimum external-analysis classifier; the next step is no longer opening analysis in principle, but deciding whether any additional increment is justified
+  - opening another analysis increment without a concrete repeated use case would be continuation by momentum, not by need
   - opening a graph view first would take the riskier path before proving that a narrower analysis case is insufficient
 
 ## Conservatism Verdict
@@ -99,20 +101,20 @@
   - no critical or moderate failures were found in adversarial revalidation
   - the low-risk export slice was exhausted explicitly
   - the current boundary is clear and enforced
-  - no repeated unmet use case is currently documented against `analyze` plus the six exports
+  - no repeated unmet use case is currently documented against the current approved operational surface
 
 ## Order If Conditions Change
 
-1. Open Option 1 first when a narrow, recurring, clearly derived analysis use case is explicitly named.
+1. Open Option 1 first only when a narrow, recurring, clearly derived additional analysis use case is explicitly named.
 2. Consider Option 2 only if that need is genuinely structural or navigational and cannot be met by export or simple analysis.
 3. Keep Option 3 as the default fallback whenever no concrete demand is present.
 
 ## Approved Freeze Trigger
 
 - Break the freeze only when at least one of the following is true:
-  - a concrete and repeated use case exists that current `analyze` plus current exports cannot satisfy cleanly
-  - a real operational need is documented and shown to be unmet by the current runtime and export surface
-  - an explicit architecture decision authorizes one narrowly defined external-analysis read-only use case
+  - a concrete and repeated use case exists that the current approved operational surface cannot satisfy cleanly
+  - a real operational need is documented and shown to be unmet by the current approved operational surface
+  - an explicit architecture decision authorizes one narrowly defined additional external-analysis read-only increment beyond the current classifier
 - The following do not break the freeze:
   - curiosity
   - aesthetic improvement
@@ -130,17 +132,19 @@
 
 ## Pilot Verdict
 
-- Approved pilot:
+- Approved pilots that remain inside the freeze:
   - `bootstrap-scan` as assistive discovery only
+  - local automation bridge MVP as `integration` only
 - Reason:
   - bootstrap friction appeared in repeated real-project validation
   - a shortlist-only scan can reduce manual pointing without creating runtime authority
-  - it stays below the external-analysis boundary because it suggests candidates but does not decide canonical context
+  - it suggests candidates but does not decide canonical context
+  - the local automation bridge reduces mechanical handoff without deciding canonical context or altering runtime truth
 
 ## Resume Protocol
 
 1. Write one concrete use case in operational terms.
-2. Record why the current `analyze` flow plus current exports do not satisfy it cleanly.
+2. Record why the current approved operational surface does not satisfy it cleanly.
 3. Classify the proposal as `export`, `analysis`, `integration`, or the already-approved `assistive discovery` carve-out.
 4. Check whether it requires a new canonical concept, a new source of truth, or core changes.
 5. Check whether it touches `validate`, `analyze`, `state.json`, session policy, or runtime authority.

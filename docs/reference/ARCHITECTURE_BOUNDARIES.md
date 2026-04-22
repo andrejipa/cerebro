@@ -25,16 +25,24 @@ The core never:
 
 ## State Boundary
 
-Only these runtime files influence behavior:
+These persisted runtime files define business continuity:
 
 - `.cerebro/state.json`
 - `.cerebro/session.local.json`
+
+That persisted pair defines the repo-local continuity surface, but the live proof of session ownership is no longer fully contained in those repo-local files. Active session authority also depends on one external per-user session claim outside the project root.
+
+A transient coordination artifact may appear during runtime operations:
+
+- `.cerebro/runtime.lock`
 
 Logs are operational artifacts only:
 
 - `.cerebro/logs/events.jsonl`
 
-No other file may change runtime behavior unless it is explicitly registered in `sources` and only for integrity checks.
+No other persisted file may define runtime business validity unless it is explicitly registered in `sources` and only for integrity checks.
+`runtime.lock` only serializes concurrent operations and does not become a second source of truth.
+The core may remove a stale `runtime.lock` automatically when the prior owner appears inactive; that is coordination recovery only and does not certify semantic continuity of the interrupted round.
 
 ## Extension Boundary
 
@@ -86,5 +94,5 @@ extension -> core (implicit write)
 - Exports and integrations consume canonical state and persisted validation results; they do not become a second validation gate.
 - Additional hardening should stop unless a concrete new evasion path appears or the public surface actually changes.
 - CLI command names stay canonical unless an explicit architecture decision authorizes aliases.
-- After the low-risk export slice was exhausted, further capability growth stays deliberately frozen until a concrete repeated use case is recorded and classified.
+- After the low-risk export slice was exhausted and the minimum approved external increments were closed, further capability growth stays deliberately frozen until a concrete repeated use case is recorded and classified.
 - Curiosity, aesthetic polish, or abstract pressure to "get closer to the ideal" do not justify opening the next layer.

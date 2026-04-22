@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import subprocess
 import sys
@@ -12,7 +13,13 @@ from pathlib import Path
 from cli.commands.init import run_init
 from cli.commands.sources_export import run_sources_export
 from core.state_store import StateStore
-from extensions.sources_export.exporter import SourcesExportError, export_sources_markdown, write_sources_markdown
+from extensions.sources_export.exporter import (
+    SourcesExportError,
+    export_sources_json,
+    export_sources_markdown,
+    write_sources_markdown,
+)
+from tests.runtime_fixtures import seed_registered_source
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,6 +54,62 @@ class SourcesExportTests(unittest.TestCase):
             self.assertIn("- Reference sources: 1", output)
             self.assertIn("- reference.txt [reference]", output)
             self.assertIn("- tracked.txt [primary]", output)
+
+    def test_export_json_contains_expected_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("secret-content", encoding="utf-8")
+            reference = root / "reference.txt"
+            reference.write_text("reference-content", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt", "reference.txt"])
+            state = store.load_state()
+            for item in state["sources"]:
+                item["role"] = "reference" if item["path"] == "reference.txt" else "primary"
+            store.save_state(state)
+            store.validate_state()
+            store.open_session("alice")
+
+            payload = export_sources_json(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            self.assertEqual(payload["schema_version"], "1")
+            self.assertEqual(payload["export_kind"], "sources")
+            self.assertEqual(payload["exported_at"], "2026-04-11T12:00:00+00:00")
+            self.assertEqual(payload["revision"], 1)
+            self.assertEqual(len(payload["root_sha256"]), 64)
+            self.assertEqual(payload["payload"]["validation"], "ok")
+            self.assertEqual(payload["payload"]["session_file"], "present")
+            self.assertEqual(payload["payload"]["count"], 2)
+            self.assertEqual(payload["payload"]["primary_count"], 1)
+            self.assertEqual(payload["payload"]["reference_count"], 1)
+            by_path = {
+                item["path"]: {
+                    "sha256": item["sha256"],
+                    "role": item["role"],
+                    "size_bytes": item["size_bytes"],
+                }
+                for item in payload["payload"]["sources"]
+            }
+            expected_sha_by_path = {
+                item["path"]: item["sha256"] for item in state["sources"]
+            }
+            self.assertEqual(
+                by_path,
+                {
+                    "tracked.txt": {
+                        "sha256": expected_sha_by_path["tracked.txt"],
+                        "role": "primary",
+                        "size_bytes": len("secret-content"),
+                    },
+                    "reference.txt": {
+                        "sha256": expected_sha_by_path["reference.txt"],
+                        "role": "reference",
+                        "size_bytes": len("reference-content"),
+                    },
+                },
+            )
 
     def test_export_reports_fail_but_keeps_registered_paths_for_inconsistent_sources(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -100,6 +163,9 @@ class SourcesExportTests(unittest.TestCase):
             with self.assertRaises(SourcesExportError):
                 export_sources_markdown(root)
 
+            with self.assertRaises(SourcesExportError):
+                export_sources_json(root)
+
     def test_export_does_not_change_revision_or_runtime_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -126,7 +192,7 @@ class SourcesExportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             run_init(root, None)
-            store = StateStore(root)
+            store, _ = seed_registered_source(root)
             store.open_session("alice")
             before_state = store.state_path.read_text(encoding="utf-8")
             before_session = store.session_path.read_text(encoding="utf-8")
@@ -156,6 +222,19 @@ class SourcesExportTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertIn("# Sources", output)
             self.assertIn("## Registered Paths", output)
+
+    def test_cli_exports_json_to_stdout(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            stream = io.StringIO()
+
+            with redirect_stdout(stream):
+                exit_code = run_sources_export(root, type("Args", (), {"out": None, "format": "json"}))
+
+            payload = json.loads(stream.getvalue())
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(payload["export_kind"], "sources")
 
     def test_cli_exports_to_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

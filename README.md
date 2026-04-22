@@ -72,6 +72,59 @@ Do not merge, rebase, or cherry-pick from a pre-rewrite clone without explicitly
 
 ## Install
 
+Two directories matter:
+
+- **Cerebro repository root**: install Cerebro here; the local `venv\` and `cerebro.exe` live here
+- **target project root**: use Cerebro here; `.cerebro\` is created here and all runtime commands operate here
+
+If those are different directories, that is normal.
+If you only read one thing, read this: install Cerebro in the Cerebro repository root, then change into the target project root before running `init`, `import-context`, `checkpoint`, `validate`, `analyze`, or any export.
+Do not run `init`, `import-context`, `checkpoint`, `validate`, `analyze`, or any export from the Cerebro repository unless that repository is itself the project you want to track.
+
+Recommended on Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\docs\operations\install-cerebro.ps1
+```
+
+The installer script:
+
+- checks for Python 3.11 or newer
+- creates a local `venv\`
+- installs Cerebro into that local environment
+- validates the installed CLI with `cerebro --help`
+
+Typical Windows layout:
+
+```text
+C:\tools\cerebro          <- install Cerebro here
+D:\work\my-project        <- use Cerebro here
+```
+
+After the script finishes, either activate `venv\Scripts\Activate.ps1` from the Cerebro repository root and then use `cerebro` in the target project root, or call `venv\Scripts\cerebro.exe` directly.
+
+## First Successful Run
+
+If this is your first contact with Cerebro, ignore exports and advanced operational docs until this sequence succeeds once:
+
+```powershell
+cerebro init
+cerebro import-context --files README.md pyproject.toml path\to\current-work.md
+cerebro checkpoint --goal "..." --summary "..." --next-step "..."
+cerebro validate
+cerebro analyze
+```
+
+Use this sequence from the **target project root**, not from the Cerebro repository root.
+Read it as two steps:
+
+1. install Cerebro once in the Cerebro repository root
+2. run the basic flow above from the target project root
+
+If `analyze` or `validate` says that no sources are registered yet, the next command is `cerebro import-context --files ...`.
+
+Manual fallback for operators who already manage their own Python environment:
+
 ```powershell
 pip install -e .
 ```
@@ -86,6 +139,22 @@ cerebro validate
 ```
 
 Bootstrap a new instance once with `init`, `import-context`, `checkpoint`, and `validate`.
+`validate` only passes after at least one source is explicitly registered.
+That first bootstrap `checkpoint` seeds the canonical checkpoint before the normal daily session flow exists.
+`import-context` previews a sources diff and requires `y` confirmation before replacing the registered set.
+Run bootstrap from the target project root.
+
+For the first `import-context`, choose a small explicit set of human-maintained files:
+
+- one project-definition file such as `README.md`, `pyproject.toml`, `package.json`, `go.mod`, or `Cargo.toml`
+- one or two files that describe the current work, operating rules, or current project state
+- never generated files, exports, logs, caches, backups, vendored libraries, or build output
+
+Minimal first import example in a Python project:
+
+```powershell
+cerebro import-context --files README.md pyproject.toml path\to\current-work.md
+```
 
 Optional assistive step before `import-context` in a new or unknown project:
 
@@ -107,36 +176,60 @@ cerebro checkpoint --goal "..." --summary "..." --next-step "..."
 Normal daily flow after the instance already exists:
 
 - start with `cerebro analyze`
+- answer first whether the work is in `cerebro` or in a `caso`
+- classify the problem as `comprovado`, `provavel`, or `hipotese`
+- do not advance if evidence is not strong enough
+- if more than one path exists, compare risk, reversibility, approval burden, and verification burden before deciding
+- submit any risky slice to the approval boundary when policy requires it
+- execute only the approved and properly scoped slice
+- verify the result and audit the practical outcome
 - finish with `cerebro checkpoint`
+- record the expected tracing for the round as operational discipline
 
-`cerebro analyze` is the official runtime entrypoint for human and agent resume flow.
+`cerebro analyze` is the official runtime entrypoint for continuity flow.
 `cerebro resume` remains available for compatibility, but it is not the recommended surface.
+After the first checkpoint seed exists, `cerebro checkpoint` is valid only for a round that already has an active local session.
 Use the canonical CLI command names as documented; do not rely on aliases or synonyms.
+Any daily use that skips this flow is operationally invalid.
+Treat that invalidity as a protocol mismatch in operational records, not as CLI-enforced runtime invalidation.
 
 ## Operating It
 
 Use the approved operational baseline in [docs/operations/OPERATIONS_BASELINE.md](docs/operations/OPERATIONS_BASELINE.md).
 
-- bootstrap mode: `bootstrap-scan` if needed, then `init -> import-context -> checkpoint -> validate`
-- continuous work mode: start with `cerebro analyze`, finish with `cerebro checkpoint`
-- audit / engineering mode: use agents and the automation bridge only as external helpers, then return to Cerebro through `checkpoint` and `analyze`
+- runtime entry mode `bootstrap`: `bootstrap-scan` if needed, then `init -> import-context -> checkpoint -> validate`
+- runtime entry mode `continuous work`: start with `cerebro analyze`, finish with `cerebro checkpoint`
+- external protocol rounds: use agents and the automation bridge only as external helpers, record one round intent label (`ENGINEERING`, `OPERATION`, `BREAKING`, or `CERTIFICATION`), then return to Cerebro through `checkpoint` and `analyze`
 
 ## Evolution State
 
-The core runtime and the current read-only export surface are complete for the current demand.
-A final multi-role closure review closed the last safe external gaps and confirmed that no additional safe executable work remains inside the current contract.
+The current approved operational surface is complete for the current demand.
+A real gap must be measured against the runtime, the seven read-only exports, and the currently approved external helpers within their explicit non-authoritative boundaries.
+A final multi-role closure review closed the last safe external gaps and confirmed that no additional safe autonomous capability growth remains inside the current contract.
 
 The project is deliberately frozen for new capability growth until a concrete and repeated use case justifies opening the next layer explicitly.
 Any future growth must enter through one minimum safe external increment at a time, not by automatic continuation.
 In the absence of such a use case, the correct action is to operate the system, not evolve it.
 
+This freeze does not mean total inactivity. It means no new increment is currently authorized for the canonical runtime surface.
+
+Outside that canonical surface, the repository may still carry approved derived tracks that remain explicitly non-authoritative. The current examples are:
+
+- `experiments/recall_eval/`: implemented and benchmarked as an experimental derived evaluation track; not promoted into the approved product surface
+- `experiments/operational_signals/`: implemented as an opt-in derived observability track for operational insufficiency signals; it records outside `.cerebro/`, does not alter runtime authority, and its initial empty registry is the correct state until real signals exist
+
+Those derived tracks do not change the core freeze posture, do not create canonical state, and do not reopen architecture by themselves.
+
 ## Runtime Files
 
 - `.cerebro/state.json`
 - `.cerebro/session.local.json`
+- `.cerebro/runtime.lock`
 - `.cerebro/logs/events.jsonl`
 
-Only the first two affect runtime behavior.
+`state.json` and `session.local.json` are the only persisted runtime inputs that define business continuity.
+`runtime.lock` is a transient coordination file used while the core serializes concurrent mutations.
+`events.jsonl` remains a non-canonical operational artifact.
 
 ## Out Of Repo Scope
 

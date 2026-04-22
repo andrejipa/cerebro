@@ -9,7 +9,9 @@
 
 ## Metrics
 
+- dataset cases: `11`
 - total cases: `11`
+- excluded cases: `0`
 - true positives: `5`
 - false positives: `0`
 - true negatives: `6`

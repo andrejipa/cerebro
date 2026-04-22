@@ -8,6 +8,7 @@ from unittest import mock
 
 from core.schema import MAX_SOURCES, build_initial_state
 from core.state_store import StateStore, StateStoreError, StateValidationError
+from tests.runtime_fixtures import seed_registered_source
 
 
 class HardeningTests(unittest.TestCase):
@@ -50,8 +51,10 @@ class HardeningTests(unittest.TestCase):
 
     def test_open_session_does_not_change_revision(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            store = StateStore(tmp_dir)
+            root = Path(tmp_dir)
+            store = StateStore(root)
             store.initialize()
+            seed_registered_source(root)
             before = store.load_state()["revision"]
 
             store.open_session("alice")
@@ -169,10 +172,10 @@ class HardeningTests(unittest.TestCase):
             root = Path(tmp_dir)
             store = StateStore(root)
             store.initialize()
+            seed_registered_source(root)
 
             with mock.patch("core.state_store.os.replace", side_effect=OSError("replace failed")):
                 with self.assertRaises(StateStoreError):
                     store.open_session("alice")
 
             self.assertFalse(store.session_path.exists())
-

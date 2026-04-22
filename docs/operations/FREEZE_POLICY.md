@@ -77,6 +77,42 @@ The following do not break the freeze:
 - speculative feature growth without a recurring use case
 - pressure to invent alignment, semantic understanding, or a new authority surface
 
+## Review Cadence
+
+The freeze posture is re-evaluated on a documented cadence so that staleness cannot silently harden into permanence, without turning the evaluation itself into a growth driver.
+
+Operational state for this cadence lives in `docs/operations/freeze_review.toml`. That TOML is a derived operational-discipline artifact. It is not canonical runtime authority, must not be read or written by `core/` or by any runtime mutator, and must never be treated as a second source of truth about state.
+
+The cadence tracks four fields in `[review]`:
+
+- `mandatory_review_after_rounds` — maximum operational rounds since `last_review_date` before a review becomes mandatory
+- `mandatory_review_after_days` — maximum calendar days since `last_review_date` before a review becomes mandatory
+- `trigger_count_since_review` — count of Formal Resume Trigger candidates observed since `last_review_date`
+- `round_count_since_review` — count of completed operational rounds since `last_review_date`
+
+A review is mandatory when any one of these is true:
+
+- `round_count_since_review >= mandatory_review_after_rounds`
+- the elapsed days since `last_review_date` reach `mandatory_review_after_days`
+- `trigger_count_since_review` is non-zero
+
+A mandatory review only requires that the freeze posture be re-assessed and re-recorded. It does not authorize growth. Growth still requires a Formal Resume Trigger and the Resume Protocol.
+
+The review exists to re-check whether the current approved operational surface still remains sufficient, not to broaden authority by default. If a review records a candidate opening, it must preserve the same gate language already used elsewhere in this policy: `a concrete and repeated use case exists that the current approved operational surface cannot satisfy cleanly`.
+
+The same review record must also preserve the Resume Protocol wording when documenting why a candidate opening is still blocked: `Record why the current approved operational surface does not satisfy it cleanly.`
+
+If a review escalates beyond confirmation, the only growth shape it may point at is `one narrowly defined additional external-analysis read-only increment beyond the current classifier`, and that still remains subject to the Formal Resume Trigger and Resume Protocol.
+
+Each completed review records its outcome in `[last_outcome]` using a closed vocabulary for `verdict`:
+
+- `freeze_confirmed` — freeze posture remains; no resume trigger accepted
+- `freeze_confirmed_with_carveout` — freeze posture remains; an existing approved carve-out was re-affirmed or narrowed
+- `resume_authorized` — a Formal Resume Trigger was accepted and the Resume Protocol applies
+- `resume_pending_evidence` — a candidate trigger was recorded but evidence is insufficient; review must re-occur within half the normal cadence
+
+After each review, `last_review_date`, `next_review_due`, `trigger_count_since_review`, and `round_count_since_review` must be reset consistently with the recorded verdict.
+
 ## Rejection Criteria
 
 Reject a proposed advance immediately when it is based on:

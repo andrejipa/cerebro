@@ -7,6 +7,7 @@ across extension exporters without creating a new framework layer.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import os
 from pathlib import Path
 
 from core import StateStore, StateStoreError, StateValidationError
@@ -32,6 +33,16 @@ def read_snapshot(root: str | Path, error_type: type[Exception]) -> tuple[StateS
     return store, snapshot
 
 
+def read_snapshot_and_runtime(root: str | Path, error_type: type[Exception]) -> tuple[StateStore, object, dict]:
+    """Load one coherent snapshot plus runtime block through the public API."""
+    store = StateStore(root)
+    try:
+        snapshot, agent_runtime = store.read_snapshot_and_runtime()
+    except (StateStoreError, StateValidationError) as exc:
+        raise error_type(f"failed to read state snapshot: {exc}") from exc
+    return store, snapshot, agent_runtime
+
+
 def resolve_output_target(root: str | Path, output_path: str | Path) -> Path:
     """Resolve an explicit output path relative to the current project root."""
     root_path = Path(root).resolve()
@@ -42,9 +53,18 @@ def resolve_output_target(root: str | Path, output_path: str | Path) -> Path:
 
 
 def reject_runtime_output_path(store: StateStore, target: Path, error_type: type[Exception]) -> None:
-    """Reject writes to runtime-owned files and directories."""
+    """Reject writes to runtime-owned files, directories, and canonical source files."""
     if store.is_runtime_path(target):
         raise error_type(f"output path is reserved for runtime files: {target}")
+
+    try:
+        snapshot = store.read_snapshot()
+    except (StateStoreError, StateValidationError) as exc:
+        raise error_type(f"failed to read state snapshot: {exc}") from exc
+
+    registered_source_paths = {(store.root / source.path).resolve() for source in snapshot.sources}
+    if target in registered_source_paths:
+        raise error_type(f"output path is reserved for registered source files: {target}")
 
 
 def write_markdown_output(
@@ -57,9 +77,26 @@ def write_markdown_output(
     store = StateStore(root)
     target = resolve_output_target(root, output_path)
     reject_runtime_output_path(store, target, error_type)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(markdown, encoding="utf-8", newline="\n")
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        _write_text_atomic(target, markdown)
+    except OSError as exc:
+        raise error_type(f"failed to write output file: {target}") from exc
     return target
+
+
+def _write_text_atomic(path: Path, text: str) -> None:
+    """Persist derived text via write-then-replace to avoid partial outputs."""
+    tmp_path = path.with_suffix(f"{path.suffix}.tmp")
+    try:
+        tmp_path.write_text(text, encoding="utf-8", newline="\n")
+        os.replace(tmp_path, path)
+    finally:
+        try:
+            if tmp_path.exists():
+                tmp_path.unlink()
+        except OSError:
+            pass
 
 
 def validation_risk_level(result: str, details: tuple[object, ...]) -> str:
@@ -76,3 +113,8 @@ def validation_risk_level(result: str, details: tuple[object, ...]) -> str:
     if detail_codes & blocking_source_codes:
         return "high"
     return "elevated"
+
+
+def validation_basis_line() -> str:
+    """Return the standard note that exports use persisted validation only."""
+    return "- Validation basis: persisted canonical record only; exports do not rerun validate"

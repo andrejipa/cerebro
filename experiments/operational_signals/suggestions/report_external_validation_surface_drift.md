@@ -46,10 +46,10 @@ Interpretation:
 
 ## External Corpora
 
-- `D:/projetos_cli/escritorio/IRPF e Caixa Rural` → `0` comparable docs, `0` extractable counts, `0` emissions
-- `D:/projetos_cli/estoque_pioneira` → `1` comparable doc, `0` extractable counts, `0` emissions
-- `D:/projetos_cli/pessoais/rpg_caminhada` → `1` comparable doc, `0` extractable counts, `0` emissions
-- `D:/projetos_cli/Portal/Resolução Humaita Codex` → `0` comparable docs, `0` extractable counts, `0` emissions
+- `IRPF e Caixa Rural` → `0` comparable docs, `0` extractable counts, `0` emissions
+- `estoque_pioneira` → `1` comparable doc, `0` extractable counts, `0` emissions
+- `rpg_caminhada` → `1` comparable doc, `0` extractable counts, `0` emissions
+- `Resolução Humaita Codex` → `0` comparable docs, `0` extractable counts, `0` emissions
 
 These corpora do not maintain the same four-file canonical surface, so they were suitable only for confirming silence under pattern absence.
 

@@ -1,5 +1,8 @@
 .cerebro/session.local.json
 .cerebro/logs/
+.cerebro/worktrees.toml
+.cerebro/worktrees.toml.lock
+.worktrees/
 
 _backup_pre_cleanup/
 _legacy/
@@ -14,7 +17,37 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.cover
 .pytest_cache/
 dist/
 build/
 *.egg-info/
+
+# temp test artifacts / runtime sandboxes
+.tmp/
+.tmp_*/
+.tmp*.txt
+.tmp*.log
+.sandbox_claims/
+.sandbox_live_proofs/
+.sandbox_tmp/
+.tmp_claims/
+.tmp_live_proofs/
+.tmp_perf_cache/
+.tmp_probe/
+.tmp_proofs/
+.tmp_recall_eval/
+.tmp_recall_eval_tests/
+.tmp_sandbox/
+.tmp_test/
+.tmp_test_gate/
+.tmp_test_gate_run/
+.tmp_test_gate_run_py/
+.tmp_test_runner2/
+.tmp_workspace/
+.tmp_aclprobe/
+
+# tooling / personal
+.obsidian/
+.wrangler/
+venv/

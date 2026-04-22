@@ -14,6 +14,7 @@ Rules:
 - read only through public read methods
 - never read runtime JSON directly
 - never write inside `.cerebro/`
+- never overwrite registered source files through output paths
 - never turn extension output into canonical truth
 
 If the design needs internal runtime paths or direct JSON access, stop and redesign.

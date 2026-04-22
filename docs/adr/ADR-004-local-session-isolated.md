@@ -10,4 +10,5 @@ Keep session state in `.cerebro/session.local.json`, separate from the canonical
 
 ## Consequence
 
-Resume flow can track local continuity without polluting shared state.
+Resume flow can open a local continuity artifact for one validated revision without polluting shared state.
+That artifact does not establish durable ownership or uninterrupted continuity across later reopen attempts.

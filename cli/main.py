@@ -21,6 +21,7 @@ from cli.commands.import_context import run_import_context
 from cli.commands.init import run_init
 from cli.commands.iteration_commit import run_iteration_commit
 from cli.commands.plan import run_plan
+from cli.commands.residuals_view import run_residuals_view
 from cli.commands.return_map_export import run_return_map_export
 from cli.commands.resume import run_resume
 from cli.commands.rollback import run_rollback
@@ -30,7 +31,16 @@ from cli.commands.status_export import run_status_export
 from cli.commands.validate import run_validate
 from cli.commands.verify import run_verify
 from cli.commands.validation_export import run_validation_export
+from cli.commands.worktree import run_worktree
 from cli.output import print_fail, user_error
+
+
+def _read_interactive_input(prompt: str, *, code: str, message: str) -> str | None:
+    try:
+        return input(prompt).strip()
+    except EOFError:
+        print_fail([user_error(code, message)])
+        return None
 
 
 def _dispatch_context_menu(argv: list[str]) -> list[str] | None:
@@ -45,7 +55,13 @@ def _dispatch_context_menu(argv: list[str]) -> list[str] | None:
     print("(1) Desenvolvimento")
     print("(2) Gerenciar projeto")
 
-    choice = input("Selecione [1/2]: ").strip()
+    choice = _read_interactive_input(
+        "Selecione [1/2]: ",
+        code="context_menu_input_closed",
+        message="interactive context menu input closed before a selection was provided",
+    )
+    if choice is None:
+        return None
     if choice == "1":
         return ["analyze"]
     if choice == "2":
@@ -67,7 +83,13 @@ def _dispatch_managed_project_mode() -> list[str] | None:
         for index, project in enumerate(projects, start=1):
             print(f"({index}) {project['name']} — {project['path']}")
         print("(N) Novo projeto")
-        selection = input(f"Selecione [1-{len(projects)}/N]: ").strip()
+        selection = _read_interactive_input(
+            f"Selecione [1-{len(projects)}/N]: ",
+            code="project_registry_selection_closed",
+            message="interactive project selection input closed before a project was chosen",
+        )
+        if selection is None:
+            return None
         if selection.lower() == "n":
             return _register_and_dispatch_project()
         if selection.isdigit():
@@ -81,7 +103,15 @@ def _dispatch_managed_project_mode() -> list[str] | None:
 
 
 def _register_and_dispatch_project(project_root: str | None = None) -> list[str] | None:
-    raw_project_root = project_root if project_root is not None else input("Project root: ").strip()
+    raw_project_root = project_root
+    if raw_project_root is None:
+        raw_project_root = _read_interactive_input(
+            "Project root: ",
+            code="project_root_input_closed",
+            message="interactive project root input closed before a project root was provided",
+        )
+        if raw_project_root is None:
+            return None
     if not raw_project_root:
         print_fail([user_error("project_root_missing", "project root is required for managed-project mode")])
         return None
@@ -313,6 +343,45 @@ def build_parser() -> argparse.ArgumentParser:
     )
     iteration_commit_parser.set_defaults(handler=run_iteration_commit)
 
+    worktree_parser = add_command_parser(
+        "worktree",
+        help="manage isolated git worktrees for parallel Cerebro agents",
+        description=(
+            "Create and manage isolated git worktrees rooted under `.worktrees/`. "
+            "Each worktree is a separate Cerebro project root with its own local `.cerebro/` runtime state."
+        ),
+    )
+    worktree_subparsers = worktree_parser.add_subparsers(dest="worktree_command", required=True)
+    worktree_create_parser = worktree_subparsers.add_parser(
+        "create",
+        help="create one isolated git worktree for parallel Cerebro work",
+        description=(
+            "Create a strict-slug git worktree under `.worktrees/<name>/`, create branch `worktree-<name>`, "
+            "and register it in `.cerebro/worktrees.toml`."
+        ),
+    )
+    worktree_create_parser.add_argument("name", help="strict worktree slug")
+    worktree_create_parser.set_defaults(handler=run_worktree)
+    worktree_list_parser = worktree_subparsers.add_parser(
+        "list",
+        help="list isolated git worktrees reconciled against the local registry",
+        description=(
+            "List git worktrees rooted under `.worktrees/` and reconcile them against `.cerebro/worktrees.toml` "
+            "to surface active, missing, and unregistered entries."
+        ),
+    )
+    worktree_list_parser.set_defaults(handler=run_worktree)
+    worktree_clean_parser = worktree_subparsers.add_parser(
+        "clean",
+        help="remove one isolated git worktree and unregister it after a clean check",
+        description=(
+            "Remove one registered git worktree rooted under `.worktrees/<name>/`, delete branch "
+            "`worktree-<name>`, and remove the registry entry only after Git confirms the cleanup."
+        ),
+    )
+    worktree_clean_parser.add_argument("name", help="strict worktree slug")
+    worktree_clean_parser.set_defaults(handler=run_worktree)
+
     resume_parser = add_command_parser(
         "resume",
         help="compatibility command for the legacy resume flow",
@@ -356,6 +425,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="render a short human-readable handoff from the current state",
         description="Export a short Markdown handoff derived from the canonical state.",
     )
+    handoff_parser.add_argument(
+        "--format",
+        choices=("md", "json"),
+        default="md",
+        help="output format; defaults to md",
+    )
     handoff_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     handoff_parser.set_defaults(handler=run_handoff_export)
 
@@ -363,6 +438,12 @@ def build_parser() -> argparse.ArgumentParser:
         "context-index-export",
         help="render a short navigation index from the current canonical context",
         description="Export a compact read-only navigation index derived from canonical state and organized around canonical registered sources and checkpoint text.",
+    )
+    context_index_parser.add_argument(
+        "--format",
+        choices=("md", "json"),
+        default="md",
+        help="output format; defaults to md",
     )
     context_index_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     context_index_parser.set_defaults(handler=run_context_index_export)
@@ -372,6 +453,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="render a short operational impact view from the current state",
         description="Export a compact read-only impact view derived from the canonical state.",
     )
+    impact_parser.add_argument(
+        "--format",
+        choices=("md", "json"),
+        default="md",
+        help="output format; defaults to md",
+    )
     impact_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     impact_parser.set_defaults(handler=run_impact_export)
 
@@ -379,6 +466,12 @@ def build_parser() -> argparse.ArgumentParser:
         "sources-export",
         help="render a short inventory of registered sources from the current state",
         description="Export a compact read-only inventory of registered source paths from the canonical state.",
+    )
+    sources_parser.add_argument(
+        "--format",
+        choices=("md", "json"),
+        default="md",
+        help="output format; defaults to md",
     )
     sources_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     sources_parser.set_defaults(handler=run_sources_export)
@@ -388,13 +481,39 @@ def build_parser() -> argparse.ArgumentParser:
         help="render a short point-of-return view from the current checkpoint",
         description="Export a compact read-only return map derived from the canonical checkpoint.",
     )
+    return_map_parser.add_argument(
+        "--format",
+        choices=("md", "json"),
+        default="md",
+        help="output format; defaults to md",
+    )
     return_map_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     return_map_parser.set_defaults(handler=run_return_map_export)
+
+    residuals_view_parser = add_command_parser(
+        "residuals-view",
+        help="render a structured view of accepted and blocked residuals",
+        description="Export a compact read-only view derived from docs/operations/residuals.toml.",
+    )
+    residuals_view_parser.add_argument(
+        "--format",
+        choices=("md", "json"),
+        default="md",
+        help="output format; defaults to md",
+    )
+    residuals_view_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
+    residuals_view_parser.set_defaults(handler=run_residuals_view)
 
     status_parser = add_command_parser(
         "status-export",
         help="render a short operational status from the current state",
         description="Export a compact read-only operational status derived from the canonical state.",
+    )
+    status_parser.add_argument(
+        "--format",
+        choices=("md", "json"),
+        default="md",
+        help="output format; defaults to md",
     )
     status_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     status_parser.set_defaults(handler=run_status_export)
@@ -403,6 +522,12 @@ def build_parser() -> argparse.ArgumentParser:
         "validation-export",
         help="render a short view of the last persisted validation result",
         description="Export a compact read-only validation view derived from the persisted canonical validation record.",
+    )
+    validation_export_parser.add_argument(
+        "--format",
+        choices=("md", "json"),
+        default="md",
+        help="output format; defaults to md",
     )
     validation_export_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     validation_export_parser.set_defaults(handler=run_validation_export)

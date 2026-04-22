@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import subprocess
 import sys
@@ -12,7 +13,13 @@ from pathlib import Path
 from cli.commands.impact_export import run_impact_export
 from cli.commands.init import run_init
 from core.state_store import StateStore
-from extensions.impact_export.exporter import ImpactExportError, export_impact_markdown, write_impact_markdown
+from extensions.impact_export.exporter import (
+    ImpactExportError,
+    export_impact_json,
+    export_impact_markdown,
+    write_impact_markdown,
+)
+from tests.runtime_fixtures import seed_checkpointed_runtime, seed_registered_source
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -50,6 +57,47 @@ class ImpactExportTests(unittest.TestCase):
             self.assertIn("- Constraint count: 1", output)
             self.assertIn("- Registered sources: 1", output)
             self.assertIn("- tracked.txt", output)
+
+    def test_export_json_contains_expected_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("secret-content", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            store.update_checkpoint(
+                {
+                    "goal": "Ship fix",
+                    "summary": "Checkpoint is ready.",
+                    "next_step": "Open tracked.txt and continue.",
+                    "constraints": ["Do not change API"],
+                }
+            )
+            store.validate_state()
+            store.open_session("alice")
+
+            payload = export_impact_json(root, exported_at="2026-04-11T12:00:00+00:00")
+
+            self.assertEqual(payload["schema_version"], "1")
+            self.assertEqual(payload["export_kind"], "impact")
+            self.assertEqual(payload["exported_at"], "2026-04-11T12:00:00+00:00")
+            self.assertEqual(payload["revision"], 2)
+            self.assertEqual(len(payload["root_sha256"]), 64)
+            self.assertEqual(payload["payload"]["validation"], "ok")
+            self.assertEqual(payload["payload"]["risk"], "low")
+            self.assertEqual(payload["payload"]["session_file"], "present")
+            self.assertEqual(
+                payload["payload"]["scope"],
+                {
+                    "goal": "Ship fix",
+                    "next_step": "Open tracked.txt and continue.",
+                    "constraint_count": 1,
+                    "registered_sources": 1,
+                },
+            )
+            self.assertEqual(payload["payload"]["registered_paths"], ["tracked.txt"])
+            self.assertEqual(payload["payload"]["validation_details"], [])
 
     def test_export_reports_fail_and_high_risk_for_inconsistent_sources(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -112,6 +160,9 @@ class ImpactExportTests(unittest.TestCase):
             with self.assertRaises(ImpactExportError):
                 export_impact_markdown(root)
 
+            with self.assertRaises(ImpactExportError):
+                export_impact_json(root)
+
     def test_export_does_not_change_revision_or_runtime_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -147,7 +198,7 @@ class ImpactExportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             run_init(root, None)
-            store = StateStore(root)
+            store, _ = seed_registered_source(root)
             store.open_session("alice")
             before_state = store.state_path.read_text(encoding="utf-8")
             before_session = store.session_path.read_text(encoding="utf-8")
@@ -168,15 +219,7 @@ class ImpactExportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             run_init(root, None)
-            store = StateStore(root)
-            store.update_checkpoint(
-                {
-                    "goal": "Goal",
-                    "summary": "Summary",
-                    "next_step": "Next",
-                    "constraints": [],
-                }
-            )
+            seed_checkpointed_runtime(root)
             stream = io.StringIO()
 
             with redirect_stdout(stream):
@@ -187,19 +230,25 @@ class ImpactExportTests(unittest.TestCase):
             self.assertIn("# Impact", output)
             self.assertIn("## Scope", output)
 
+    def test_cli_exports_json_to_stdout(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            seed_checkpointed_runtime(root)
+            stream = io.StringIO()
+
+            with redirect_stdout(stream):
+                exit_code = run_impact_export(root, type("Args", (), {"out": None, "format": "json"}))
+
+            payload = json.loads(stream.getvalue())
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(payload["export_kind"], "impact")
+
     def test_cli_exports_to_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             run_init(root, None)
-            store = StateStore(root)
-            store.update_checkpoint(
-                {
-                    "goal": "Goal",
-                    "summary": "Summary",
-                    "next_step": "Next",
-                    "constraints": [],
-                }
-            )
+            seed_checkpointed_runtime(root)
             args = type("Args", (), {"out": "impact.md"})
 
             exit_code = run_impact_export(root, args)
@@ -214,15 +263,7 @@ class ImpactExportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             run_init(root, None)
-            store = StateStore(root)
-            store.update_checkpoint(
-                {
-                    "goal": "Goal",
-                    "summary": "Summary",
-                    "next_step": "Next",
-                    "constraints": [],
-                }
-            )
+            seed_checkpointed_runtime(root)
             env = os.environ.copy()
             existing_pythonpath = env.get("PYTHONPATH")
             env["PYTHONPATH"] = str(REPO_ROOT) if not existing_pythonpath else f"{REPO_ROOT}{os.pathsep}{existing_pythonpath}"

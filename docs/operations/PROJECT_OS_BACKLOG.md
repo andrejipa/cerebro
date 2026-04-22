@@ -273,6 +273,28 @@ O foco atual e qualidade de decisao: escolher melhor, justificar melhor e reduzi
 - [ ] Tarefa 102: competir mecanismos para endurecer ownership residual contra tamper ou restore do authority store externo, comparando pelo menos uma opcao SO-backed menos replayavel contra uma opcao de capability/challenge sem introduzir split-brain fora do `state.json`; registrar explicitamente quando o ganho nao justificar o custo estrutural.
 - [ ] Tarefa 103: competir isolamento mais forte de `verify` contra side effects fora do root e tamper transitório totalmente restaurado antes do exit, comparando a fronteira atual de sandbox+guardas contra pelo menos uma opcao de isolamento de processo/OS mais forte ou contra a decisao explicita de manter o residual.
 - [x] Tarefa 104: introduzir governanca canonica minima de retencao para `.cerebro/artifacts/` e `.cerebro/logs/events.jsonl`, escolhendo a politica manual validate-gated como vencedora nesta fase: `validate --retention-report` faz dry-run sem efeitos colaterais, `validate --retention-apply` arquiva so grupos de artifacts inequivocamente nao vivos e linhas nao-consolidation antigas de `events.jsonl`, preserva todas as consolidacoes no log ativo, mantem refs vivas e siblings da verificacao atual, bloqueia superficies desconhecidas e grava o archive set em `.cerebro/trash/retention/`.
+
+### Round 8 - Fechamento Corretivo Dos ALTOs
+
+- [x] `exec.command` no `apply`: falha de launch agora vira `ActionRuntimeError` com `apply_failed` / `command_execution_exception`, sem cair no fallback `internal_error`.
+- [x] `verify`: falha de launch agora vira `VerificationRuntimeError` com `verify_failed` / `command_execution_exception`, sem cair no fallback `internal_error`.
+- [x] `open_session()`: o registro canonico da sessao viva agora persiste antes de `session.local.json`, com rollback de claim/live-proof/registry se a escrita final falhar, fechando a janela de sessao orfa.
+- [x] `validate --retention-apply`: append degradado de `retention_applied` agora falha fechado, nao publica sucesso e so grava `retention_event_id` no manifest apos commit real do evento.
+
+### Round 9 - Fechamento Corretivo Dos MEDIOs E Cobertura Direta De Validacao
+
+- [x] `verify` com cobertura obrigatoria parcial agora retorna `exit 1` sem limpar `pending_action_ids` nem reclassificar a verificacao persistida como cobertura completa; fechamento cristalizado em `tests/test_alpha_runtime.py:1736` e `tests/test_status_export.py:292`.
+- [x] o bloqueio de `verify` redundante apos drift fora do runtime foi removido; reruns completos e subsets explicitos voltam a ser permitidos quando o workspace mudou externamente, com regressao em `tests/test_alpha_runtime.py:4330` e `tests/test_alpha_runtime.py:4351`.
+- [x] `rollback` de action sensivel agora exige que a approval original persistida continue valida e aprovada; o fechamento reusa `approval_required_kinds` como fonte canonica unica e falha fechado em `cli/commands/rollback.py` quando esse vinculo se perde.
+- [x] o backend file-backed agora redige descritores de `session_claim` e `session_live_proof` nas mensagens de erro, eliminando vazamento de path absoluto de override sem mudar o contrato de sessao; regressao em `tests/test_state_store.py:1874`.
+- [x] `validate --retention-apply` agora grava `manifest.pending.json` no proprio archive e conclui o mesmo archive no rerun apos falha antes do manifest final, sem duplicar a trilha do cleanup; regressao em `tests/test_validate.py:524` e `tests/test_validate.py:591`.
+- [x] `C1`: `plan.current_task_id` orfao agora tem teste direto em `tests/test_validate.py:225`.
+- [x] `C2`: ciclo em `depends_on` agora tem teste direto em `tests/test_validate.py:238`.
+- [x] `C3` (`approval rejected`): o ramo ja existente agora tem teste direto em `tests/test_validate.py:254`.
+- [x] `C3` (`approval ausente`): action sensivel em `applied` ou `rolled_back` agora exige `approval_id` aprovado sob `approval_required_kinds`; cobertura direta em `tests/test_validate.py:269`.
+- [x] `C4`: `required_command_ids` desconhecido ou nao permitido em `verify` agora tem testes diretos em `tests/test_validate.py:291` e `tests/test_validate.py:300`.
+- [x] `C5`: `owner_claim_id` vazio agora tem teste direto em `tests/test_validate.py:312`.
+- [x] `C6`: boundary de `sources[].path` agora tem teste direto em `tests/test_validate.py:325`.
 - [ ] Tarefa 105: explorar concorrencia externa real sobre `apply` / `rollback` com harness adversarial de interleavings, medir os limites observaveis e decidir se existe endurecimento incremental justificavel alem do preflight + compensacao + documentacao atual.
 - [ ] Tarefa 106: estruturar identidade persistente de protocolo/contrato/projeto no estado canonico sem quebrar compatibilidade, convertendo esses anchors hoje procedurais em campos verificaveis quando o ganho superar o custo de migracao e governanca.
 

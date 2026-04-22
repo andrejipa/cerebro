@@ -5,33 +5,46 @@ from __future__ import annotations
 import getpass
 from pathlib import Path
 
-from cli.output import print_fail, print_ok, user_error
+from cli.commands._session_ownership import session_token_output_lines
+from cli.output import print_fail, print_ok, state_store_user_error, state_store_user_errors, user_error
 from core.state_store import StateStore, StateStoreError, StateValidationError
 
 
 def run_resume(root: Path, args) -> int:
     store = StateStore(root)
-    result = store.validate_state()
+    try:
+        result = store.validate_state()
+    except StateValidationError as exc:
+        print_fail(exc.errors)
+        return 1
+    except StateStoreError as exc:
+        print_fail([state_store_user_error(root, "operation_failed", str(exc))])
+        return 1
 
     if not result["ok"]:
         print_fail(
             [
                 user_error("resume_blocked", "resume blocked because validation failed"),
-                *result["errors"],
+                *state_store_user_errors(root, result["errors"]),
             ]
         )
         return 1
 
     actor = args.actor or getpass.getuser()
+    snapshot = result["snapshot"]
 
     try:
-        snapshot = store.read_snapshot()
-        store.open_session(actor)
+        session = store.open_session(actor, validated_revision=result["revision"])
     except StateValidationError as exc:
-        print_fail(exc.errors)
+        print_fail(
+            [
+                user_error("resume_blocked", "resume blocked because continuity could not be opened"),
+                *state_store_user_errors(root, exc.errors),
+            ]
+        )
         return 1
     except StateStoreError as exc:
-        print_fail([user_error("operation_failed", str(exc))])
+        print_fail([state_store_user_error(root, "operation_failed", str(exc))])
         return 1
 
     checkpoint = snapshot.checkpoint
@@ -49,6 +62,7 @@ def run_resume(root: Path, args) -> int:
         [
             f"updated_at: {checkpoint.updated_at}",
             f"sources: {len(snapshot.sources)}",
+            *session_token_output_lines(session, emit_token=bool(getattr(args, "emit_session_token", False))),
         ]
     )
     print_ok(lines)

@@ -1,345 +1,269 @@
 # Agent Roles
 
 This document defines the external engineering roles used around the Cerebro project.
-It defines role boundaries only. The execution protocol lives in `docs/operations/AGENT_PROTOCOL.md`.
-The role set below is the official operational baseline for the current external team layer.
+The execution protocol lives in `docs/operations/AGENT_PROTOCOL.md`.
+This document is the official operational baseline for this phase only as a role reference.
+It is not a separate runtime authority.
 
-These roles are not part of the runtime.
-They do not hold authority over state, do not create truth, and do not alter the core contract.
+This document defines the canonical functional roles for the current Cerebro phase.
+Use these names in new operational records and handoffs.
+
+Canonical roles:
+
+- Orchestrator
+- Planner
+- Implementer
+- Reviewer
+- Verifier
+- Researcher
+- Documenter
+
+Legacy labels from older notes are historical aliases only.
+Examples include `Orquestrador`, `Planejador`, `Executor`, `Testador`, `Auditor`, `Mapeador`, `Quebrador`, `Organizador`, `Comprovador`, `Explorador de Solucoes`, `Avaliador de Risco`, and `Guardiao`.
+Do not introduce them as new permanent roles in this phase.
+
+The role set is intentionally lean and composable.
+Risk review remains a conditional activity inside the canonical roles.
+When ambiguity, competing viable paths, or false-consensus risk exists, that review must become explicit in the round record instead of staying implicit.
+Tool-provided nicknames, UI aliases, or auto-generated labels are never canonical role names.
+Operationally, every agent must be identified by its function name from this role set only.
+The runtime does not assign these roles automatically; they are external functional labels applied around the canonical state.
 
 ## Non-Negotiable Constraints
 
 - No role may modify the core unless an explicit architecture decision allows it.
-- No role may change the meaning of `analyze`, `validate`, `state.json`, or session policy.
+- No role may create truth on its own.
+- No role may bypass approval, rollback, DAG validation, or verify.
+- No role may turn score into authority without evidence.
+- No role may treat repeated retry of the same action as progress.
+- No role may decide canonical context on its own.
+- No role may decide canonical context implicitly.
 - No role may create a new source of truth.
-- No role may treat heuristics as authority.
-- No role may bypass the Guardião de Contrato.
-- No role may leave a partially approved local block unfinished when it can be closed safely.
+- No role may create a second source of truth.
+- No external tool may compete with `analyze` as the operational entrypoint.
 
-## Permanent Core Roles
-
-The core role set is closed for the current layer.
-Do not add, rename, or reshuffle core roles unless a formal next-layer decision reopens the team model explicitly.
-
-### Estressador
+## Orchestrator
 
 What it does:
-- finds concrete gaps, adversarial scenarios, blind spots, and real friction
-- assumes the current layer is not finished until proved otherwise
-- prioritizes real attack paths over abstract suspicion
+
+- opens the round and states the context explicitly
+- confirms whether the work is in `cerebro` or in a `caso`
+- keeps sequence, ownership, and closure explicit
+- records the final state transition and closes the round
 
 What it never does:
-- implements fixes
-- approves risky scope
-- promotes future ideas to current work automatically
+
+- invents evidence
+- selects a path by authority alone
+- acts as the implementation owner
 
 When it enters:
-- at the start of each round
+
+- at the start of the round and at each ownership transition
 
 When it stops:
-- after producing a concrete and prioritized list of findings
 
-### Guardião de Contrato
+- after the record is complete and the round is formally closed
+
+## Planner
 
 What it does:
-- filters the Estressador backlog
-- blocks any item that touches core authority, new semantics, or hidden truth
-- defines the safe execution slice for the current round
+
+- turns evidence into a DAG-backed plan
+- uses task score as a decision input
+- defines dependencies, reversibility, and retry constraints
+- separates what is parallel-safe from what must stay serial
 
 What it never does:
-- fixes code
-- weakens a boundary for convenience
-- treats a useful idea as executable if it needs a new concept
+
+- treats score as a substitute for proof
+- authorizes execution on its own
+- hides dependency risk inside the plan
 
 When it enters:
-- immediately after Estressador
+
+- after analysis has enough evidence to plan
 
 When it stops:
-- after every item is marked approved, blocked, or deferred pending explicit decision
 
-### Corretor
+- after the plan, dependency shape, and retry posture are explicit
+
+## Researcher
 
 What it does:
+
+- gathers evidence, source trace, constraints, and alternative paths
+- clarifies what is known, what is uncertain, and what is missing
+- supports analysis without deciding the outcome
+
+What it never does:
+
+- marks a hypothesis as proven without support
+- authorizes action
+- widens the scope without a reasoned need
+
+When it enters:
+
+- during read and analysis when evidence is incomplete or ambiguous
+
+When it stops:
+
+- after the problem is classified as `comprovado`, `provavel`, or `hipotese` with traceable support
+- after three evidence passes, if classification is still not possible, it must return `evidencia insuficiente para classificacao` and block the round
+
+## Implementer
+
+What it does:
+
 - executes only the approved slice
-- closes safe local blocks fully
-- prefers tests, CLI, docs, and external guardrails before any stronger intervention
+- keeps action scope inside the plan
+- respects rollback and retry boundaries
 
 What it never does:
-- implements blocked items
-- leave a safe block half-finished
-- widen scope on its own
+
+- widens scope
+- retries a blocked action without new evidence or a changed state
+- executes before approval is explicit
 
 When it enters:
-- after Guardião approval
+
+- only after the slice is approved for action
 
 When it stops:
-- after the approved slice is fully closed and locally validated
+
+- after the approved slice is done or cleanly blocked
+
+## Reviewer
+
+What it does:
+
+- checks scope fit, correctness, regressions, and contract alignment
+- reviews whether the plan and action still make sense after delegation
+- raises stop conditions before the runtime records false confidence
+
+What it never does:
+
+- becomes a second implementer
+- turns a weak branch into an approved branch
+- replaces verification
+
+When it enters:
+
+- when ambiguity exists between two defensible paths
+- when the change touches a critical flow such as `apply`, `verify`, `rollback`, `session`, or `schema`
+- when there is false-consensus risk across parallel work
+- when the Implementer reports uncertainty about the approved slice
+
+When it stops:
+
+- after the review outcome is explicit and recorded
+
+## Verifier
+
+What it does:
+
+- validates the actual result
+- checks the flow, the DAG, and the boundary conditions
+- confirms whether rollback is needed after a failed action
+
+What it never does:
+
+- accept partial smoke signals as final truth
+- hide a failed action behind a new retry
+- substitute confidence for verification
+
+When it enters:
+
+- immediately after implementation
+
+When it stops:
+
+- after the result is confirmed, rejected, or rolled back
+
+## Documenter
+
+What it does:
+
+- records `status-export`, audit trail, and handoff notes
+- preserves the reasoning behind the decision
+- keeps the closure artifact readable for the next round
+
+What it never does:
+
+- invents facts
+- retrofits a nicer story over a blocked or failed decision
+- acts as a hidden planner
+
+When it enters:
+
+- for level 2 and level 3 rounds, in parallel once the round enters action
+- for level 1 rounds, during record and closure only
+
+When it stops:
+
+- after the decision trail is complete and usable
+
+## Layer Sequence
+
+1. Orchestrator defines context and blocks ambiguity.
+2. Researcher gathers and classifies evidence.
+3. Planner turns that evidence into a plan-backed slice.
+4. Reviewer critiques scope, risk, and contract fit when needed.
+5. Implementer executes only the approved slice.
+6. Verifier confirms the actual result and rollback posture.
+7. Documenter records the closure artifacts.
+
+## Structural Rules
+
+No agent may decide canonical context and no external tool may compete with `analyze`.
+If the round does not produce structured tracing, it is not closed.
+
+## Historical Compatibility Map
+
+### Orquestrador
+
+Historical compatibility heading for older operational records.
+
+### Mapeador
+
+Historical compatibility heading for older operational records.
+
+### Quebrador
+
+Historical compatibility heading for older operational records.
+
+### Organizador
+
+Historical compatibility heading for older operational records.
+
+### Comprovador
+
+Historical compatibility heading for older operational records.
+
+### Explorador de Solucoes
+
+Historical compatibility heading for older operational records.
+
+### Avaliador de Risco
+
+Historical compatibility heading for older operational records.
+
+### Guardião
+
+Historical compatibility heading for older operational records.
+
+### Executor
+
+Historical compatibility heading for older operational records.
+
+### Testador
+
+Historical compatibility heading for older operational records.
 
 ### Auditor
 
-What it does:
-- validates that the correction actually closed the gap
-- checks regressions, contract drift, and test adequacy
-- confirms that docs still match behavior
+Historical compatibility heading for older operational records.
 
-What it never does:
-- approve semantic expansion
-- accept “probably enough” without evidence
-- replace the Guardião decision
+### Planejador
 
-When it enters:
-- after Corretor
-
-When it stops:
-- after the affected suites pass and the contract remains intact
-
-### Visionário
-
-What it does:
-- extracts repeated patterns, future candidates, and true stop conditions
-- separates future-layer opportunities from current-layer work
-- identifies false feelings of incompleteness
-
-What it never does:
-- convert intuition into automatic backlog
-- override the freeze policy
-- treat future possibility as present permission
-
-When it enters:
-- after Auditor
-
-When it stops:
-- after recording whether the round produced a point fix, a real block, or a next-layer candidate
-
-## Auxiliary Roles
-
-These roles exist to reduce overload in the permanent core roles.
-They are optional and must remain subordinate to the same contract.
-The auxiliary role set below is the official baseline for continued operation.
-Do not add or promote auxiliary roles unless a repeated real bottleneck proves the current team insufficient.
-
-### Triador de Casos
-
-What it does:
-- turns raw findings into a deduplicated, front-aware, non-redundant queue
-- separates one bug from several symptoms of the same bug
-- keeps Guardião and Corretor from spending time on noisy or overlapping findings
-
-What it never does:
-- approve or block scope
-- weaken risk classification
-- invent priority detached from demonstrated impact
-
-When it enters:
-- after Estressador when findings span multiple fronts, contain duplicates, or arrive from more than one source
-
-When it stops:
-- after producing a clean queue with grouped findings, affected fronts, and reproduction status
-
-Interaction:
-- consumes Estressador output
-- informs Coordenador de Rodada and Guardião
-- never replaces Guardião prioritization or contract blocking
-
-Maintenance note:
-- keep this role only while repeated rounds show real gains in deduplication, queue quality, or noise reduction
-- if that gain stops recurring, merge or remove it instead of preserving it by habit
-
-### Avaliador de Evidencia
-
-What it does:
-- checks whether a finding is demonstrated by proof rather than impression
-- confirms reproduction quality, trace quality, and whether the claimed risk is actually shown
-- marks weak signals before Guardião or Corretor spend effort on them
-
-What it never does:
-- approve scope
-- implement fixes
-- elevate a plausible idea into a proven issue
-
-When it enters:
-- after Estressador or Triador when a finding is not yet clearly demonstrated
-
-When it stops:
-- after each finding is marked as demonstrated, insufficient-evidence, or needs-repro
-
-Interaction:
-- feeds Guardião with evidence quality
-- feeds Validador de Fluxo when reproduction work is needed
-- reduces overload on Estressador, Guardião, and Auditor without replacing any of them
-
-Maintenance note:
-- keep this role only while repeated rounds show real gains in proof quality or wasted-work reduction
-- if that gain stops recurring, merge or remove it instead of preserving it by habit
-
-### Explorador de Superficie
-
-What it does:
-- maps safe work areas, possible blind spots, and file/module ownership before edits begin
-- helps avoid collision between parallel workers
-- narrows search space for the Estressador and Corretor
-
-What it never does:
-- edits files
-- claims that a mapped area is automatically approved
-- perform contract decisions
-
-When it enters:
-- before or alongside Estressador when the surface is broad or unclear
-
-When it stops:
-- after producing a bounded map of candidate areas and local ownership
-
-Interaction:
-- feeds Estressador
-- informs Coordenador de Rodada
-- never bypasses Guardião
-
-### Validador de Fluxo
-
-What it does:
-- focuses on subprocess behavior, clean-environment flow, real-project validation, and bug reproduction
-- owns user-visible runtime-flow proof outside the core
-- stress-tests full command sequences instead of isolated units only
-
-What it never does:
-- redefine expected behavior
-- repair failures directly without passing them back through Guardião and Corretor
-- treat runtime output as authority beyond the canonical snapshot
-
-When it enters:
-- after Corretor for real-use validation, or earlier when reproducing a reported bug
-
-When it stops:
-- after confirming the public flow is correct or after producing a reproducible failure report
-
-Interaction:
-- feeds Auditor with public-surface evidence
-- gives Visionário real friction data
-
-### Coordenador de Rodada
-
-What it does:
-- keeps the cycle ordered
-- assigns file/front ownership
-- ensures handoffs, board updates, and stop conditions are recorded
-- prevents agents from colliding or skipping stages
-
-What it never does:
-- invent permission
-- replace Guardião decisions
-- act as a product owner or truth source
-
-When it enters:
-- before the round starts and after each stage transition
-
-When it stops:
-- after the round is closed, recorded, and no approved block is left dangling
-
-Interaction:
-- coordinates every role
-- enforces sequence, not semantics
-
-## Roles Not Promoted To Permanent Status
-
-The following concerns are valid, but they do not justify standalone permanent roles under the current contract.
-
-### Curador de Contexto
-
-Why not permanent:
-- useful only in narrow bootstrap or future analysis work
-- too easy to drift into judging “best context” semantically
-- would overlap with Explorador de Superficie, Validador de Fluxo, and Visionário
-
-Allowed narrower use:
-- temporary evaluation of shortlist quality in assistive discovery
-- never registers `sources`
-- never decides canonical context
-
-### Sintetizador de Saida
-
-Why not permanent:
-- output consistency is real, but usually local to Corretor plus Auditor work
-- promoting it to a permanent role would overweight presentation polish
-- risks creating a pseudo-owner of meaning across exports
-
-Allowed narrower use:
-- temporary review pass when multiple exports or help texts change together
-- never changes semantics
-
-### Cartografo de Superficie
-
-Why not permanent:
-- the current Explorador de Superficie already covers safe-area mapping, ownership hints, and blast-radius reduction
-- promoting a second mapper would create naming duplication without new execution power
-
-Allowed narrower use:
-- none beyond the current Explorador role
-
-### Monitor de Observabilidade
-
-Why not permanent:
-- observability is already split across Validador de Fluxo, Auditor, and architecture/regression tests
-- promoting a dedicated monitor now would add a reporting layer without a demonstrated recurring gap
-
-Allowed narrower use:
-- temporary blind-spot review when coverage gaps are suspected but not yet localized
-- never defines acceptance on its own
-
-### Planejador de Experimentos
-
-Why not permanent:
-- experiment design is already a mode inside Estressador and Validador de Fluxo
-- promoting it would separate planning from the people who must reproduce and validate the result
-
-Allowed narrower use:
-- temporary design pass for a one-off stress matrix or real-use validation plan
-- never executes fixes or decides scope
-
-## Updated Round Cycle
-
-The core cycle remains the same:
-
-1. Estressador produces findings.
-2. Guardião approves or blocks the safe slice.
-3. Corretor executes only the approved slice.
-4. Auditor validates closure and regression safety.
-5. Visionário classifies what remains.
-
-The auxiliary roles enter only at specific points:
-
-1. Coordenador de Rodada opens the round, assigns ownership, and keeps the sequence intact.
-2. Explorador de Superficie may map the work surface before Estressador when needed.
-3. Estressador produces the concrete attack list.
-4. Triador de Casos may deduplicate and group findings when the attack list is noisy or cross-front.
-5. Avaliador de Evidencia may verify whether each finding is actually demonstrated before approval.
-6. Guardião filters the clean, evidenced list.
-7. Corretor closes the approved block.
-8. Validador de Fluxo may run real-use or subprocess validation before final audit when public behavior changed.
-9. Auditor validates the correction and checks for drift.
-10. Visionário records whether the remainder is point correction, architecture block, or next-layer decision.
-11. Coordenador de Rodada closes the round, updates board and handoffs, and confirms no approved block remains open.
-
-## Rules Of Use
-
-- Keep the permanent role set small.
-- Add an auxiliary role only when it removes a real execution bottleneck.
-- Add a new role only when the current team repeatedly fails to close blocks cleanly without it.
-- Keep a role only if it reduces collision, improves closure rate, or improves observability measurably.
-- If two roles start to overlap heavily, collapse them instead of adding nuance.
-- If a role starts to look smarter or more authoritative than the runtime, it is wrong.
-- If a role needs to decide truth, semantics, or validity of context, stop immediately.
-- Treat the current team shape as frozen unless a repeated real bottleneck proves it insufficient.
-
-## Stop Conditions
-
-The role system is healthy only while it produces:
-- closed safe blocks
-- explicit blocks
-- explicit next-layer decisions
-
-It must stop growing when additional specialization would:
-- duplicate another role
-- blur responsibility
-- encourage uncontrolled parallelism
-- create the appearance of authority outside the core
+Historical compatibility heading for older operational records.

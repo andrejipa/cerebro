@@ -4,6 +4,8 @@ External consumers of the core live here.
 
 Current read-only extensions:
 
+- `context_index_export`
+- `external_freshness_verifier`
 - `handoff_export`
 - `impact_export`
 - `status_export`

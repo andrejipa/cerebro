@@ -471,7 +471,9 @@ class BootstrapScanTests(unittest.TestCase):
                 text=True,
             )
             self.assertEqual(wrong_dir_import.returncode, 1)
-            self.assertIn("state file not found", wrong_dir_import.stdout)
+            self.assertIn("no Cerebro state found in current directory", wrong_dir_import.stdout)
+            self.assertIn("outside the project directory", wrong_dir_import.stdout)
+            self.assertIn("run `cerebro init` first", wrong_dir_import.stdout)
 
             correct_dir_import = subprocess.run(
                 [sys.executable, "-m", "cli.main", "import-context", "--files", "README.md"],

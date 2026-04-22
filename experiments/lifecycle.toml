@@ -1,0 +1,38 @@
+# Experiments Lifecycle Ledger
+#
+# This ledger is a derived governance artifact listing every folder
+# under `experiments/` that counts as an experiment, together with its
+# lifecycle status and review cadence.
+#
+# It is NOT canonical runtime state. It must not be read or written by
+# `core/` or by any runtime mutator, and it must never be treated as a
+# second source of truth.
+#
+# Vocabulary for `status`:
+#
+#   - active     — currently in use; must carry `last_reviewed`,
+#                  `next_review_due`, and `outcome_so_far`
+#   - graduated  — promoted into an approved surface; must carry
+#                  `graduated_on`, `graduated_to`, and `outcome_so_far`
+#   - archived   — complete, kept as historical evidence, not in use;
+#                  must carry `archived_on` and `outcome_so_far`
+#
+# Deletion of an archived experiment requires an explicit ADR.
+
+schema_version = "1"
+default_review_interval_days = 90
+
+[[experiment]]
+name = "operational_signals"
+status = "active"
+started = "2026-04-20"
+last_reviewed = "2026-04-20"
+next_review_due = "2026-07-19"
+outcome_so_far = "observability-only layer for operational insufficiency signals; advisory tripwire sub-layer `suggestions/` carries one narrow externally validated rule (`detect_stale_system_state`) plus one rule that passed an author-curated dataset but did not validate on the real corpus (`detect_export_surface_gap`); the layer remains advisory-only, human-reviewed, and currently classified as marginal rather than ready for wider expansion"
+
+[[experiment]]
+name = "recall_eval"
+status = "archived"
+started = "2026-04-20"
+archived_on = "2026-04-20"
+outcome_so_far = "semantic retrieval benchmarked against four real-project corpora across four variants (A-D); lexical baseline matched or beat embeddings in most variants; not promoted into the approved product surface; kept as historical evidence that semantic retrieval did not clear the lexical bar on this corpus"

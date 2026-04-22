@@ -1,3 +1,11 @@
+## Current Snapshot — 2026-04-22
+
+- Live executable bug queue: none.
+- Current posture: this file is preserved as historical evidence of closed canonical-runtime rounds; nothing below is live unless it is explicitly reopened in a current snapshot.
+- Residual handling: accepted residuals and freeze-blocked items do not become an executable queue here by default.
+
+## Historical Canonical Bug Ledger
+
 ## Estado da suíte
 
 - Antes da varredura: `534` testes passando, `6` skips, `0` falhas (`python -m unittest discover -s tests -v`)
@@ -367,9 +375,25 @@
 - Testes que cristalizaram o fechamento:
   - `tests/test_state_store.py:2142` — `StateStoreTests.test_discard_session_clears_stale_session_records_trace_without_bumping_revision`
   - `tests/test_validate.py:1153` — `ValidateCommandTests.test_session_discard_clears_stale_session_and_requires_explicit_reopen`
-  - `tests/test_validate.py:1900` — `ValidateCommandTests.test_checkpoint_command_reports_operation_failed_without_mutating_state_when_session_close_fails`
-- Lacuna de cobertura ainda aberta no `main`: os cenários análogos de `import-context` e `checkpoint` para falha em `close_session()`/`save_state()` no nível do CLI ainda injetam `StateStoreError` por `mock.patch.object(...)`, então o fechamento do runtime continua válido, mas a prova de rollback por falha real de I/O nesses chamadores segue separada.
+  - `tests/test_validate.py:1973` — `ValidateCommandTests.test_checkpoint_command_reports_operation_failed_without_mutating_state_when_session_close_fails`
+  - `tests/test_validate.py:1012` — `ValidateCommandTests.test_import_context_reports_operation_failed_without_mutating_state_when_session_close_fails`
+  - `tests/test_validate.py:1064` — `ValidateCommandTests.test_import_context_reports_operation_failed_without_losing_session_when_state_write_fails`
+  - `tests/test_validate.py:2027` — `ValidateCommandTests.test_checkpoint_command_reports_operation_failed_without_losing_session_when_state_write_fails`
 - Residual fechado nesta sessão: a janela remanescente de `_save_state_with_refreshed_session()` foi eliminada na Round 13 por meio do journal local `session.refresh.pending.json`.
+
+### MÉDIO — `close_session()` podia engolir leitura inválida de `session.local.json` e seguir limpando a sessão [FECHADO nesta sessão]
+
+- Localização: `core/state_store.py:1189-1267`
+- Descrição: quando `_read_session_file()` levantava exceção inesperada ou retornava `session_errors`, `close_session()` zerava `session_data/session_errors` e seguia para limpar registry, claim/live-proof e `session.local.json`, escondendo o defeito de leitura e abrindo caminho para sucesso silencioso nos chamadores CLI.
+- Como reproduzir: abrir uma sessão válida e forçar `_read_session_file()` a falhar durante `close_session()`, ou corromper `session.local.json` antes do fechamento.
+- Causa raiz confirmada: o boundary de fechamento tratava falha de leitura como ausência tolerável de sidecar, em vez de tratá-la como precondição inválida para cleanup.
+- Debate: sem divergência no fechamento; reviewer e architect concordaram que o menor patch seguro era fail-closed no próprio boundary, com trilha via `_record_trace_only_events()`.
+- Fechamento observado: `close_session()` agora registra `session_close_failed` e levanta `StateStoreError` antes de limpar registry, claim ou live-proof quando a sessão não é legível/validável; `import-context` e `checkpoint` traduzem isso para `operation_failed` sem mutação parcial.
+- Localização do fechamento: `core/state_store.py:1189-1267`
+- Testes que cristalizaram o fechamento:
+  - `tests/test_state_store.py:2347` — `StateStoreTests.test_close_session_fails_closed_and_records_trace_when_session_file_is_invalid`
+  - `tests/test_validate.py:1064` — `ValidateCommandTests.test_import_context_reports_operation_failed_without_mutating_state_when_session_file_read_raises_during_close`
+  - `tests/test_validate.py:2031` — `ValidateCommandTests.test_checkpoint_command_reports_operation_failed_without_mutating_state_when_session_file_read_raises_during_close`
 
 ### MÉDIO — `verify` parcial sai com código `0` [FECHADO na Round 9]
 
@@ -435,6 +459,8 @@
 - `C5` [FECHADO na Round 9]: `core/validation.py:1020` agora tem teste direto para `owner_claim_id` vazio em `tests/test_validate.py:312` — `test_validate_session_rejects_empty_owner_claim_id`.
 - `C6` [FECHADO na Round 9]: o boundary de `sources[].path` agora tem teste direto para path absoluto, traversal e separador inválido em `tests/test_validate.py:325` — `test_validate_state_rejects_invalid_source_path_boundaries`.
 - `C7` [FECHADO nesta sessão]: `tests/test_analyze.py` agora cobre o caminho padrão sem `session_token` e a emissão explícita sob `emit_session_token=True`; cobertura direta em `tests/test_analyze.py:43`, `tests/test_analyze.py:94` e `tests/test_analyze.py:124`.
+- `C8` [FECHADO nesta sessão]: `tests/test_validate.py` agora substitui os mocks estreitos de `StateStore.close_session`/`StateStore.save_state` por falhas reais de `Path.unlink` e `os.replace`, cristalizando rollback efetivo nos chamadores CLI `import-context` e `checkpoint`; cobertura direta em `tests/test_validate.py:1012`, `tests/test_validate.py:1064`, `tests/test_validate.py:1973` e `tests/test_validate.py:2027`.
+- `C9` [FECHADO nesta sessão]: o ramo exato em que `_read_session_file()` explode dentro de `close_session()` agora está cristalizado também no CLI de `checkpoint`, além do core e de `import-context`; cobertura direta em `tests/test_state_store.py:2347`, `tests/test_validate.py:1064` e `tests/test_validate.py:2031`.
 
 ## Próximos passos
 

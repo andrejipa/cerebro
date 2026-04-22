@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-CURRENT_SCHEMA_VERSION = "1"
+CURRENT_SCHEMA_VERSION = "2"
 SUPPORTED_SCHEMA_VERSIONS = frozenset({CURRENT_SCHEMA_VERSION})
 
 

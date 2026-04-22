@@ -22,6 +22,7 @@ def run_init(root: Path, args=None) -> int:
         [
             f"instance_created: {store.cerebro_dir}",
             f"state_path: {store.state_path}",
+            "next_step: run `cerebro import-context --files ...` from this project root",
         ]
     )
     return 0

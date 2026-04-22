@@ -118,10 +118,16 @@ def required_action_approval_error(
     approval_id: object,
     approval_statuses: dict[str, str],
     approval_required_kinds: list[str],
+    *,
+    target_exists: bool | None = None,
 ) -> str:
     """Return one policy error when a sensitive action lacks an approved approval."""
     action_kind = _action_kind(action)
-    if not action_kind or not action_requires_approval(action, approval_required_kinds):
+    if not action_kind or not action_requires_approval(
+        action,
+        approval_required_kinds,
+        target_exists=target_exists,
+    ):
         return ""
     if not isinstance(approval_id, str) or not approval_id:
         return f"kind {action_kind} requires a non-empty approval_id under execution policy"

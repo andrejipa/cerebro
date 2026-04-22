@@ -19,8 +19,8 @@ opportunity_map_text = """
 [[case]]
 id = "surface-pos-002"
 label = "positive"
-label_reason = "three sources present and drift hits the medium threshold exactly"
-expected_confidence = "medium"
+label_reason = "the two live current-snapshot carriers drift by exactly the low threshold while README stays archival"
+expected_confidence = "low"
 readme_text = """
 # README
 
@@ -39,9 +39,8 @@ opportunity_map_text = """
 
 [[case]]
 id = "surface-pos-003"
-label = "positive"
-label_reason = "four sources present with low-threshold pairwise drift"
-expected_confidence = "low"
+label = "negative"
+label_reason = "README and closure are archival, so the two live carriers drift by less than the minimum threshold"
 readme_text = """
 # README
 
@@ -65,9 +64,8 @@ phase_closure_text = """
 
 [[case]]
 id = "surface-pos-004"
-label = "positive"
-label_reason = "phase closure and current state diverge by more than ten tests"
-expected_confidence = "medium"
+label = "negative"
+label_reason = "phase closure is archival, so one live carrier alone must stay silent by the live-authority scope guard"
 system_state_text = """
 ## Current Snapshot
 
