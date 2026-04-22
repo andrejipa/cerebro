@@ -15,6 +15,21 @@
 - Gate pós-slice: 737 testes, 0 falhas, 6 skips; 51 testes arquiteturais, 0 falhas
 - Comportamento inalterado. Sem novo artefato canônico.
 
+### Slice 1a — Encapsulation Cleanup (Concluída 2026-04-22)
+
+- Três métodos usados por `verification_runtime` promovidos a API pública em
+  `StateStore`:
+  - `_runtime_lock` → `runtime_lock`
+  - `_validate_state_locked` → `validate_state_locked`
+  - `_read_owned_active_session` → `read_owned_active_session`
+- `core/store_protocols.py` (`VerificationStoreSurface`) atualizado para expor
+  apenas nomes públicos; Protocol deixa de documentar dependência em underscore
+- `core/verification_runtime.py` (`execute_verification_cycle`) atualizado para
+  chamar a API pública
+- Chamadas internas dentro de `state_store.py` migradas consistentemente
+- Gate pós-slice: 737 testes, 0 falhas, 6 skips; 51 testes arquiteturais, 0 falhas
+- Comportamento inalterado. Apenas rename + Protocol refinado.
+
 ## Why This Exists
 
 `StateStore` is still the clearest architectural hotspot outside the now-clean

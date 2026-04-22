@@ -687,11 +687,11 @@ def execute_verification_cycle(
     if resolved_root != store.root:
         raise StateStoreError("verification cycle root must match state store root")
 
-    with store._runtime_lock():
-        validation_result, state_data = store._validate_state_locked()
+    with store.runtime_lock():
+        validation_result, state_data = store.validate_state_locked()
         if not validation_result["ok"] or state_data is None:
             return validation_result, None, None
-        store._read_owned_active_session(state_data, expected_session_token)
+        store.read_owned_active_session(state_data, expected_session_token)
 
         verification_record = run_verification_commands(
             resolved_root,

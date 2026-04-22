@@ -137,7 +137,7 @@ class StateStore:
 
     def initialize(self) -> dict:
         """Create the minimal instance layout and initial state."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             if self.state_path.exists():
                 raise StateStoreError(f"instance already exists at {self.state_path}")
 
@@ -377,7 +377,7 @@ class StateStore:
         """Append one explicit consolidation record to the audit trail."""
         if not isinstance(consolidation, dict):
             raise StateStoreError("parallel approach consolidation must be an object")
-        with self._runtime_lock():
+        with self.runtime_lock():
             state = self.load_state()
             normalized = dict(consolidation)
             subject_kind = normalized.get("subject_kind", "")
@@ -945,7 +945,7 @@ class StateStore:
         """Persist one runtime event and project any decision-critical signal into canonical state."""
         if not isinstance(event, dict):
             raise StateStoreError("runtime event must be an object")
-        with self._runtime_lock():
+        with self.runtime_lock():
             state = self.load_state()
             normalized = self._normalize_runtime_event_input(event)
             expected_revision = state["revision"]
@@ -972,7 +972,7 @@ class StateStore:
 
     def save_state(self, state: dict, expected_revision: int | None = None) -> None:
         """Validate and atomically persist the state."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             state = canonicalize_state_data(state)
             if not isinstance(state, dict):
                 raise StateStoreError("state must be a JSON object")
@@ -1008,7 +1008,7 @@ class StateStore:
 
     def register_sources(self, paths: list[str], *, expected_session_token: str | None = None) -> dict:
         """Replace the full sources list with a new validated set."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             state = self.load_state()
             self._assert_active_session_token(state, expected_session_token)
             sources = self.prepare_sources(paths)
@@ -1044,7 +1044,7 @@ class StateStore:
         expected_session_token: str | None = None,
     ) -> dict:
         """Replace the checkpoint block with a short explicit checkpoint."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             checkpoint = self._build_checkpoint_update(data)
             state = self.load_state()
             candidate = dict(state)
@@ -1064,7 +1064,7 @@ class StateStore:
             runtime_errors = self._runtime_validation_errors(state)
             if runtime_errors:
                 raise StateValidationError(runtime_errors)
-            active_session = self._read_owned_active_session(state, expected_session_token)
+            active_session = self.read_owned_active_session(state, expected_session_token)
 
             def persist() -> dict:
                 previous_sources = list(state["sources"])
@@ -1092,7 +1092,7 @@ class StateStore:
 
     def open_session(self, actor: str, validated_revision: int | None = None) -> dict:
         """Create one local session file for the current operator."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             if not isinstance(actor, str) or not actor.strip():
                 raise StateStoreError("actor must be a non-empty string")
 
@@ -1189,7 +1189,7 @@ class StateStore:
 
     def close_session(self) -> bool:
         """Remove the local session file when present, failing closed if the session cannot be read safely."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             if self.session_path.exists():
                 state = self.load_state()
                 previous_state = deepcopy(state)
@@ -1270,7 +1270,7 @@ class StateStore:
 
     def discard_session(self, *, expected_session_token: str | None = None) -> dict:
         """Explicitly remove the local session without claiming uninterrupted continuity."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             session_exists = self.has_active_session()
             validation = self.validate_state()
             session_errors = [item for item in validation["errors"] if str(item.get("code", "")).startswith("session_")]
@@ -1455,7 +1455,7 @@ class StateStore:
         expected_session_token: str | None = None,
     ) -> dict:
         """Persist the alpha-runtime plan, command registry, and execution policy."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             plan_block, command_registry, verification_block, execution_policy = self._build_agent_plan_update(data)
             if validated_revision is None:
                 validation = self.validate_state()
@@ -1468,7 +1468,7 @@ class StateStore:
             runtime_errors = self._runtime_validation_errors(state)
             if runtime_errors:
                 raise StateValidationError(runtime_errors)
-            active_session = self._read_owned_active_session(state, expected_session_token)
+            active_session = self.read_owned_active_session(state, expected_session_token)
 
             previous_task_id = state["agent_runtime"]["plan"].get("current_task_id", "")
             state["agent_runtime"]["plan"] = plan_block
@@ -1516,7 +1516,7 @@ class StateStore:
         expected_session_token: str | None = None,
     ) -> dict:
         """Append one or more executed action records to the canonical alpha-runtime state."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             if not isinstance(action_records, list) or not action_records:
                 raise StateStoreError("action_records must contain at least one action record")
             if validated_revision is None:
@@ -1530,7 +1530,7 @@ class StateStore:
             runtime_errors = self._runtime_validation_errors(state)
             if runtime_errors:
                 raise StateValidationError(runtime_errors)
-            active_session = self._read_owned_active_session(state, expected_session_token)
+            active_session = self.read_owned_active_session(state, expected_session_token)
 
             previous_task_id = state["agent_runtime"]["plan"].get("current_task_id", "")
             actions = list(state["agent_runtime"]["actions"])
@@ -1603,7 +1603,7 @@ class StateStore:
         expected_session_token: str | None = None,
     ) -> dict:
         """Persist one approval request or resolution in canonical runtime state."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             if validated_revision is None:
                 validation = self.validate_state()
                 if not validation["ok"]:
@@ -1615,7 +1615,7 @@ class StateStore:
             runtime_errors = self._runtime_validation_errors(state)
             if runtime_errors:
                 raise StateValidationError(runtime_errors)
-            active_session = self._read_owned_active_session(state, expected_session_token)
+            active_session = self.read_owned_active_session(state, expected_session_token)
 
             approvals = list(state["agent_runtime"]["approvals"]["items"])
             approvals = [item for item in approvals if item["id"] != approval_record["id"]]
@@ -1669,7 +1669,7 @@ class StateStore:
         expected_session_token: str | None = None,
     ) -> dict:
         """Persist the latest verification run for the alpha runtime."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             if validated_revision is None:
                 validation = self.validate_state()
                 if not validation["ok"]:
@@ -1681,7 +1681,7 @@ class StateStore:
             runtime_errors = self._runtime_validation_errors(state)
             if runtime_errors:
                 raise StateValidationError(runtime_errors)
-            active_session = self._read_owned_active_session(state, expected_session_token)
+            active_session = self.read_owned_active_session(state, expected_session_token)
 
             previous_plan = deepcopy(state["agent_runtime"]["plan"])
             verification_record = self._merge_verification_result(
@@ -1756,11 +1756,11 @@ class StateStore:
 
     def validate_state(self) -> dict:
         """Validate the persisted state file without raising on user-data failures."""
-        with self._runtime_lock():
-            result, _ = self._validate_state_locked()
+        with self.runtime_lock():
+            result, _ = self.validate_state_locked()
             return result
 
-    def _validate_state_locked(self) -> tuple[dict, dict | None]:
+    def validate_state_locked(self) -> tuple[dict, dict | None]:
         """Return the validation result plus the canonical state while the runtime lock is held."""
         if not self.state_path.exists():
             return {
@@ -1851,7 +1851,7 @@ class StateStore:
 
     def inspect_retention(self, *, expected_revision: int | None = None) -> dict:
         """Return one dry-run retention report without mutating runtime files."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             state = self.load_state()
             if expected_revision is not None and state["revision"] != expected_revision:
                 raise StateStoreError("state revision changed during operation")
@@ -1859,7 +1859,7 @@ class StateStore:
 
     def apply_retention(self, *, expected_revision: int | None = None) -> dict:
         """Apply the governed retention policy and archive discarded runtime data."""
-        with self._runtime_lock():
+        with self.runtime_lock():
             state = self.load_state()
             if expected_revision is not None and state["revision"] != expected_revision:
                 raise StateStoreError("state revision changed during operation")
@@ -3493,7 +3493,7 @@ class StateStore:
                 ]
             )
 
-    def _read_owned_active_session(self, state: dict, expected_session_token: str | None) -> dict | None:
+    def read_owned_active_session(self, state: dict, expected_session_token: str | None) -> dict | None:
         """Return the one active local session after proving capability ownership when present."""
         session_data, session_errors = self._read_validated_session_for_state(state)
         if session_errors:
@@ -3762,7 +3762,7 @@ class StateStore:
 
     def _assert_active_session_token(self, state: dict, expected_session_token: str | None) -> None:
         """Require a matching session capability before mutating state under one live local session."""
-        self._read_owned_active_session(state, expected_session_token)
+        self.read_owned_active_session(state, expected_session_token)
 
     def _assert_expected_session_id(self, state: dict, expected_session_id: str | None) -> None:
         """Fail closed when a session-bound operation no longer owns the same session."""
@@ -4963,7 +4963,7 @@ class StateStore:
         self._try_remove_runtime_lock_file()
 
     @contextmanager
-    def _runtime_lock(self):
+    def runtime_lock(self):
         """Serialize runtime mutations across instances to avoid lost updates."""
         if self._lock_depth > 0:
             self._lock_depth += 1
