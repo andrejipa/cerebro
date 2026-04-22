@@ -2,11 +2,18 @@
 
 ## Status
 
-- Planning-only artifact.
-- Non-authoritative.
-- Does not reopen the freeze.
-- Does not authorize mutations in `core/`, `cli/`, `tests/`, schema, `analyze`,
-  `validate`, `state.json`, or session policy.
+- Slice 1 (Contract Extraction) executada em 2026-04-22 e commitada em `441facf`.
+- Slices 2–5 planejadas; aguardam autorização incremental.
+
+### Slice 1 — Contract Extraction (Concluída 2026-04-22)
+
+- `core/store_protocols.py` criado com `ActionStoreSurface` e `VerificationStoreSurface`
+  como `@runtime_checkable Protocol` classes
+- `core/action_runtime.py`: 13 funções anotadas com `ActionStoreSurface`
+- `core/verification_runtime.py`: 5 funções anotadas com `VerificationStoreSurface`
+- `tests/test_runtime_units.py`: 7 testes de contrato adicionados
+- Gate pós-slice: 737 testes, 0 falhas, 6 skips; 51 testes arquiteturais, 0 falhas
+- Comportamento inalterado. Sem novo artefato canônico.
 
 ## Why This Exists
 
