@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import shutil
@@ -13,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from core.agent_runtime import current_plan_generation_id
+from core.digests import sha256_bytes as _sha256_bytes
+from core.digests import sha256_text as _sha256_text
 from core.execution_policy import (
     ExecutionPolicyError,
     ensure_command_allowed,
@@ -117,14 +118,6 @@ def _write_text_atomic(path: Path, content: str) -> None:
             pass
 
 
-def _sha256_text(content: str) -> str:
-    return hashlib.sha256(content.encode("utf-8")).hexdigest()
-
-
-def _sha256_bytes(content: bytes) -> str:
-    return hashlib.sha256(content).hexdigest()
-
-
 def _exec_command_binding_payload(command: dict | None, command_id: str) -> dict:
     """Return the approval/retry-relevant snapshot for one exec.command entry."""
     if not isinstance(command, dict):
@@ -150,7 +143,7 @@ def compute_exec_command_signature(command_registry: dict[str, dict], command_id
     """Return a stable digest for the resolved exec.command registry snapshot."""
     payload = _exec_command_binding_payload(command_registry.get(command_id), command_id)
     serialized = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    return _sha256_text(serialized)
 
 
 def _attach_plan_generation(agent_runtime: dict, details: dict) -> dict:
@@ -477,7 +470,7 @@ def compute_action_fingerprint(payload: dict, *, command_registry: dict[str, dic
             normalized["command_id"],
         )
     serialized = json.dumps(fingerprint_payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+    return _sha256_text(serialized)
 
 
 def _read_text(path: Path) -> str:

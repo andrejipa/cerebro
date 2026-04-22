@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 
 from core.action_runtime import compute_exec_command_signature
 from core.agent_runtime import build_command_registry_map
+from core.digests import sha256_file, sha256_text
 from core.runtime_event_window import events_since_latest_plan_update
 
 
@@ -30,11 +30,7 @@ def _file_state_marker(path: Path) -> dict:
         return {"exists": False, "sha256": ""}
     if not path.is_file():
         return {"exists": True, "sha256": "non-file"}
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(65536), b""):
-            digest.update(chunk)
-    return {"exists": True, "sha256": digest.hexdigest()}
+    return {"exists": True, "sha256": sha256_file(path)}
 
 
 def build_action_evidence_token(root: Path, normalized_action: dict, agent_runtime: dict, task_id: str) -> str:
@@ -70,7 +66,7 @@ def build_action_evidence_token(root: Path, normalized_action: dict, agent_runti
         evidence["last_run_at"] = verification.get("last_run_at", "")
 
     payload = json.dumps(evidence, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    return sha256_text(payload)
 
 
 def _matches_retry_signature(action: dict, normalized_action: dict, fingerprint: str) -> bool:
@@ -134,7 +130,7 @@ def evaluate_action_effectiveness(root: Path, normalized_action: dict) -> dict:
     if kind == "fs.create_file":
         target = _resolve_workspace_path(root, normalized_action["path"])
         current_state = _file_state_marker(target)
-        desired_sha256 = hashlib.sha256(normalized_action["content"].encode("utf-8")).hexdigest()
+        desired_sha256 = sha256_text(normalized_action["content"])
         if current_state["exists"] and current_state["sha256"] == desired_sha256:
             return {
                 "allowed": False,
@@ -156,7 +152,7 @@ def evaluate_action_effectiveness(root: Path, normalized_action: dict) -> dict:
         target = _resolve_workspace_path(root, normalized_action["path"])
         if target.exists() and target.is_file():
             original = target.read_text(encoding="utf-8")
-            original_sha256 = hashlib.sha256(original.encode("utf-8")).hexdigest()
+            original_sha256 = sha256_text(original)
             if original_sha256 == normalized_action["expected_sha256"]:
                 updated = original
                 can_simulate = True

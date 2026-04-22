@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 import shutil
 import subprocess
@@ -17,6 +16,7 @@ from core.command_sandbox import (
     prepare_project_sandbox,
     summarize_manifest_diff,
 )
+from core.digests import sha256_text as _sha256_text
 from core.execution_policy import ExecutionPolicyError, ensure_command_allowed
 from core.state_store import SESSION_CLAIMS_DIR_ENV_VAR, SESSION_LIVE_PROOFS_DIR_ENV_VAR, StateStoreError
 from core.store_protocols import VerificationStoreSurface
@@ -49,10 +49,6 @@ def _timestamp_now() -> str:
 
 def _artifact_relpath(*parts: str) -> str:
     return Path("artifacts").joinpath(*parts).as_posix()
-
-
-def _sha256_text(content: str) -> str:
-    return hashlib.sha256(content.encode("utf-8")).hexdigest()
 
 
 def _guarded_runtime_relative_paths(root: Path, snapshots: list[dict]) -> set[str]:
