@@ -288,12 +288,7 @@ Structured residual index: `docs/operations/residuals.toml` is the canonical str
 
 ## Divergências doc/código
 
-- `AGENT_ARCHITECTURE.md` ainda descreve `DELEGATE`/`RECORD` e papéis como se fossem parte do runtime canônico, mas o estado real persiste plano, approvals, actions e verification, não um scheduler de papéis.
-  Evidência:
-  [docs/operations/AGENT_ARCHITECTURE.md](</d:/projetos_cli/cerebro/docs/operations/AGENT_ARCHITECTURE.md:24>),
-  [docs/operations/AGENT_ARCHITECTURE.md](</d:/projetos_cli/cerebro/docs/operations/AGENT_ARCHITECTURE.md:39>),
-  [docs/operations/AGENT_ARCHITECTURE.md](</d:/projetos_cli/cerebro/docs/operations/AGENT_ARCHITECTURE.md:68>),
-  [core/agent_runtime.py](</d:/projetos_cli/cerebro/core/agent_runtime.py:243>).
+- ~~`AGENT_ARCHITECTURE.md` ainda descreve `DELEGATE`/`RECORD` e papéis como se fossem parte do runtime canônico~~ — **Fechado em 2026-04-22**: `## Canonical Flow` renomeado para `## Operational Flow (Agent Protocol Only)` com disclaimer explícito de que a sequência é protocolo externo, não gate do CLI; `## Canonical Roles` renomeado para `## Canonical Roles (External Labels Only)` com nota de que o runtime não agenda papéis; `test_tracked_root_surface_is_minimal_and_docs_are_grouped` atualizado para incluir `.codex` e `AGENTS.md` no set de root entries. 51 testes arquiteturais verdes.
 - Comportamentos reais ainda não registrados no baseline operacional:
   `validate_state()` tenta até 3 vezes em concorrência antes de `state_changed_during_validation` em [core/state_store.py](</d:/projetos_cli/cerebro/core/state_store.py:1660>);
   `verify` reescreve sandbox env completo em [core/verification_runtime.py](</d:/projetos_cli/cerebro/core/verification_runtime.py:36>);

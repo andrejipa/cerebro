@@ -19,7 +19,11 @@ The runtime is a scored, gated, auditable task system:
 The architecture does not depend on hidden authority.
 It depends on explicit evidence, explicit delegation, and explicit records.
 
-## Canonical Roles
+## Canonical Roles (External Labels Only)
+
+The runtime does not assign or schedule roles automatically.
+These are external functional labels applied around the canonical state.
+See `docs/operations/AGENT_ROLES.md` for the authoritative role contract.
 
 The canonical roles for this phase are:
 
@@ -34,11 +38,15 @@ The canonical roles for this phase are:
 Legacy labels from older notes are non-canonical.
 They may be read as historical aliases only.
 
-## Canonical Flow
+## Operational Flow (Agent Protocol Only)
 
-The canonical operating flow is:
+The operational flow for external agents working around the runtime is:
 
 `READ -> ANALYZE -> PLAN -> DELEGATE -> ACT -> VERIFY -> RECORD`
+
+This sequence defines operational discipline for the round; it is not enforced by the CLI as a runtime gate.
+The runtime persists flat state: plan, approvals, actions, and verification records.
+There is no built-in DELEGATE or RECORD stage in the runtime — those are external agent responsibilities.
 
 ### READ
 

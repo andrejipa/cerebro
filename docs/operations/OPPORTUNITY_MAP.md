@@ -367,11 +367,11 @@ Bootstrap document created on 2026-04-16 for the autonomous loop.
 - Status: `blocked in documenter track`
 - Reason: the confirmed fix requires mutating `core/action_runtime.py` and proportional regression tests to track and prune only the empty directories created by the current apply
 
-### BLOCKED-DOC-DRIFT-002 — `AGENT_ARCHITECTURE.md` remains misaligned with the runtime contract
+### CLOSED-DOC-DRIFT-002 — `AGENT_ARCHITECTURE.md` realinhado com o contrato do runtime
 
 - Source: `docs/operations/WEAKNESS_REPORT.md`
-- Status: `blocked by architecture-test perimeter`
-- Reason: the document drift is real, but `tests/test_architecture.py` currently asserts the literal `READ -> ANALYZE -> PLAN -> DELEGATE -> ACT -> VERIFY -> RECORD` flow and the `DELEGATE`/`RECORD` headings, so correcting the document would require coupled doc+test changes outside this documenter-only loop
+- Status: `closed 2026-04-22`
+- Resolution: `## Canonical Flow` → `## Operational Flow (Agent Protocol Only)` com disclaimer explícito; `## Canonical Roles` → `## Canonical Roles (External Labels Only)` com nota de ausência de role scheduler no runtime; `test_tracked_root_surface_is_minimal_and_docs_are_grouped` atualizado para `.codex` e `AGENTS.md`; 51 testes arquiteturais verdes.
 
 ## Accepted Residuals That Are Not Queue Items By Default
 

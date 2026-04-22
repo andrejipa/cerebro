@@ -131,8 +131,10 @@ class ArchitectureIsolationTests(unittest.TestCase):
         self.assertEqual(
             root_entries,
             {
+                ".codex",
                 ".github",
                 ".gitignore",
+                "AGENTS.md",
                 "README.md",
                 "cli",
                 "core",
