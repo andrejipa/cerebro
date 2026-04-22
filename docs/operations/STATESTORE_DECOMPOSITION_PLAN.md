@@ -3,7 +3,8 @@
 ## Status
 
 - Slice 1 (Contract Extraction) executada em 2026-04-22 e commitada em `441facf`.
-- Slices 2–5 planejadas; aguardam autorização incremental.
+- Slice 2 (Read-Model Extraction) executada em 2026-04-22 no working tree corrente; gate pós-slice confirmado verde.
+- Slices 3–5 planejadas; aguardam execução incremental.
 
 ### Slice 1 — Contract Extraction (Concluída 2026-04-22)
 
@@ -29,6 +30,19 @@
 - Chamadas internas dentro de `state_store.py` migradas consistentemente
 - Gate pós-slice: 737 testes, 0 falhas, 6 skips; 51 testes arquiteturais, 0 falhas
 - Comportamento inalterado. Apenas rename + Protocol refinado.
+
+### Slice 2 — Read-Model Extraction (Concluída 2026-04-22)
+
+- `core/state_read_model_service.py` criado para encapsular o trio read-only:
+  - `read_task_assessments`
+  - `read_task_selection_consistency`
+  - `read_task_work_profiles`
+- `core/state_store.py` preserva a surface pública e agora delega esses três
+  métodos para o serviço read-only, mantendo a facade como autoridade única
+- `tests/test_state_read_model_service.py`: 5 testes diretos do serviço
+- `tests/test_state_store.py`: 3 guards de passthrough da facade
+- Gate pós-slice: 759 testes, 0 falhas, 6 skips; 51 testes arquiteturais, 0 falhas
+- Comportamento canônico preservado; nenhuma mudança de CLI, schema ou autoridade
 
 ## Why This Exists
 

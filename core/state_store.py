@@ -29,17 +29,12 @@ from core.agent_runtime import (
     canonicalize_state_data,
     iter_command_checks,
 )
-from core.decision_runtime import (
-    choose_next_task,
-    derive_task_assessments,
-    evaluate_task_selection_consistency,
-)
+from core.decision_runtime import choose_next_task
 from core.memory_runtime import (
     sync_approval_memory_notes,
     sync_success_memory_notes,
     sync_verification_memory_notes,
 )
-from core.work_profile import derive_task_work_profiles
 from core.read_models import (
     CheckpointRecord,
     SourceRecord,
@@ -47,6 +42,7 @@ from core.read_models import (
     ValidationDetail,
     ValidationRecord,
 )
+from core.state_read_model_service import StateReadModelService
 from core.schema import build_initial_state
 from core.validation import error, validate_session_data, validate_state_data
 
@@ -134,6 +130,10 @@ class StateStore:
         self.trash_dir = self.cerebro_dir / "trash"
         self._lock_fd: int | None = None
         self._lock_depth = 0
+        self._read_models = StateReadModelService(
+            load_agent_runtime=lambda: self.read_agent_runtime(),
+            load_task_assessments=lambda **kwargs: self.read_task_assessments(**kwargs),
+        )
 
     def initialize(self) -> dict:
         """Create the minimal instance layout and initial state."""
@@ -908,9 +908,11 @@ class StateStore:
         recent_events: tuple[dict, ...] | None = None,
     ) -> tuple[dict, ...]:
         """Return evidence-backed task assessments derived from canonical runtime state."""
-        runtime_block = agent_runtime if agent_runtime is not None else self.read_agent_runtime()
-        recent_event_block = recent_events if recent_events is not None else ()
-        return tuple(derive_task_assessments(runtime_block, recent_event_block))
+        return self._read_models.read_task_assessments(
+            event_limit=event_limit,
+            agent_runtime=agent_runtime,
+            recent_events=recent_events,
+        )
 
     def read_task_selection_consistency(
         self,
@@ -920,16 +922,10 @@ class StateStore:
         task_assessments: tuple[dict, ...] | list[dict] | None = None,
     ) -> dict:
         """Replay task selection from read-only state and report whether it still matches current_task_id."""
-        runtime_block = agent_runtime if agent_runtime is not None else self.read_agent_runtime()
-        recent_event_block = recent_events if recent_events is not None else ()
-        assessments = task_assessments if task_assessments is not None else self.read_task_assessments(
-            agent_runtime=runtime_block,
-            recent_events=recent_event_block,
-        )
-        return evaluate_task_selection_consistency(
-            runtime_block,
-            recent_event_block,
-            assessments=assessments,
+        return self._read_models.read_task_selection_consistency(
+            agent_runtime=agent_runtime,
+            recent_events=recent_events,
+            task_assessments=task_assessments,
         )
 
     def read_task_work_profiles(
@@ -938,8 +934,7 @@ class StateStore:
         agent_runtime: dict | None = None,
     ) -> tuple[dict, ...]:
         """Return derived work profiles for the current canonical tasks."""
-        runtime_block = agent_runtime if agent_runtime is not None else self.read_agent_runtime()
-        return tuple(derive_task_work_profiles(runtime_block))
+        return self._read_models.read_task_work_profiles(agent_runtime=agent_runtime)
 
     def record_runtime_event(self, event: dict) -> None:
         """Persist one runtime event and project any decision-critical signal into canonical state."""

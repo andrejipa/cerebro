@@ -2,20 +2,20 @@
 
 ## Current Snapshot — 2026-04-22
 
-- Suite status: blocked-escalation.
-- Last suite result: `730` tests, `1` failure, `8` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
+- Suite status: green.
+- Last suite result: `759` tests, `0` failures, `6` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
 - Architecture gate: `51` tests, `0` failures.
 - Derived `recall_eval` validation: green with `49` tests and `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
 - Derived `operational_signals/suggestions` validation: green with `97` tests and `0` failures in `experiments/operational_signals/suggestions/tests`.
 - Runtime continuity state: no local `.cerebro/state.json` present in this workspace.
-- Current posture: deliberate freeze for canonical-runtime growth; approved work stays limited to corrective maintenance in derived boundaries, factual documentation updates, authority-surface reduction, and planning-only preparation for documented frozen hotspots.
+- Current posture: deliberate freeze for speculative canonical-runtime growth remains active; the current user-directed engineering session is consuming an already mapped incremental hardening queue in canonical runtime and adjacent boundaries.
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now expose explicit current snapshots that classify their remaining content as historical evidence by default, reducing ambiguity during live triage.
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
-- Current queue mode: blocked-escalation; the latest AGENTS-equivalent gate is red inside frozen canonical `tests/`, so no new corrective slice may start until that blocker is explicitly reopened or cleared by a subsequent authoritative green rerun.
+- Current queue mode: execution; the canonical gate is green again and the ordered hardening queue may proceed.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `blocked-escalation — tests.test_state_store.StateStoreTests.test_validate_state_recovers_pending_session_refresh_after_crash_before_state_save remains red in frozen canonical tests; the latest focused rerun failed earlier with host-temp PermissionError in raw tempfile.TemporaryDirectory(), so the blocker currently looks unstable but still outside the approved derived boundaries`
+- Current next item: `ordered execution — continue the mapped StateStore sequence with Slice 3 (session lifecycle extraction)`
 - Active derived boundaries: `experiments/recall_eval` and `experiments/operational_signals` remain active but non-authoritative; `experiments/operational_signals/suggestions` stays marginal/advisory-only and should not expand without new evidence.
 - The canonical `SCOUT_CONTROL_STATE` block is now materialized below; `OPPORTUNITY_MAP.md` carries only a minimal next-action projection so scout-control state remains single-sourced.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -37,7 +37,7 @@ SCOUT_CONTROL_STATE
 - exhausted_failure_classes: []
 - exhausted_probe_families: []
 - renewal_step_required: none
-- renewal_strength: strong
+- renewal_strength: none
 - paper_renewal: false
 - renewal_debt:
   - cross_cutting_owed: false

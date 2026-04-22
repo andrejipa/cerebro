@@ -895,6 +895,73 @@ class StateStoreTests(unittest.TestCase):
             self.assertEqual(replay["derived_task_id"], "task-002")
             self.assertGreater(replay["priority_gap"], 0)
 
+    def test_read_task_assessments_delegates_to_read_model_service(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            store = StateStore(Path(tmp_dir))
+            agent_runtime = {"plan": {"tasks": []}}
+            recent_events = ({"event": "runtime_probe"},)
+            expected = ({"id": "task-001"},)
+
+            with mock.patch.object(
+                store._read_models,
+                "read_task_assessments",
+                return_value=expected,
+            ) as delegated:
+                result = store.read_task_assessments(
+                    event_limit=7,
+                    agent_runtime=agent_runtime,
+                    recent_events=recent_events,
+                )
+
+            self.assertIs(result, expected)
+            delegated.assert_called_once_with(
+                event_limit=7,
+                agent_runtime=agent_runtime,
+                recent_events=recent_events,
+            )
+
+    def test_read_task_selection_consistency_delegates_to_read_model_service(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            store = StateStore(Path(tmp_dir))
+            agent_runtime = {"plan": {"current_task_id": "task-001"}}
+            recent_events = ({"event": "plan_updated"},)
+            task_assessments = ({"id": "task-001"},)
+            expected = {"status": "consistent"}
+
+            with mock.patch.object(
+                store._read_models,
+                "read_task_selection_consistency",
+                return_value=expected,
+            ) as delegated:
+                result = store.read_task_selection_consistency(
+                    agent_runtime=agent_runtime,
+                    recent_events=recent_events,
+                    task_assessments=task_assessments,
+                )
+
+            self.assertIs(result, expected)
+            delegated.assert_called_once_with(
+                agent_runtime=agent_runtime,
+                recent_events=recent_events,
+                task_assessments=task_assessments,
+            )
+
+    def test_read_task_work_profiles_delegates_to_read_model_service(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            store = StateStore(Path(tmp_dir))
+            agent_runtime = {"plan": {"tasks": []}}
+            expected = ({"id": "task-001", "workload_mode": "light"},)
+
+            with mock.patch.object(
+                store._read_models,
+                "read_task_work_profiles",
+                return_value=expected,
+            ) as delegated:
+                result = store.read_task_work_profiles(agent_runtime=agent_runtime)
+
+            self.assertIs(result, expected)
+            delegated.assert_called_once_with(agent_runtime=agent_runtime)
+
     def test_trace_events_remain_single_writer_under_concurrent_runtime_event_appends(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)

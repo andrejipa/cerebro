@@ -2,21 +2,23 @@
 
 ## Current Snapshot — 2026-04-22
 
-- Suite gate is currently red in this shell: `730` tests, `1` failure, `8` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
+- Suite gate is currently green in this shell: `759` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`.
 - Derived `recall_eval` validation remains green after the latest slice: `49` tests, `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation is green after the latest overlapping-writer lock hardening: `31` tests, `0` failures in `experiments/operational_signals/tests`.
 - Derived `operational_signals/suggestions` validation is green after the latest temp-root hardening: `97` tests, `0` failures in `experiments/operational_signals/suggestions/tests`.
-- Current posture: deliberate freeze remains active for canonical-runtime growth; allowed work stays limited to corrective maintenance in approved derived boundaries plus docs/governance hardening and planning-only preparation for already documented frozen hotspots.
+- Current posture: deliberate freeze remains active for speculative canonical-runtime growth; the current user-directed session is consuming an already mapped incremental hardening queue in `StateStore` and adjacent runtime surfaces.
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now open with explicit current snapshots that mark their remaining body as historical evidence by default, reducing residual-intake ambiguity during heartbeat triage.
 - Planning-only `StateStore` decomposition prep is now recorded in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it stays explicitly non-authoritative and does not reopen the freeze.
 - Current executable queue:
-  - `canonical runtime: blocked-escalation — authoritative gate red in frozen tests`
-  - `derived tracks paused until the canonical gate returns green or the frozen boundary is explicitly reopened`
+  - `canonical runtime: ordered hardening resumed after the canonical gate returned green`
+  - `latest runtime slice: raw sha256 helpers now converge in core/digests.py with direct regression coverage`
+  - `latest StateStore slice: Slice 2 extracted the read-model trio behind the existing facade via core/state_read_model_service.py`
+  - `next runtime slice: continue StateStore decomposition with Slice 3 (session lifecycle extraction)`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
-- Current queue mode: blocked-escalation; do not continue scout rotation while the authoritative gate is red inside frozen canonical `tests/`.
+- Current queue mode: execution; the canonical gate is green again, so bounded ordered slices may proceed.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `blocked-escalation — preserve the authoritative red gate on tests.test_state_store.StateStoreTests.test_validate_state_recovers_pending_session_refresh_after_crash_before_state_save; the latest focused rerun failed earlier with host-temp PermissionError under raw tempfile.TemporaryDirectory(), so do not start another slice under freeze while canonical tests remain red`
+- Current next item: `ordered execution — continue the mapped StateStore sequence with Slice 3 (session lifecycle extraction)`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -27,9 +29,9 @@
 
 ```text
 NEXT_ACTION
-- next_required_step: blocked-escalation
-- active_renewal_debt: deferred while canonical gate is red
-- highest_priority_hypothesis: the live blocker is no longer in an approved derived boundary; the latest focused rerun suggests unstable host-temp behavior in frozen canonical tests, so the next safe action is still to preserve the red gate state and wait for an explicit reopen or a green authoritative rerun
+- next_required_step: session_lifecycle_extraction
+- active_renewal_debt: none while the canonical gate stays green
+- highest_priority_hypothesis: after the read-model cluster moved cleanly behind the facade, the next highest-leverage StateStore seam is session ownership and crash-recovery lifecycle, still isolated from validation/retention and low-level locking
 ```
 
 ## Historical Derived Chronology
