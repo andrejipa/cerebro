@@ -215,7 +215,6 @@ Snapshot updated on 2026-04-21 after the suggestion-layer slices and the later `
   - `WEAK-HIGH-001`
   - `WEAK-HIGH-002`
   - `WEAK-HIGH-003`
-  - `WEAK-MED-004`
   - `DOC-DRIFT-002`
 
 ## Historical Weakness Intake
@@ -224,7 +223,7 @@ Snapshot updated on 2026-04-21 after the suggestion-layer slices and the later `
 - `WEAK-HIGH-001`: confirmed high-severity runtime gap from `WEAKNESS_REPORT.md`; `_save_state_with_refreshed_session()` can leave `session_revision_invalid` after a hard crash window
 - `WEAK-HIGH-002`: confirmed high-severity runtime gap from `WEAKNESS_REPORT.md`; `open_session()` can leave `session_registry_mismatch` after a hard crash between the canonical registry write and `session.local.json`
 - `WEAK-HIGH-003`: closed on 2026-04-19; `verification.state_check` now persists preflight separately and `verification.checks` contains only command checks
-- `WEAK-MED-004`: confirmed medium-severity rollback residual from `WEAKNESS_REPORT.md`; `create-new` removes the file on rollback but can leave an empty directory created by the apply
+- `WEAK-MED-004`: closed on 2026-04-22; `rollback` de `fs.create_file` caso `create-new` já remove a árvore recém-criada via `_prune_empty_workspace_dirs(created_target_dirs)`, com regressão em `tests/test_alpha_runtime.py`
 - Latest deep-audit intake also added new medium-severity items: `close_session()` crash split and a stronger coverage gap around a single end-to-end `session -> plan -> apply -> verify -> rollback` flow
 - Latest deep-audit intake also recorded undocumented runtime behaviors now tracked in `WEAKNESS_REPORT.md`: `plan_generation_id` fallback and auto-filled `consolidation_id`
 - The separate documentary drift in `AGENT_ARCHITECTURE.md` is confirmed, but remains blocked in this loop because `tests/test_architecture.py` currently guards the old literal flow and headings

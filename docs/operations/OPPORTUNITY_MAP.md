@@ -361,11 +361,11 @@ Bootstrap document created on 2026-04-16 for the autonomous loop.
 - Status: `blocked in documenter track`
 - Reason: the confirmed high-severity fix requires mutating `core/state_store.py` and proportional regression tests to close the `session_registry_mismatch` window, which this loop may not touch under `AGENTS.md`
 
-### BLOCKED-WEAK-MED-004 — rollback leaves empty directory residue after `create-new`
+### CLOSED-WEAK-MED-004 — rollback agora poda tree recém-criada no caso `create-new`
 
 - Source: `docs/operations/WEAKNESS_REPORT.md`
-- Status: `blocked in documenter track`
-- Reason: the confirmed fix requires mutating `core/action_runtime.py` and proportional regression tests to track and prune only the empty directories created by the current apply
+- Status: `closed (recorded 2026-04-22)`
+- Resolution: `_prune_empty_workspace_dirs` em `core/action_runtime.py` já poda `created_target_dirs` no `rollback` de `fs.create_file` (linha 1025) e de `fs.move` sem `target_preimage_ref` (linha 1066); regressão em `tests/test_alpha_runtime.py` confirma que `notes/archive/` e `notes/` saem ausentes após rollback de `notes/archive/draft.txt`.
 
 ### CLOSED-DOC-DRIFT-002 — `AGENT_ARCHITECTURE.md` realinhado com o contrato do runtime
 
@@ -385,8 +385,7 @@ Bootstrap document created on 2026-04-16 for the autonomous loop.
 - `none — hardening do Grupo 6 concluído`
 - Historical closure note preserved for the documentary perimeter: `documenter queue exhausted; await Formal Resume Trigger`
 - blocked residuals:
-  - `WEAK-MED-004` and deeper architectural residuals still require mutating runtime code and proportional regression coverage
-  - `AGENT_ARCHITECTURE.md` drift is now explicitly known, but remains blocked by the coupled `tests/test_architecture.py` literal guard
+  - deeper architectural residuals still require mutating runtime code and proportional regression coverage
   - `PHASE_CLOSURE.md` structural proof hardening remains outside the active documenter-only queue
 - latest revalidation:
   - the weakness queue was re-read and reconciled on 2026-04-17
