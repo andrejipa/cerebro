@@ -19,6 +19,7 @@ from core.execution_policy import (
     ensure_mutation_path_allowed,
     required_action_approval_error,
 )
+from core.store_protocols import ActionStoreSurface
 
 
 class ActionRuntimeError(Exception):
@@ -70,7 +71,7 @@ def _resolve_workspace_path(root: Path, raw_path: str) -> Path:
     return (root / candidate).resolve()
 
 
-def _resolve_runtime_ref(root: Path, store, ref: str) -> Path:
+def _resolve_runtime_ref(root: Path, store: ActionStoreSurface, ref: str) -> Path:
     path = (store.cerebro_dir / Path(ref)).resolve()
     try:
         path.relative_to(store.cerebro_dir.resolve())
@@ -204,7 +205,7 @@ def _trash_relpath(*parts: str) -> str:
 
 
 def _record_command_exception_event(
-    store,
+    store: ActionStoreSurface,
     *,
     action: dict,
     command: dict,
@@ -351,7 +352,7 @@ def _apply_workspace_paths(root: Path, action: dict) -> list[Path]:
     raise ActionRuntimeError(f"multi-file apply batches currently support only filesystem action kinds: {kind}")
 
 
-def _apply_runtime_paths(root: Path, store, action: dict) -> list[Path]:
+def _apply_runtime_paths(root: Path, store: ActionStoreSurface, action: dict) -> list[Path]:
     """Return runtime-owned paths whose state may change during one apply action."""
     kind = action.get("kind", "")
     action_id = action.get("id", "")
@@ -365,7 +366,7 @@ def _apply_runtime_paths(root: Path, store, action: dict) -> list[Path]:
     return paths
 
 
-def _collect_apply_surface(root: Path, store, actions: list[dict]) -> tuple[dict[Path, Path], dict[Path, Path]]:
+def _collect_apply_surface(root: Path, store: ActionStoreSurface, actions: list[dict]) -> tuple[dict[Path, Path], dict[Path, Path]]:
     """Return the workspace and runtime paths that one apply batch can touch."""
     workspace_paths: dict[Path, Path] = {}
     runtime_paths: dict[Path, Path] = {}
@@ -493,7 +494,7 @@ def _read_bytes(path: Path) -> bytes:
         raise ActionRuntimeError(f"failed to read file: {path}") from exc
 
 
-def _assert_runtime_artifact_integrity(root: Path, store, ref: str, expected_sha256: object, label: str) -> None:
+def _assert_runtime_artifact_integrity(root: Path, store: ActionStoreSurface, ref: str, expected_sha256: object, label: str) -> None:
     """Reject rollback when the persisted runtime artifact content no longer matches the recorded digest."""
     if not isinstance(expected_sha256, str) or not expected_sha256:
         return
@@ -549,7 +550,7 @@ def _rollback_runtime_refs(action_record: dict) -> list[str]:
     return refs
 
 
-def _collect_rollback_surface(root: Path, store, action_records: list[dict]) -> tuple[dict[Path, Path], dict[Path, Path]]:
+def _collect_rollback_surface(root: Path, store: ActionStoreSurface, action_records: list[dict]) -> tuple[dict[Path, Path], dict[Path, Path]]:
     """Return the workspace paths and runtime refs that rollback may touch."""
     workspace_paths: dict[Path, Path] = {}
     runtime_refs: dict[Path, Path] = {}
@@ -574,7 +575,7 @@ def _collect_rollback_surface(root: Path, store, action_records: list[dict]) -> 
 
 def preflight_apply_batch(
     root: Path,
-    store,
+    store: ActionStoreSurface,
     agent_runtime: dict,
     action_specs: list[dict],
     command_registry: dict[str, dict],
@@ -626,7 +627,7 @@ def preflight_apply_batch(
 
 def preflight_rollback_actions(
     root: Path,
-    store,
+    store: ActionStoreSurface,
     agent_runtime: dict,
     action_records: list[dict],
     registered_paths: set[str],
@@ -660,7 +661,7 @@ def preflight_rollback_actions(
 
 def _restore_rollback_surface(
     root: Path,
-    store,
+    store: ActionStoreSurface,
     *,
     snapshot_root: Path,
     snapshot_cerebro_dir: Path,
@@ -678,7 +679,7 @@ def _restore_rollback_surface(
 @contextmanager
 def guarded_rollback_batch(
     root: Path,
-    store,
+    store: ActionStoreSurface,
     agent_runtime: dict,
     action_records: list[dict],
     registered_paths: set[str],
@@ -718,7 +719,7 @@ def guarded_rollback_batch(
 
 
 @contextmanager
-def guarded_apply_batch(root: Path, store, normalized_actions: list[dict]):
+def guarded_apply_batch(root: Path, store: ActionStoreSurface, normalized_actions: list[dict]):
     """Restore the pre-batch workspace/runtime surface if one multi-file apply later fails."""
     if not normalized_actions:
         raise ActionRuntimeError("no actions supplied for apply batch")
@@ -754,7 +755,7 @@ def guarded_apply_batch(root: Path, store, normalized_actions: list[dict]):
 
 def apply_action(
     root: Path,
-    store,
+    store: ActionStoreSurface,
     agent_runtime: dict,
     payload: dict,
     command_registry: dict[str, dict],
@@ -1001,7 +1002,7 @@ def apply_action(
     )
 
 
-def rollback_action(root: Path, store, agent_runtime: dict, action_record: dict, registered_paths: set[str]) -> dict:
+def rollback_action(root: Path, store: ActionStoreSurface, agent_runtime: dict, action_record: dict, registered_paths: set[str]) -> dict:
     """Rollback one previously applied reversible action."""
     policy = agent_runtime["execution_policy"]
     if action_record.get("status") != "applied":

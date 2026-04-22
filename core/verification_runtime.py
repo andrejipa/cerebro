@@ -19,6 +19,7 @@ from core.command_sandbox import (
 )
 from core.execution_policy import ExecutionPolicyError, ensure_command_allowed
 from core.state_store import SESSION_CLAIMS_DIR_ENV_VAR, SESSION_LIVE_PROOFS_DIR_ENV_VAR, StateStoreError
+from core.store_protocols import VerificationStoreSurface
 
 
 class VerificationRuntimeError(Exception):
@@ -279,7 +280,7 @@ def _build_verify_command_env(
 
 
 def _record_command_exception_event(
-    store,
+    store: VerificationStoreSurface,
     *,
     task_id: str,
     command: dict,
@@ -305,7 +306,7 @@ def _record_command_exception_event(
 
 
 def _record_command_artifact_persistence_event(
-    store,
+    store: VerificationStoreSurface,
     *,
     task_id: str,
     command: dict,
@@ -334,7 +335,7 @@ def _record_command_artifact_persistence_event(
 
 
 def _record_verification_preflight_failure_event(
-    store,
+    store: VerificationStoreSurface,
     *,
     task_id: str,
     reason_code: str,
@@ -398,7 +399,7 @@ def covers_required_verification_scope(required_command_ids: object, selected_co
 
 def run_verification_commands(
     root: Path,
-    store,
+    store: VerificationStoreSurface,
     agent_runtime: dict,
     *,
     command_ids: list[str] | None = None,
@@ -676,7 +677,7 @@ def run_verification_commands(
 
 def execute_verification_cycle(
     root: Path,
-    store,
+    store: VerificationStoreSurface,
     *,
     command_ids: list[str] | None = None,
     expected_session_token: str | None = None,

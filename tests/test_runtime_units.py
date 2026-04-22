@@ -1026,5 +1026,71 @@ class RuntimeUnitTests(unittest.TestCase):
         self.assertGreater(selection["priority"], 0)
 
 
+class StoreProtocolContractTests(unittest.TestCase):
+    def test_action_store_surface_is_satisfied_by_state_store(self) -> None:
+        from core.state_store import StateStore
+        from core.store_protocols import ActionStoreSurface
+
+        with tempfile.TemporaryDirectory() as d:
+            store = StateStore(d)
+            self.assertIsInstance(store, ActionStoreSurface)
+
+    def test_verification_store_surface_is_satisfied_by_state_store(self) -> None:
+        from core.state_store import StateStore
+        from core.store_protocols import VerificationStoreSurface
+
+        with tempfile.TemporaryDirectory() as d:
+            store = StateStore(d)
+            self.assertIsInstance(store, VerificationStoreSurface)
+
+    def test_inline_sandbox_store_satisfies_action_store_surface(self) -> None:
+        from core.store_protocols import ActionStoreSurface
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            sandbox_store = type(
+                "SandboxStore",
+                (),
+                {
+                    "cerebro_dir": root / ".cerebro",
+                    "artifacts_dir": root / ".cerebro" / "artifacts",
+                    "trash_dir": root / ".cerebro" / "trash",
+                },
+            )()
+            self.assertIsInstance(sandbox_store, ActionStoreSurface)
+
+    def test_action_store_surface_rejects_object_missing_required_attrs(self) -> None:
+        from core.store_protocols import ActionStoreSurface
+
+        incomplete = type("Incomplete", (), {"cerebro_dir": Path("/tmp")})()
+        self.assertNotIsInstance(incomplete, ActionStoreSurface)
+
+    def test_store_protocols_module_exports_both_surfaces(self) -> None:
+        import core.store_protocols as sp
+
+        self.assertTrue(hasattr(sp, "ActionStoreSurface"))
+        self.assertTrue(hasattr(sp, "VerificationStoreSurface"))
+
+    def test_action_runtime_store_params_are_annotated(self) -> None:
+        import inspect
+        import core.action_runtime as ar
+
+        for fn_name in ("apply_action", "rollback_action", "preflight_apply_batch", "guarded_apply_batch"):
+            fn = getattr(ar, fn_name)
+            hints = {k: str(v) for k, v in inspect.get_annotations(fn).items()}
+            self.assertIn("store", hints, f"{fn_name} missing store annotation")
+            self.assertIn("ActionStoreSurface", hints["store"], f"{fn_name} store not typed as ActionStoreSurface")
+
+    def test_verification_runtime_store_params_are_annotated(self) -> None:
+        import inspect
+        import core.verification_runtime as vr
+
+        for fn_name in ("execute_verification_cycle", "run_verification_commands"):
+            fn = getattr(vr, fn_name)
+            hints = {k: str(v) for k, v in inspect.get_annotations(fn).items()}
+            self.assertIn("store", hints, f"{fn_name} missing store annotation")
+            self.assertIn("VerificationStoreSurface", hints["store"], f"{fn_name} store not typed as VerificationStoreSurface")
+
+
 if __name__ == "__main__":
     unittest.main()
