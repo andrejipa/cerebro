@@ -243,9 +243,24 @@ Halt the future campaign immediately if any of the following becomes true:
   - the mandatory operator checkpoint before slice `14/14` was explicitly
     consumed on `2026-04-23`
 - current next approved slice:
-  - `_validate_action_relations_block` (`slice 14/14`)
+  - `none; slice 14 is halted pending operator direction`
 - next mandatory operator checkpoint:
-  - `none before slice 14; reassess for halt/closeout after slice 14 or on any stop condition`
+  - `operator decision required now because slice 14 hit a stop condition before extraction`
+- current halt detail:
+  - `_validate_action_relations_block` was not extracted
+  - stop reason: the live block still requires more than about `6` primitive or collection inputs to isolate cleanly under the active trigger constraints
+  - concrete fan-out at [core/validation.py:1171](/D:/projetos_cli/cerebro/core/validation.py:1171):
+    - `actions`
+    - `agent_runtime`
+    - `task_ids`
+    - `action_ids_by_task`
+    - `approval_ids`
+    - `approval_items`
+    - `approval_statuses`
+    - `approval_required_kinds`
+    - `batch_registry_used_ids`
+    - `executable_task_ids`
+  - outcome: halt is intentional and compliant with the trigger; do not force extraction without a new operator decision
 - completed slice commits:
   - `refactor(validate): extract _validate_memory_block (slice 1/14)`
   - `refactor(validate): extract _validate_execution_policy_block (slice 2/14)`

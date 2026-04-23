@@ -168,6 +168,6 @@ Every approved slice must clear all of:
 - characterization precondition status: `satisfied`
 - completed slice count: `13/14`
 - observation-center routing:
-  - `validation-slice-14-action-relations` is the current open queue head in `docs/operations/observation_center.toml`
+  - `validation-slice-14-action-relations` is the current blocked queue head in `docs/operations/observation_center.toml`
 - next required step:
-  - `execute slice 14 (_validate_action_relations_block); continuation beyond slice 14 remains not pre-approved`
+  - `return to the operator: slice 14 (_validate_action_relations_block) hit the active stop condition on helper fan-out (> about 6 primitive or collection inputs), so continuation beyond slice 13 remains not pre-approved`

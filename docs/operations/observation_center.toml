@@ -254,7 +254,7 @@ halt_if = "Slice 13 is not complete, the whitelist changes, or any required gate
 [[observations]]
 id = "validation-slice-14-action-relations"
 title = "Validation decomposition slice 14"
-status = "open"
+status = "blocked"
 kind = "slice"
 priority = "high"
 boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
@@ -264,7 +264,7 @@ source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
 auto_continuation = false
 dependencies = ["validation-slice-14-manual-checkpoint"]
 dependencies_satisfied = true
-next_action = "Extract _validate_action_relations_block in core/validation.py, preserve exact ordering/shape behavior, and stop for closeout reassessment afterward."
+next_action = "Halt before extraction: the current action_relations block still requires more than about 6 primitive or collection inputs to isolate cleanly, so continuation now needs explicit operator direction instead of forced extraction."
 done_when = "Slice 14 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 13/14 to 14/14 or record a halt with evidence."
 halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, a gate turns red, or validation shape/order confidence cannot be preserved with confidence."
 
