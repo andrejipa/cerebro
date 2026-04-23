@@ -844,6 +844,20 @@ def _validate_audit_last_action_ref_block(
     return errors
 
 
+def _validate_task_action_ref_relations_block(
+    action_ids_by_task: dict[str, set[str]],
+    action_ids_seen: set[str],
+) -> list[dict]:
+    errors: list[dict] = []
+
+    for task_id, task_action_ids in action_ids_by_task.items():
+        for action_id in task_action_ids:
+            if action_id not in action_ids_seen:
+                errors.append(error("invalid_agent_plan_task_action_ids", f"task {task_id} references unknown action id: {action_id}"))
+
+    return errors
+
+
 def _validate_verification_block(
     verification: object,
     prefix: str = "agent_runtime",
@@ -1077,11 +1091,7 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
     }
 
     errors.extend(_validate_audit_last_action_ref_block(audit, action_ids_seen, prefix))
-
-    for task_id, task_action_ids in action_ids_by_task.items():
-        for action_id in task_action_ids:
-            if action_id not in action_ids_seen:
-                errors.append(error("invalid_agent_plan_task_action_ids", f"task {task_id} references unknown action id: {action_id}"))
+    errors.extend(_validate_task_action_ref_relations_block(action_ids_by_task, action_ids_seen))
 
     for action in actions if isinstance(actions, list) else []:
         if not isinstance(action, dict):

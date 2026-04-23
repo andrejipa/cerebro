@@ -14,8 +14,8 @@
   - `tests/test_validate_error_ordering.py` added with `15` tests
   - coverage split: `14` per-block malformed payloads + `1` mixed aggregate-order case
 - slice progress:
-  - completed: `10/14`
-  - latest slice: `_validate_audit_last_action_ref_block`
+  - completed: `11/14`
+  - latest slice: `_validate_task_action_ref_relations_block`
 - current live gate:
   - AGENTS-equivalent suite: `840` tests, `0` failures, `6` skips
   - architecture gate: `51` tests, `0` failures
@@ -224,11 +224,11 @@ Halt the future campaign immediately if any of the following becomes true:
   - `python -m unittest tests.test_architecture -v` → `51` tests, `0` failures
   - AGENTS-equivalent suite → `840` tests, `0` failures, `6` skips
 - current autonomous window:
-  - slices `10-11` are pre-approved for autonomous continuation at one slice per
-    heartbeat round while gates stay green
-  - no additional human-review checkpoint is expected inside that window
+  - slices `10-11` were pre-approved for autonomous continuation at one slice
+    per heartbeat round while gates stayed green
+  - that window is now consumed cleanly at `11/14`
 - current next autonomous slice:
-  - `_validate_task_action_ref_relations_block` (`slice 11/14`)
+  - `none; manual checkpoint is now active before slice 12`
 - next mandatory operator checkpoint:
   - before `_validate_plan_dependency_relations_block` (`slice 12/14`)
 - completed slice commits:
@@ -242,3 +242,4 @@ Halt the future campaign immediately if any of the following becomes true:
   - `refactor(validate): extract _validate_verification_block (slice 8/14)`
   - `refactor(validate): extract _validate_plan_block (slice 9/14)`
   - `refactor(validate): extract _validate_audit_last_action_ref_block (slice 10/14)`
+  - `refactor(validate): extract _validate_task_action_ref_relations_block (slice 11/14)`

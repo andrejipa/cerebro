@@ -14,10 +14,10 @@
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
 - `docs/operations/observation_center.toml` now exists as the machine-readable queue for still-resolvable work; unresolved slices, checkpoints, and blockers should be recorded there first, and the markdown snapshots should be treated as human projections of that center rather than as the queue engine itself.
-- Current queue mode: autonomous corrective validation-decomposition slice loop; slice 10 is complete, slice 11 is pre-approved without per-slice human review while the whitelist and gates stay green, and the campaign must pause again before slice 12.
+- Current queue mode: validation-decomposition autonomous window consumed through slice 11; slices 1-11 are complete, and the campaign is now paused at the mandatory manual checkpoint before slice 12.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `execute slice 11 (_validate_task_action_ref_relations_block) under the active validation-decomposition whitelist`
-- Observation-center head item: `validation-slice-11-task-action-ref-relations`
+- Current next item: `pause for explicit operator review before slice 12 (_validate_plan_dependency_relations_block)`
+- Observation-center head item: `validation-slice-12-manual-checkpoint`
 - Observation-center structural note:
   - `queue_authority = machine-primary`
   - authority order is now explicit: `AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests`
@@ -49,7 +49,8 @@
   - `_validate_verification_block` is now extracted in `core/validation.py` as slice `8/14`, with no detected ordering or message drift
   - `_validate_plan_block` is now extracted in `core/validation.py` as slice `9/14`, with no detected ordering or message drift
   - `_validate_audit_last_action_ref_block` is now extracted in `core/validation.py` as slice `10/14`, with no detected ordering or message drift
-  - no additional human review checkpoint is required before slice `11/14`; the next mandatory pause remains before slice `12/14`
+  - `_validate_task_action_ref_relations_block` is now extracted in `core/validation.py` as slice `11/14`, with no detected ordering or message drift
+  - the autonomous window through slice `11/14` is now consumed; the mandatory manual checkpoint is active before slice `12/14`
   - the preparatory characterization gates are green: targeted `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent full suite
 - Verification scout closeout:
   - the prior P5 coverage gaps identified in `decision_runtime`, `action_identity`, `discipline_runtime`, `state_runtime_lock_service`, `state_session_artifacts_service`, and `state_retention_service` are now covered by direct regression tests
