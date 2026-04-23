@@ -7,7 +7,7 @@
 - Derived `recall_eval` validation remains green after the latest slice: `49` tests, `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation is green after the latest overlapping-writer lock hardening: `31` tests, `0` failures in `experiments/operational_signals/tests`.
 - Derived `operational_signals/suggestions` validation is green after the latest temp-root hardening: `97` tests, `0` failures in `experiments/operational_signals/suggestions/tests`.
-- Current posture: deliberate freeze remains active for speculative canonical-runtime growth; the latest user-directed session closed the narrow P4 workspace-path resolution slice, and one new formal resume trigger is now active for the validation-decomposition campaign only.
+- Current posture: deliberate freeze remains active for speculative canonical-runtime growth; the latest user-directed session closed the narrow P4 workspace-path resolution slice, and the validation-decomposition campaign now runs under its parent trigger plus one narrow child exception trigger for the final slice only.
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now open with explicit current snapshots that mark their remaining body as historical evidence by default, reducing residual-intake ambiguity during heartbeat triage.
 - Planning-only `StateStore` decomposition prep is now recorded in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it stays explicitly non-authoritative and does not reopen the freeze.
 - `docs/operations/observation_center.toml` now carries the structured unresolved-work queue; the heartbeat should reconcile and consume that center before falling back to the narrative snapshot fields below, and the markdown snapshots should now be treated as projections of that queue rather than as the primary scheduler surface.
@@ -31,14 +31,16 @@
   - `slice 11 is now complete: _validate_task_action_ref_relations_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 12 is now complete: _validate_plan_dependency_relations_block was extracted in core/validation.py with the ordering oracle still green`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
-- Current queue mode: slice `14` is now halted before extraction; the final `action_relations` block still exceeds the clean-helper fan-out limit under the active trigger, so no further automatic continuation is authorized.
+- Current queue mode: slice `14` is reopened under a narrow child exception trigger; the final `action_relations` block still exceeds the generic clean-helper fan-out limit, so the next round must first strengthen the oracle and then attempt exactly that final slice under the explicit override.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `operator decision required on halted slice 14 (_validate_action_relations_block)`
+- Current next item: `strengthen the action_relations oracle, then execute slice 14 (_validate_action_relations_block) under the narrow exception trigger`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
 - Formal resume trigger consumed: `FORMAL_RESUME_TRIGGER_CORE_PATH_RESOLUTION.md`; that slice ended green with `825` tests, `0` failures, `6` skips plus a green `tests.test_architecture` gate.
-- Formal resume trigger active: `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`; authorized scope is limited to `core/validation.py`, `tests/test_validate_error_ordering.py`, and closeout updates in `docs/operations/`.
+- Formal resume triggers active:
+  - `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`
+  - `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md`
 - Future local-first improvement note: the observation center now records a blocked follow-on item for a SQLite ledger promotion, but no trigger is open for that migration today.
 - Historical ledger note: the detailed derived-fix chronology and prior queue states remain preserved below under an explicit historical heading; the snapshot above is the only live operational reference.
 
@@ -46,10 +48,10 @@
 
 ```text
 NEXT_ACTION
-- next_required_step: operator_decide_validation_slice_14_halt
+- next_required_step: strengthen_action_relations_oracle_then_attempt_validation_slice_14
 - observation_center_head: validation-slice-14-action-relations
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: the final `action_relations` tail block is now confirmed as the predicted late-campaign halt point; isolating it still needs more than about `6` primitive or collection inputs, which is a trigger-defined stop condition, so the next move must be an explicit operator decision rather than another automatic slice
+- highest_priority_hypothesis: the final `action_relations` tail block remains the predicted late-campaign hotspot, but a new narrow child trigger now authorizes one explicit final attempt as long as the strengthened oracle pins exact shape/order first and no new abstraction is introduced
 ```
 
 ## Historical Derived Chronology

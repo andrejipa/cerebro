@@ -9,14 +9,14 @@
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
 - Derived `operational_signals/suggestions` validation: green with `97` tests and `0` failures in `experiments/operational_signals/suggestions/tests`.
 - Runtime continuity state: no local `.cerebro/state.json` present in this workspace.
-- Current posture: deliberate freeze for speculative canonical-runtime growth remains active; the latest user-directed session closed the narrow P4 workspace-path resolution slice after the earlier bounded tests-only corrective tranche, and a new formal resume trigger is now open for the validation-decomposition campaign only.
+- Current posture: deliberate freeze for speculative canonical-runtime growth remains active; the latest user-directed session closed the narrow P4 workspace-path resolution slice after the earlier bounded tests-only corrective tranche, and the validation-decomposition campaign now runs under its parent trigger plus one narrow child exception trigger for the final slice only.
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now expose explicit current snapshots that classify their remaining content as historical evidence by default, reducing ambiguity during live triage.
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
 - `docs/operations/observation_center.toml` now exists as the machine-readable queue for still-resolvable work; unresolved slices, checkpoints, and blockers should be recorded there first, and the markdown snapshots should be treated as human projections of that center rather than as the queue engine itself.
-- Current queue mode: validation-decomposition slice 14 is now halted before extraction; the active trigger remains open, but continuation requires explicit operator direction because the final `action_relations` block still exceeds the clean-helper fan-out limit.
+- Current queue mode: validation-decomposition slice 14 is reopened under a narrow child exception trigger; the final `action_relations` block still exceeds the generic clean-helper fan-out limit, but one explicit final attempt is now authorized with stronger oracle pinning and no new abstraction layer.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `operator decision required on halted slice 14 (_validate_action_relations_block)`
+- Current next item: `execute slice 14 under the narrow exception trigger after strengthening the action_relations oracle`
 - Observation-center head item: `validation-slice-14-action-relations`
 - Observation-center structural note:
   - `queue_authority = machine-primary`
@@ -35,7 +35,9 @@
   - `tests/`: authorized for `tests/test_validate_error_ordering.py` only
   - `core/`: authorized for `core/validation.py` only
   - `cli/`: closed
-- Active formal resume trigger: `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`
+- Active formal resume triggers:
+  - `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`
+  - `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md`
 - No broader runtime refactor is currently open beyond the validation-decomposition whitelist.
 - Validation-decomposition progress note:
   - `tests/test_validate_error_ordering.py` now pins exact `(code, message)` ordering for `14` sub-block payloads plus `1` mixed aggregate-order case
@@ -55,8 +57,8 @@
   - the mandatory reassessment checkpoint before slice `13/14` was explicitly consumed by operator approval on `2026-04-23`
   - `_validate_verification_relations_block` is now extracted in `core/validation.py` as slice `13/14`, with no detected ordering or message drift
   - the mandatory reassessment checkpoint before slice `14/14` was explicitly consumed by operator approval on `2026-04-23`
-  - `_validate_action_relations_block` reached a documented halt before extraction on `2026-04-23`: the block still requires more than about `6` primitive or collection inputs to isolate cleanly under the active trigger constraints
-  - the trigger remains active but non-consumed; continuation now requires explicit operator direction instead of automatic extraction
+  - `_validate_action_relations_block` first reached a documented halt before extraction on `2026-04-23`: the block still requires more than about `6` primitive or collection inputs to isolate cleanly under the parent trigger constraints
+  - a narrow child trigger now authorizes one final same-file attempt for slice `14/14`, provided the action-relations oracle is strengthened first and no context object or broader scope widening is introduced
   - the preparatory characterization gates are green: targeted `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent full suite
 - Verification scout closeout:
   - the prior P5 coverage gaps identified in `decision_runtime`, `action_identity`, `discipline_runtime`, `state_runtime_lock_service`, `state_session_artifacts_service`, and `state_retention_service` are now covered by direct regression tests

@@ -243,9 +243,9 @@ Halt the future campaign immediately if any of the following becomes true:
   - the mandatory operator checkpoint before slice `14/14` was explicitly
     consumed on `2026-04-23`
 - current next approved slice:
-  - `none; slice 14 is halted pending operator direction`
+  - `_validate_action_relations_block` under `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md`
 - next mandatory operator checkpoint:
-  - `operator decision required now because slice 14 hit a stop condition before extraction`
+  - `none before the slice-14 exception attempt; reassess again only if the strengthened oracle cannot pin behavior or the extraction halts`
 - current halt detail:
   - `_validate_action_relations_block` was not extracted
   - stop reason: the live block still requires more than about `6` primitive or collection inputs to isolate cleanly under the active trigger constraints
@@ -260,7 +260,7 @@ Halt the future campaign immediately if any of the following becomes true:
     - `approval_required_kinds`
     - `batch_registry_used_ids`
     - `executable_task_ids`
-  - outcome: halt is intentional and compliant with the trigger; do not force extraction without a new operator decision
+  - outcome: the original halt remains historically correct and compliant with the parent trigger; a new narrow child trigger now authorizes one explicit final attempt without introducing a context object or widening scope beyond the existing whitelist
 - completed slice commits:
   - `refactor(validate): extract _validate_memory_block (slice 1/14)`
   - `refactor(validate): extract _validate_execution_policy_block (slice 2/14)`
