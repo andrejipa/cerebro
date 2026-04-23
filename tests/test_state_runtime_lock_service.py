@@ -66,6 +66,83 @@ class StateRuntimeLockServiceTests(unittest.TestCase):
             self.assertIn("stale lock", message)
             self.assertEqual(service.lock_path.read_text(encoding="utf-8"), "999999")
 
+    def test_runtime_lock_is_reentrant_within_the_same_service_instance(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            service = self._build_service(root, timeout_seconds=0.0, poll_seconds=0.0)
+
+            with service.runtime_lock():
+                self.assertEqual(service._lock_depth, 1)
+                self.assertTrue(service.process_runtime_lock_is_held())
+                self.assertTrue(service.lock_path.exists())
+
+                with service.runtime_lock():
+                    self.assertEqual(service._lock_depth, 2)
+                    self.assertTrue(service.process_runtime_lock_is_held())
+                    self.assertTrue(service.lock_path.exists())
+
+                self.assertEqual(service._lock_depth, 1)
+                self.assertTrue(service.process_runtime_lock_is_held())
+                self.assertTrue(service.lock_path.exists())
+
+            self.assertEqual(service._lock_depth, 0)
+            self.assertFalse(service.process_runtime_lock_is_held())
+            self.assertFalse(service.lock_path.exists())
+
+    def test_register_and_unregister_process_runtime_lock_track_local_hold_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            service = self._build_service(root)
+
+            self.assertFalse(service.process_runtime_lock_is_held())
+            service.register_process_runtime_lock()
+            self.assertTrue(service.process_runtime_lock_is_held())
+            service.register_process_runtime_lock()
+            self.assertTrue(service.process_runtime_lock_is_held())
+            service.unregister_process_runtime_lock()
+            self.assertTrue(service.process_runtime_lock_is_held())
+            service.unregister_process_runtime_lock()
+            self.assertFalse(service.process_runtime_lock_is_held())
+
+    def test_try_recover_invalid_runtime_lock_removes_aged_malformed_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            service = self._build_service(root, timeout_seconds=1.0, poll_seconds=0.0)
+            service.lock_path.parent.mkdir(parents=True, exist_ok=True)
+            service.lock_path.write_text("not-a-pid", encoding="utf-8")
+            old_time = time.time() - 10
+            os.utime(service.lock_path, (old_time, old_time))
+
+            self.assertTrue(service.try_recover_invalid_runtime_lock())
+            self.assertFalse(service.lock_path.exists())
+
+    def test_try_recover_invalid_runtime_lock_preserves_recent_malformed_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            service = self._build_service(root, timeout_seconds=5.0, poll_seconds=0.0)
+            service.lock_path.parent.mkdir(parents=True, exist_ok=True)
+            service.lock_path.write_text("not-a-pid", encoding="utf-8")
+
+            self.assertFalse(service.try_recover_invalid_runtime_lock())
+            self.assertTrue(service.lock_path.exists())
+
+    def test_release_runtime_lock_clears_local_state_even_if_close_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            service = self._build_service(root)
+            service._lock_fd = 123
+            service._lock_depth = 1
+            service.register_process_runtime_lock()
+
+            with mock.patch("os.close", side_effect=OSError("close failed")):
+                with mock.patch.object(service, "try_remove_runtime_lock_file", return_value=True) as remove_mock:
+                    service.release_runtime_lock()
+
+            self.assertIsNone(service._lock_fd)
+            self.assertEqual(service._lock_depth, 0)
+            self.assertFalse(service.process_runtime_lock_is_held())
+            remove_mock.assert_called_once_with()
+
 
 if __name__ == "__main__":
     unittest.main()
