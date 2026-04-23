@@ -185,6 +185,9 @@ Para a campanha ativa de validation decomposition, a validação obrigatória é
 - `python -m unittest tests.test_validate -v`
 - `python -m unittest tests.test_architecture -v`
 - gate AGENTS-equivalente
+- se a alteração passar nos testes mas ainda parecer ter mudado shape ou ordem
+  de validação fora da cobertura explicitamente pinada, tratar como risco e
+  parar
 
 Registrar sempre:
 
@@ -213,6 +216,8 @@ Parar imediatamente se:
 - surgir necessidade de qualquer tecnologia não local
 - o plano vivo mandar checkpoint manual
 - chegar ao ponto imediatamente anterior ao slice `12`
+- a alteração passar nos testes mas ainda puder ter mudado shape ou ordem de
+  validação fora da cobertura explicitamente pinada
 - houver risco de escopo escorregar
 - o orçamento da rodada estiver acabando sem fechamento seguro
 

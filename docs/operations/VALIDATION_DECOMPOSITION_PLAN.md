@@ -167,13 +167,16 @@ Every future slice under an approved trigger must follow this exact protocol:
    - `python -m unittest tests.test_architecture -v`
    - `python -m unittest tests.test_validate -v`
    - `python -m unittest tests.test_validate_error_ordering -v`
-10. continue automatically at one slice per heartbeat round while all of these
+10. if the slice passes those tests but still appears to have changed
+    validation shape or append order outside the characterization coverage that
+    is explicitly pinned, treat that as risk and halt instead of continuing
+11. continue automatically at one slice per heartbeat round while all of these
     stay true:
     - the next slice is still within slices `4-11`
     - the active whitelist is unchanged
     - every required gate stays green
-11. reintroduce a mandatory operator checkpoint before slice `12/14`
-12. stop immediately for operator review on any halt condition
+12. reintroduce a mandatory operator checkpoint before slice `12/14`
+13. stop immediately for operator review on any halt condition
 
 ## Stop Conditions
 
@@ -185,6 +188,9 @@ Halt the future campaign immediately if any of the following becomes true:
 - the helper boundary is not clean without renaming locals
 - exact error order changes under characterization tests
 - exact error text changes under characterization tests
+- a slice passes the current tests but may still have changed validation shape
+  or append order outside the characterization coverage that is explicitly
+  pinned
 - any slice needs more than about `6` primitive or collection inputs
 - any gate turns red
 - any slice needs to touch a file outside the approved whitelist

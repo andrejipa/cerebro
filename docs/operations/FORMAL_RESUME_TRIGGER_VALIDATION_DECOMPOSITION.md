@@ -136,6 +136,9 @@ Stop immediately if any one of these becomes true:
 - a slice requires renaming locals
 - a slice requires reordering validations
 - a slice requires changing error text or error codes
+- a slice passes the current tests but may still have changed validation shape
+  or append order outside the characterization coverage that is explicitly
+  pinned today
 - a slice requires more than about `6` primitive or collection inputs
 - any gate turns red
 

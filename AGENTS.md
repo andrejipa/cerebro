@@ -176,6 +176,8 @@ marque como decisão humana necessária.
 - Declarar idempotência sem teste que force o mesmo segundo
 - Usar `except: pass` sem registro em audit
 - Deixar `state.json` em escrita parcial
+- Tratar mudança de shape ou ordem de validação não explicitamente coberta como
+  "segura" só porque os testes existentes passaram
 - Avançar ao próximo slice sem o anterior verde
 - Deixar a suíte vermelha ao encerrar
 
@@ -187,6 +189,8 @@ Descoberto nos rounds 8-9. Use sempre:
 3. Registre via audit já existente
 4. Adicione teste que force exatamente o modo de falha
 5. Prefira rollback a retry cego
+6. Se uma alteração passar nos testes mas ainda puder ter mudado shape ou ordem
+   de validação fora da cobertura explícita, trate como risco e pare
 
 ## Loop autônomo — como operar
 
