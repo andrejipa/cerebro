@@ -298,7 +298,7 @@ source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
 auto_continuation = false
 dependencies = []
 dependencies_satisfied = true
-next_action = "Pending human acceptance or rejection. The files exist only in the current working tree and are not canonical until explicitly reviewed, accepted, and committed."
+next_action = "Technical review corrected two proposal-local blockers: event append now uses exclusive sequence-file creation, and pre/post state digest fields now require real sha256 digests. Pending human acceptance or rejection; the files exist only in the current working tree and are not canonical until explicitly accepted and committed."
 done_when = "Either an explicit human-accepted commit promotes this proposed slice, or the working-tree proposal is removed and the quarantine record is closed."
 halt_if = "Any follow-on slice treats this proposed module, trigger, or test file as canonical runtime authority before human acceptance and a commit."
 
@@ -383,6 +383,23 @@ source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
 auto_continuation = false
 dependencies = ["transition-journal-slice-1-ordering", "state-digest-slice-1-canonical", "replay-snapshot-slice-1-digest-chain", "event-reducer-slice-1-checkpoint-replaced", "material-scope-preimage-slice-1"]
 dependencies_satisfied = true
-next_action = "Human must review the proposed untracked files and choose promotion by explicit commit, continued quarantine, or removal."
+next_action = "Technical review remediation completed for the proposal package, including transition-journal overwrite and malformed digest blockers. Human must still choose promotion by explicit commit, continued quarantine, or removal."
 done_when = "The proposal package is either accepted by an explicit human-approved commit or removed with docs updated to the resulting canonical state."
 halt_if = "Any autonomous loop begins a new implementation slice before this governance decision is resolved."
+
+[[observations]]
+id = "foundation-proposals-technical-review-2026-04-23"
+title = "Technical review remediation for quarantined foundation proposal package"
+status = "resolved"
+kind = "review"
+priority = "high"
+boundary = "quarantined working-tree proposal files only; no canonical promotion"
+trigger = "not open"
+source_plan = "foundation-proposals-human-review"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = false
+dependencies = ["transition-journal-slice-1-ordering", "state-digest-slice-1-canonical", "replay-snapshot-slice-1-digest-chain", "event-reducer-slice-1-checkpoint-replaced", "material-scope-preimage-slice-1"]
+dependencies_satisfied = true
+next_action = "Resolved on 2026-04-23 after correcting transition-journal same-sequence overwrite risk and malformed digest acceptance in the quarantined proposal package."
+done_when = "Foundation-focused tests pass with 72 tests and the AGENTS-equivalent proposed working-tree gate passes with 918 tests, while the package remains explicitly non-canonical."
+halt_if = "Any documentation or follow-on work treats this review remediation as human acceptance or canonical runtime promotion."

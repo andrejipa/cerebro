@@ -3,7 +3,7 @@
 ## Current Snapshot — 2026-04-23
 
 - Canonical git HEAD gate is green: `846` tests, `0` failures, `6` skips measured from a clean detached worktree after the governance reconciliation commit with the AGENTS-equivalent runner.
-- Proposed working-tree gate is also green: `916` tests, `0` failures, `6` skips via the same runner, contingent on the quarantined untracked foundation proposal files being present.
+- Proposed working-tree gate is also green: `918` tests, `0` failures, `6` skips via the same runner, contingent on the quarantined untracked foundation proposal files being present.
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`.
 - Derived `recall_eval` validation remains green after the latest slice: `49` tests, `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation is green after the latest overlapping-writer lock hardening: `31` tests, `0` failures in `experiments/operational_signals/tests`.
@@ -32,7 +32,7 @@
   - `slice 11 is now complete: _validate_task_action_ref_relations_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 12 is now complete: _validate_plan_dependency_relations_block was extracted in core/validation.py with the ordering oracle still green`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
-- Current queue mode: the validation-decomposition campaign is complete; transition-journal slice 1, state-digest slice 1, replay-snapshot slice 1, event-reducer slice 1, and material-scope slice 1 are quarantined proposals pending human acceptance or rejection. No live reducer integration, broader event coverage, snapshot persistence, journal, apply, material-scope instrumentation, commit recovery, state integration, or new autonomous implementation is authorized.
+- Current queue mode: the validation-decomposition campaign is complete; transition-journal slice 1, state-digest slice 1, replay-snapshot slice 1, event-reducer slice 1, and material-scope slice 1 are quarantined proposals pending human acceptance or rejection. Technical review corrected two transition-journal proposal-local blockers, but the package remains non-canonical until human acceptance and commit. No live reducer integration, broader event coverage, snapshot persistence, journal, apply, material-scope instrumentation, commit recovery, state integration, or new autonomous implementation is authorized.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
 - Current next item: `human review required for quarantined foundation proposal package; no autonomous implementation slice is open`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
@@ -44,7 +44,7 @@
 - Latest executable-specification result:
   - no foundation slice is canonical in git HEAD; the latest canonical implementation result remains `820fbb7`
   - quarantined working-tree proposals currently include `transition_journal`, `state_digest`, `replay_model`, `event_reducer`, and `material_scope`
-  - proposed-package gates are green while those files are present: `70` combined foundation tests and `916` full-suite tests
+  - proposed-package gates are green while those files are present: `72` combined foundation tests and `918` full-suite tests
   - canonical git HEAD gates are green without those files: `846` full-suite tests and `51` architecture tests
   - follow-on live filesystem instrumentation, event-sourcing integration, commit-protocol integration, rollback/recovery integration, state-store integration, action-runtime integration, or unreported-effect detection claims remain closed until human acceptance and a new trigger define whitelist and stop conditions
 - Future local-first improvement note: the observation center now records a blocked follow-on item for a SQLite ledger promotion, but no trigger is open for that migration today.
@@ -57,7 +57,7 @@ NEXT_ACTION
 - next_required_step: none_in_validation_decomposition_lane
 - observation_center_head: foundation-proposals-human-review
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: the validation-decomposition lane is closed cleanly at `14/14`; the quarantined foundation package requires human acceptance or rejection before any new implementation slice, live reducer integration, broader event coverage, snapshot persistence, material-scope instrumentation, commit recovery, digest integration, or further work in `core/validation.py`
+- highest_priority_hypothesis: the validation-decomposition lane is closed cleanly at `14/14`; the quarantined foundation package has passed technical review remediation but still requires human acceptance or rejection before any new implementation slice, live reducer integration, broader event coverage, snapshot persistence, material-scope instrumentation, commit recovery, digest integration, or further work in `core/validation.py`
 ```
 
 ## Historical Derived Chronology

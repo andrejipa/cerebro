@@ -4,7 +4,7 @@
 
 - Suite status: green.
 - Canonical git HEAD gate: `846` tests, `0` failures, `6` skips measured from a clean detached worktree after the governance reconciliation commit with the AGENTS-equivalent runner.
-- Proposed working-tree gate: `916` tests, `0` failures, `6` skips via the same runner; this result is contingent on the quarantined untracked foundation proposal files being present.
+- Proposed working-tree gate: `918` tests, `0` failures, `6` skips via the same runner; this result is contingent on the quarantined untracked foundation proposal files being present.
 - Architecture gate: `51` tests, `0` failures.
 - Derived `recall_eval` validation: green with `49` tests and `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
@@ -15,7 +15,7 @@
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
 - `docs/operations/observation_center.toml` now exists as the machine-readable queue for still-resolvable work; unresolved slices, checkpoints, and blockers should be recorded there first, and the markdown snapshots should be treated as human projections of that center rather than as the queue engine itself.
-- Current queue mode: the validation-decomposition campaign is complete; the transition-journal, state-digest, replay-snapshot, event-reducer, and material-scope slice-1 artifacts are quarantined proposals pending human acceptance or rejection. No live reducer integration, broader event coverage, snapshot persistence, journal integration, commit recovery, material-scope runtime instrumentation, live state integration, or new autonomous implementation continuation is open.
+- Current queue mode: the validation-decomposition campaign is complete; the transition-journal, state-digest, replay-snapshot, event-reducer, and material-scope slice-1 artifacts are quarantined proposals pending human acceptance or rejection. A technical review of the proposal package found and corrected two transition-journal proposal-local blockers before promotion: event files now use exclusive sequence-file creation instead of overwrite-capable replace, and `pre_state_digest` / `post_state_digest` now require real `sha256:` digests. No live reducer integration, broader event coverage, snapshot persistence, journal integration, commit recovery, material-scope runtime instrumentation, live state integration, or new autonomous implementation continuation is open.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
 - Current next item: `human review required for quarantined foundation proposal package; no autonomous implementation slice is open`
 - Observation-center head item: `foundation-proposals-human-review`
@@ -66,7 +66,8 @@
   - this proposal does not connect the digest to live state persistence, transition journal replay, snapshot acceptance, apply, rollback, verify, schema, or validation paths
 - Transition-journal proposal note:
   - `core/transition_journal.py` currently provides the isolated strong-ordering journal primitive in the working tree only
-  - `tests/test_transition_journal.py` pins destructive behavior for sequence gaps, corrupt event ids, broken previous-event chains, stale `HEAD`, abandoned temp files, invalid journal `.json` names, `HEAD` cache-write failure, caller-supplied ordering fields, and incomplete transition records
+  - `tests/test_transition_journal.py` pins destructive behavior for sequence gaps, corrupt event ids, broken previous-event chains, stale `HEAD`, abandoned temp files, invalid journal `.json` names, `HEAD` cache-write failure, caller-supplied ordering fields, incomplete transition records, malformed state digest fields, and same-sequence concurrent write conflict without overwrite
+  - technical review found and closed two proposal-local blockers before promotion: append no longer overwrites an existing sequence file, and transition records no longer accept malformed pre/post state digest strings
   - this proposal does not connect the journal to live apply, rollback, verify, state, or schema paths
 - No broader runtime refactor is currently open beyond the validation-decomposition whitelist.
 - Validation-decomposition progress note:
