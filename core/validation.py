@@ -297,6 +297,138 @@ def _validate_execution_policy_block(
     return errors, approval_required_kinds
 
 
+def _validate_plan_block(
+    plan: object,
+    prefix: str = "agent_runtime",
+) -> tuple[list[dict], set[str], dict[str, str], dict[str, list[str]], dict[str, set[str]]]:
+    errors: list[dict] = []
+    task_ids: set[str] = set()
+    task_statuses: dict[str, str] = {}
+    task_dependencies: dict[str, list[str]] = {}
+    action_ids_by_task: dict[str, set[str]] = {}
+
+    if not isinstance(plan, dict):
+        errors.append(error("invalid_agent_plan", f"{prefix}.plan must be an object"))
+    else:
+        errors.extend(_require_exact_keys(plan, PLAN_KEYS, "invalid_agent_plan_keys", f"{prefix}.plan"))
+        for key in ("goal", "summary", "updated_at", "current_task_id", "generation_id"):
+            errors.extend(_validate_string(plan.get(key), "invalid_agent_plan_field", f"{prefix}.plan.{key}"))
+
+        plan_status = plan.get("status")
+        if not isinstance(plan_status, str) or plan_status not in VALID_PLAN_STATUSES:
+            errors.append(
+                error(
+                    "invalid_agent_plan_status",
+                    f"{prefix}.plan.status must be one of: {', '.join(sorted(VALID_PLAN_STATUSES))}",
+                )
+            )
+
+        tasks = plan.get("tasks")
+        if not isinstance(tasks, list):
+            errors.append(error("invalid_agent_plan_tasks", f"{prefix}.plan.tasks must be an array"))
+        else:
+            if len(tasks) > MAX_PLAN_TASKS:
+                errors.append(
+                    error(
+                        "invalid_agent_plan_tasks",
+                        f"{prefix}.plan.tasks cannot contain more than {MAX_PLAN_TASKS} items",
+                    )
+                )
+            for index, task in enumerate(tasks):
+                task_prefix = f"{prefix}.plan.tasks[{index}]"
+                if not isinstance(task, dict):
+                    errors.append(error("invalid_agent_plan_task_item", f"{task_prefix} must be an object"))
+                    continue
+                errors.extend(_require_exact_keys(task, PLAN_TASK_KEYS, "invalid_agent_plan_task_keys", task_prefix))
+                for field in ("id", "title", "details"):
+                    errors.extend(
+                        _validate_non_empty_string(
+                            task.get(field),
+                            "invalid_agent_plan_task_field",
+                            f"{task_prefix}.{field}",
+                        )
+                    )
+                task_id = task.get("id")
+                if isinstance(task_id, str) and task_id:
+                    if task_id in task_ids:
+                        errors.append(error("invalid_agent_plan_tasks", f"duplicate task id: {task_id}"))
+                    task_ids.add(task_id)
+                    task_statuses[task_id] = task.get("status", "")
+                task_status = task.get("status")
+                if not isinstance(task_status, str) or task_status not in VALID_TASK_STATUSES:
+                    errors.append(
+                        error(
+                            "invalid_agent_plan_task_status",
+                            f"{task_prefix}.status must be one of: {', '.join(sorted(VALID_TASK_STATUSES))}",
+                        )
+                    )
+
+                depends_on = task.get("depends_on")
+                errors.extend(
+                    _validate_string_list(
+                        depends_on,
+                        code="invalid_agent_plan_task_depends_on",
+                        label=f"{task_prefix}.depends_on",
+                    )
+                )
+                if isinstance(task_id, str) and task_id and isinstance(depends_on, list):
+                    task_dependencies[task_id] = depends_on
+
+                errors.extend(
+                    _validate_string_list(
+                        task.get("working_set"),
+                        code="invalid_agent_plan_task_working_set",
+                        label=f"{task_prefix}.working_set",
+                        max_items=MAX_TASK_WORKING_SET,
+                    )
+                )
+                errors.extend(
+                    _validate_string_list(
+                        task.get("acceptance_criteria"),
+                        code="invalid_agent_plan_task_acceptance_criteria",
+                        label=f"{task_prefix}.acceptance_criteria",
+                        max_items=MAX_TASK_ACCEPTANCE_CRITERIA,
+                    )
+                )
+                errors.extend(
+                    _validate_string_list(
+                        task.get("action_ids"),
+                        code="invalid_agent_plan_task_action_ids",
+                        label=f"{task_prefix}.action_ids",
+                    )
+                )
+                for field in ("retry_blocked_count", "verify_blocked_count", "apply_blocked_count"):
+                    value = task.get(field)
+                    if not _is_int(value) or value < 0:
+                        errors.append(
+                            error(
+                                "invalid_agent_plan_task_field",
+                                f"{task_prefix}.{field} must be a non-negative integer",
+                            )
+                        )
+                if isinstance(task_id, str) and task_id and isinstance(task.get("action_ids"), list):
+                    action_ids_by_task[task_id] = set(task["action_ids"])
+
+        current_task_id = plan.get("current_task_id")
+        if isinstance(current_task_id, str) and current_task_id and current_task_id not in task_ids:
+            errors.append(
+                error(
+                    "invalid_agent_plan_current_task_id",
+                    f"{prefix}.plan.current_task_id must reference an existing task id",
+                )
+            )
+
+        if isinstance(tasks, list):
+            if tasks and plan_status == "idle":
+                errors.append(error("invalid_agent_plan_status", f"{prefix}.plan.status cannot be idle when tasks exist"))
+            if not tasks and plan_status != "idle":
+                errors.append(error("invalid_agent_plan_status", f"{prefix}.plan.status must be idle when no tasks exist"))
+            if tasks and task_ids and all(task_statuses.get(task_id) == "done" for task_id in task_ids) and plan_status != "completed":
+                errors.append(error("invalid_agent_plan_status", f"{prefix}.plan.status must be completed when all tasks are done"))
+
+    return errors, task_ids, task_statuses, task_dependencies, action_ids_by_task
+
+
 def _validate_batch_registry_block(
     batch_registry: object,
     prefix: str = "agent_runtime",
@@ -853,124 +985,8 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
     allow_in_verify_command_ids: set[str] = set()
 
     plan = agent_runtime.get("plan")
-    if not isinstance(plan, dict):
-        errors.append(error("invalid_agent_plan", f"{prefix}.plan must be an object"))
-    else:
-        errors.extend(_require_exact_keys(plan, PLAN_KEYS, "invalid_agent_plan_keys", f"{prefix}.plan"))
-        for key in ("goal", "summary", "updated_at", "current_task_id", "generation_id"):
-            errors.extend(_validate_string(plan.get(key), "invalid_agent_plan_field", f"{prefix}.plan.{key}"))
-
-        plan_status = plan.get("status")
-        if not isinstance(plan_status, str) or plan_status not in VALID_PLAN_STATUSES:
-            errors.append(
-                error(
-                    "invalid_agent_plan_status",
-                    f"{prefix}.plan.status must be one of: {', '.join(sorted(VALID_PLAN_STATUSES))}",
-                )
-            )
-
-        tasks = plan.get("tasks")
-        if not isinstance(tasks, list):
-            errors.append(error("invalid_agent_plan_tasks", f"{prefix}.plan.tasks must be an array"))
-        else:
-            if len(tasks) > MAX_PLAN_TASKS:
-                errors.append(
-                    error(
-                        "invalid_agent_plan_tasks",
-                        f"{prefix}.plan.tasks cannot contain more than {MAX_PLAN_TASKS} items",
-                    )
-                )
-            for index, task in enumerate(tasks):
-                task_prefix = f"{prefix}.plan.tasks[{index}]"
-                if not isinstance(task, dict):
-                    errors.append(error("invalid_agent_plan_task_item", f"{task_prefix} must be an object"))
-                    continue
-                errors.extend(_require_exact_keys(task, PLAN_TASK_KEYS, "invalid_agent_plan_task_keys", task_prefix))
-                for field in ("id", "title", "details"):
-                    errors.extend(
-                        _validate_non_empty_string(
-                            task.get(field),
-                            "invalid_agent_plan_task_field",
-                            f"{task_prefix}.{field}",
-                        )
-                    )
-                task_id = task.get("id")
-                if isinstance(task_id, str) and task_id:
-                    if task_id in task_ids:
-                        errors.append(error("invalid_agent_plan_tasks", f"duplicate task id: {task_id}"))
-                    task_ids.add(task_id)
-                    task_statuses[task_id] = task.get("status", "")
-                task_status = task.get("status")
-                if not isinstance(task_status, str) or task_status not in VALID_TASK_STATUSES:
-                    errors.append(
-                        error(
-                            "invalid_agent_plan_task_status",
-                            f"{task_prefix}.status must be one of: {', '.join(sorted(VALID_TASK_STATUSES))}",
-                        )
-                    )
-
-                depends_on = task.get("depends_on")
-                errors.extend(
-                    _validate_string_list(
-                        depends_on,
-                        code="invalid_agent_plan_task_depends_on",
-                        label=f"{task_prefix}.depends_on",
-                    )
-                )
-                if isinstance(task_id, str) and task_id and isinstance(depends_on, list):
-                    task_dependencies[task_id] = depends_on
-
-                errors.extend(
-                    _validate_string_list(
-                        task.get("working_set"),
-                        code="invalid_agent_plan_task_working_set",
-                        label=f"{task_prefix}.working_set",
-                        max_items=MAX_TASK_WORKING_SET,
-                    )
-                )
-                errors.extend(
-                    _validate_string_list(
-                        task.get("acceptance_criteria"),
-                        code="invalid_agent_plan_task_acceptance_criteria",
-                        label=f"{task_prefix}.acceptance_criteria",
-                        max_items=MAX_TASK_ACCEPTANCE_CRITERIA,
-                    )
-                )
-                errors.extend(
-                    _validate_string_list(
-                        task.get("action_ids"),
-                        code="invalid_agent_plan_task_action_ids",
-                        label=f"{task_prefix}.action_ids",
-                    )
-                )
-                for field in ("retry_blocked_count", "verify_blocked_count", "apply_blocked_count"):
-                    value = task.get(field)
-                    if not _is_int(value) or value < 0:
-                        errors.append(
-                            error(
-                                "invalid_agent_plan_task_field",
-                                f"{task_prefix}.{field} must be a non-negative integer",
-                            )
-                        )
-                if isinstance(task_id, str) and task_id and isinstance(task.get("action_ids"), list):
-                    action_ids_by_task[task_id] = set(task["action_ids"])
-
-        current_task_id = plan.get("current_task_id")
-        if isinstance(current_task_id, str) and current_task_id and current_task_id not in task_ids:
-            errors.append(
-                error(
-                    "invalid_agent_plan_current_task_id",
-                    f"{prefix}.plan.current_task_id must reference an existing task id",
-                )
-            )
-
-        if isinstance(tasks, list):
-            if tasks and plan_status == "idle":
-                errors.append(error("invalid_agent_plan_status", f"{prefix}.plan.status cannot be idle when tasks exist"))
-            if not tasks and plan_status != "idle":
-                errors.append(error("invalid_agent_plan_status", f"{prefix}.plan.status must be idle when no tasks exist"))
-            if tasks and task_ids and all(task_statuses.get(task_id) == "done" for task_id in task_ids) and plan_status != "completed":
-                errors.append(error("invalid_agent_plan_status", f"{prefix}.plan.status must be completed when all tasks are done"))
+    plan_errors, task_ids, task_statuses, task_dependencies, action_ids_by_task = _validate_plan_block(plan, prefix)
+    errors.extend(plan_errors)
 
     execution_policy = agent_runtime.get("execution_policy")
     execution_policy_errors, approval_required_kinds = _validate_execution_policy_block(execution_policy, prefix)
