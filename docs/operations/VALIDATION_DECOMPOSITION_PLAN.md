@@ -17,7 +17,7 @@
   - completed: `10/14`
   - latest slice: `_validate_audit_last_action_ref_block`
 - current live gate:
-  - AGENTS-equivalent suite: `840` tests, `0` failures, `8` skips
+  - AGENTS-equivalent suite: `840` tests, `0` failures, `6` skips
   - architecture gate: `51` tests, `0` failures
 
 ## Scope Statement
@@ -222,7 +222,7 @@ Halt the future campaign immediately if any of the following becomes true:
   - `python -m unittest tests.test_validate_error_ordering -v` → `15` tests, `0` failures
   - `python -m unittest tests.test_validate -v` → `76` tests, `0` failures, `3` skips
   - `python -m unittest tests.test_architecture -v` → `51` tests, `0` failures
-  - AGENTS-equivalent suite → `840` tests, `0` failures, `8` skips
+  - AGENTS-equivalent suite → `840` tests, `0` failures, `6` skips
 - current autonomous window:
   - slices `10-11` are pre-approved for autonomous continuation at one slice per
     heartbeat round while gates stay green

@@ -2,7 +2,7 @@
 
 ## Current Snapshot — 2026-04-23
 
-- Suite gate is currently green in this shell: `840` tests, `0` failures, `8` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
+- Suite gate is currently green in this shell: `840` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`.
 - Derived `recall_eval` validation remains green after the latest slice: `49` tests, `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation is green after the latest overlapping-writer lock hardening: `31` tests, `0` failures in `experiments/operational_signals/tests`.

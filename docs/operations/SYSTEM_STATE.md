@@ -3,7 +3,7 @@
 ## Current Snapshot — 2026-04-23
 
 - Suite status: green.
-- Last suite result: `840` tests, `0` failures, `8` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
+- Last suite result: `840` tests, `0` failures, `6` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
 - Architecture gate: `51` tests, `0` failures.
 - Derived `recall_eval` validation: green with `49` tests and `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
