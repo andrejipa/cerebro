@@ -458,6 +458,69 @@ def _validate_command_registry_block(
     return errors, command_ids, allow_in_verify_command_ids
 
 
+def _validate_actions_block(
+    actions: object,
+    prefix: str = "agent_runtime",
+) -> tuple[list[dict], set[str], dict[str, str]]:
+    errors: list[dict] = []
+    action_ids_seen: set[str] = set()
+    action_statuses: dict[str, str] = {}
+
+    if not isinstance(actions, list):
+        errors.append(error("invalid_agent_actions", f"{prefix}.actions must be an array"))
+    else:
+        if len(actions) > MAX_ACTION_HISTORY:
+            errors.append(
+                error(
+                    "invalid_agent_actions",
+                    f"{prefix}.actions cannot contain more than {MAX_ACTION_HISTORY} items",
+                )
+            )
+        for index, action in enumerate(actions):
+            action_prefix = f"{prefix}.actions[{index}]"
+            if not isinstance(action, dict):
+                errors.append(error("invalid_agent_action_item", f"{action_prefix} must be an object"))
+                continue
+            errors.extend(_require_exact_keys(action, ACTION_RECORD_KEYS, "invalid_agent_action_keys", action_prefix))
+            action_id = action.get("id")
+            if not isinstance(action_id, str) or not action_id:
+                errors.append(error("invalid_agent_action_id", f"{action_prefix}.id must be a non-empty string"))
+            elif action_id in action_ids_seen:
+                errors.append(error("invalid_agent_actions", f"duplicate action id: {action_id}"))
+            else:
+                action_ids_seen.add(action_id)
+                action_statuses[action_id] = action.get("status", "")
+            kind = action.get("kind")
+            if not isinstance(kind, str) or kind not in VALID_ACTION_KINDS:
+                errors.append(
+                    error(
+                        "invalid_agent_action_kind",
+                        f"{action_prefix}.kind must be one of: {', '.join(sorted(VALID_ACTION_KINDS))}",
+                    )
+                )
+            status = action.get("status")
+            if not isinstance(status, str) or status not in VALID_ACTION_STATUSES:
+                errors.append(
+                    error(
+                        "invalid_agent_action_status",
+                        f"{action_prefix}.status must be one of: {', '.join(sorted(VALID_ACTION_STATUSES))}",
+                    )
+                )
+            for field in ("summary", "target", "task_id", "batch_id", "approval_id", "rollback_ref", "updated_at"):
+                errors.extend(_validate_string(action.get(field), "invalid_agent_action_field", f"{action_prefix}.{field}"))
+            if not isinstance(action.get("details"), dict):
+                errors.append(error("invalid_agent_action_details", f"{action_prefix}.details must be an object"))
+            errors.extend(
+                _validate_string_list(
+                    action.get("artifact_refs"),
+                    code="invalid_agent_action_artifact_refs",
+                    label=f"{action_prefix}.artifact_refs",
+                )
+            )
+
+    return errors, action_ids_seen, action_statuses
+
+
 def _validate_audit_block(audit: object, prefix: str = "agent_runtime") -> list[dict]:
     errors: list[dict] = []
 
@@ -774,57 +837,8 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
                     errors.append(error("invalid_agent_approval_field", f"{approval_prefix}.task_id references unknown task id: {approval_task_id}"))
 
     actions = agent_runtime.get("actions")
-    if not isinstance(actions, list):
-        errors.append(error("invalid_agent_actions", f"{prefix}.actions must be an array"))
-    else:
-        if len(actions) > MAX_ACTION_HISTORY:
-            errors.append(
-                error(
-                    "invalid_agent_actions",
-                    f"{prefix}.actions cannot contain more than {MAX_ACTION_HISTORY} items",
-                )
-            )
-        for index, action in enumerate(actions):
-            action_prefix = f"{prefix}.actions[{index}]"
-            if not isinstance(action, dict):
-                errors.append(error("invalid_agent_action_item", f"{action_prefix} must be an object"))
-                continue
-            errors.extend(_require_exact_keys(action, ACTION_RECORD_KEYS, "invalid_agent_action_keys", action_prefix))
-            action_id = action.get("id")
-            if not isinstance(action_id, str) or not action_id:
-                errors.append(error("invalid_agent_action_id", f"{action_prefix}.id must be a non-empty string"))
-            elif action_id in action_ids_seen:
-                errors.append(error("invalid_agent_actions", f"duplicate action id: {action_id}"))
-            else:
-                action_ids_seen.add(action_id)
-                action_statuses[action_id] = action.get("status", "")
-            kind = action.get("kind")
-            if not isinstance(kind, str) or kind not in VALID_ACTION_KINDS:
-                errors.append(
-                    error(
-                        "invalid_agent_action_kind",
-                        f"{action_prefix}.kind must be one of: {', '.join(sorted(VALID_ACTION_KINDS))}",
-                    )
-                )
-            status = action.get("status")
-            if not isinstance(status, str) or status not in VALID_ACTION_STATUSES:
-                errors.append(
-                    error(
-                        "invalid_agent_action_status",
-                        f"{action_prefix}.status must be one of: {', '.join(sorted(VALID_ACTION_STATUSES))}",
-                    )
-                )
-            for field in ("summary", "target", "task_id", "batch_id", "approval_id", "rollback_ref", "updated_at"):
-                errors.extend(_validate_string(action.get(field), "invalid_agent_action_field", f"{action_prefix}.{field}"))
-            if not isinstance(action.get("details"), dict):
-                errors.append(error("invalid_agent_action_details", f"{action_prefix}.details must be an object"))
-            errors.extend(
-                _validate_string_list(
-                    action.get("artifact_refs"),
-                    code="invalid_agent_action_artifact_refs",
-                    label=f"{action_prefix}.artifact_refs",
-                )
-            )
+    action_errors, action_ids_seen, action_statuses = _validate_actions_block(actions, prefix)
+    errors.extend(action_errors)
 
     batch_registry = agent_runtime.get("batch_registry")
     batch_registry_errors, batch_registry_used_ids = _validate_batch_registry_block(batch_registry, prefix)
