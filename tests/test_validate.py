@@ -1509,6 +1509,33 @@ class ValidateCommandTests(unittest.TestCase):
             self.assertEqual(state["agent_runtime"]["audit"]["active_session_claim_id"], "")
             self.assertIsNone(read_session_claim_bytes(store, session["owner_claim_id"]))
 
+    def test_session_discard_clears_orphan_session_local_residue_after_close_session_crash_window(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store, _ = seed_valid_runtime(root)
+            session = store.open_session("alice")
+            claim = read_session_claim(store, session["owner_claim_id"])
+            state = store.load_state()
+            store._clear_active_session_registry(state)
+            store.save_state(state, expected_revision=state["revision"])
+            store._remove_session_live_proof(claim["live_proof_id"])
+            store._remove_session_claim(session["owner_claim_id"])
+            session_path = root / ".cerebro" / "session.local.json"
+            stream = io.StringIO()
+
+            with redirect_stdout(stream):
+                exit_code = run_session_discard(root, None)
+
+            output = stream.getvalue()
+            self.assertEqual(exit_code, 0)
+            self.assertIn("session_discarded", output)
+            self.assertIn("stale-session block cleared", output)
+            self.assertIn("run `cerebro analyze` to reopen continuity explicitly", output)
+            self.assertFalse(session_path.exists())
+            self.assertIsNone(read_session_claim_bytes(store, session["owner_claim_id"]))
+            self.assertTrue(store.validate_state()["ok"])
+
     def test_session_discard_reports_absent_when_no_local_session_or_registry_exists(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)

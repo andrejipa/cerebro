@@ -4,6 +4,7 @@ import json
 import os
 import threading
 import tempfile
+import time
 import unittest
 from copy import deepcopy
 from pathlib import Path
@@ -1569,6 +1570,47 @@ class StateStoreTests(unittest.TestCase):
             self.assertEqual(store.load_state(), state)
             self.assertFalse(store.lock_path.exists())
 
+    def test_save_state_cleans_partial_runtime_lock_when_owner_write_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store = StateStore(root)
+            state = build_initial_state()
+            original_open = os.open
+            original_write = os.write
+            runtime_lock_fd: int | None = None
+
+            def tracking_open(path, flags, mode=0o777):
+                nonlocal runtime_lock_fd
+                fd = original_open(path, flags, mode)
+                if Path(path) == store.lock_path:
+                    runtime_lock_fd = fd
+                return fd
+
+            def fail_runtime_lock_owner_write(fd: int, payload: bytes) -> int:
+                if fd == runtime_lock_fd:
+                    original_write(fd, payload[:1])
+                    raise OSError("synthetic runtime-lock owner write failure")
+                return original_write(fd, payload)
+
+            with mock.patch("core.state_runtime_lock_service.os.open", side_effect=tracking_open):
+                with mock.patch(
+                    "core.state_runtime_lock_service.os.write",
+                    side_effect=fail_runtime_lock_owner_write,
+                ):
+                    with self.assertRaises(OSError) as exc_info:
+                        store.save_state(state)
+
+            self.assertIn("synthetic runtime-lock owner write failure", str(exc_info.exception))
+            self.assertIsNotNone(runtime_lock_fd)
+            with self.assertRaises(OSError):
+                os.fstat(runtime_lock_fd)
+            self.assertFalse(store.lock_path.exists())
+            self.assertFalse(store._process_runtime_lock_is_held())
+
+            store.save_state(state)
+
+            self.assertEqual(store.load_state(), state)
+
     def test_register_sources_successfully(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -2482,6 +2524,39 @@ class StateStoreTests(unittest.TestCase):
             self.assertTrue(result["ok"])
             self.assertFalse(store.lock_path.exists())
 
+    def test_runtime_lock_recovers_stale_empty_or_garbled_lock_after_grace_window(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store, _ = self._seed_valid_runtime(root)
+
+            for payload in ("", "garbled-owner"):
+                with self.subTest(payload=payload if payload else "<empty>"):
+                    store.lock_path.write_text(payload, encoding="ascii")
+                    stale_at = time.time() - 2
+                    os.utime(store.lock_path, (stale_at, stale_at))
+
+                    with mock.patch("core.state_store.RUNTIME_LOCK_TIMEOUT_SECONDS", 1):
+                        result = store.validate_state()
+
+                    self.assertTrue(result["ok"])
+                    self.assertFalse(store.lock_path.exists())
+
+    def test_runtime_lock_fresh_garbled_lock_still_times_out_without_staleness_window(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store, _ = self._seed_valid_runtime(root)
+            store.lock_path.write_text("garbled-owner", encoding="ascii")
+
+            with mock.patch("core.state_store.RUNTIME_LOCK_TIMEOUT_SECONDS", 0):
+                with mock.patch("core.state_store.RUNTIME_LOCK_POLL_SECONDS", 1):
+                    with self.assertRaises(StateStoreError) as exc_info:
+                        store.validate_state()
+
+            message = str(exc_info.exception)
+            self.assertIn("runtime.lock", message)
+            self.assertIn("stale lock", message)
+            self.assertEqual(store.lock_path.read_text(encoding="ascii"), "garbled-owner")
+
     def test_runtime_lock_timeout_reports_stale_lock_guidance_when_owner_still_looks_alive(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -2654,6 +2729,64 @@ class StateStoreTests(unittest.TestCase):
             latest_event = store.read_recent_events(limit=1)[0]
             self.assertEqual(latest_event["event"], "session_discarded")
             self.assertEqual(latest_event["mode"], "stale_session_recovery")
+
+    def test_discard_session_clears_orphan_session_local_residue_after_close_session_crash_window(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store, _ = self._seed_valid_runtime(root)
+            session = store.open_session("alice")
+            claim = self._read_session_claim(store, session["owner_claim_id"])
+            state = store.load_state()
+            before_revision = state["revision"]
+            store._clear_active_session_registry(state)
+            store.save_state(state, expected_revision=state["revision"])
+            store._remove_session_live_proof(claim["live_proof_id"])
+            store._remove_session_claim(session["owner_claim_id"])
+
+            validation = store.validate_state()
+            self.assertFalse(validation["ok"])
+            self.assertEqual(validation["errors"][0]["code"], "session_not_registered")
+
+            result = store.discard_session()
+
+            after_state = store.load_state()
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["status"], "discarded")
+            self.assertTrue(result["recovered_stale_session"])
+            self.assertEqual(result["revision"], before_revision)
+            self.assertEqual(after_state["revision"], before_revision)
+            self.assertFalse(store.session_path.exists())
+            self.assertEqual(after_state["agent_runtime"]["audit"]["active_session_id"], "")
+            self.assertEqual(after_state["agent_runtime"]["audit"]["active_session_claim_id"], "")
+            self.assertTrue(store.validate_state()["ok"])
+            latest_event = store.read_recent_events(limit=1)[0]
+            self.assertEqual(latest_event["event"], "session_discarded")
+            self.assertEqual(latest_event["mode"], "stale_session_recovery")
+
+    def test_discard_session_blocks_session_not_registered_without_token_when_claim_still_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store, _ = self._seed_valid_runtime(root)
+            session = store.open_session("alice")
+            state = store.load_state()
+            before_revision = state["revision"]
+            store._clear_active_session_registry(state)
+            store.save_state(state, expected_revision=state["revision"])
+
+            validation = store.validate_state()
+            self.assertFalse(validation["ok"])
+            self.assertEqual(validation["errors"][0]["code"], "session_not_registered")
+
+            result = store.discard_session()
+
+            after_state = store.load_state()
+            self.assertFalse(result["ok"])
+            self.assertEqual(result["status"], "blocked")
+            self.assertEqual(result["reason"], "session_token")
+            self.assertEqual(result["errors"][0]["code"], "session_token_required")
+            self.assertEqual(after_state["revision"], before_revision)
+            self.assertTrue(store.session_path.exists())
+            self.assertIsNotNone(self._read_session_claim_bytes(store, session["owner_claim_id"]))
 
     def test_discard_session_invalidates_restored_session_backup_in_same_holder(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

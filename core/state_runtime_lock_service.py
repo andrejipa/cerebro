@@ -70,9 +70,8 @@ class StateRuntimeLockService:
 
     def read_runtime_lock_owner_pid(self) -> int | None:
         """Return the lock-owner pid when the lock file is readable and valid."""
-        try:
-            raw = self.lock_path.read_text(encoding="ascii").strip()
-        except OSError:
+        raw = self._read_runtime_lock_payload()
+        if raw is None:
             return None
 
         if not raw.isdigit():
@@ -80,6 +79,13 @@ class StateRuntimeLockService:
 
         owner_pid = int(raw)
         return owner_pid if owner_pid > 0 else None
+
+    def _read_runtime_lock_payload(self) -> str | None:
+        """Return the current runtime-lock payload when it can be read safely."""
+        try:
+            return self.lock_path.read_text(encoding="ascii").strip()
+        except OSError:
+            return None
 
     def pid_is_running(self, pid: int) -> bool:
         """Return whether the runtime-lock owner still appears to be active."""
@@ -129,6 +135,29 @@ class StateRuntimeLockService:
 
         return self.try_remove_runtime_lock_file()
 
+    def try_recover_invalid_runtime_lock(self) -> bool:
+        """Recover one malformed lock file only after it ages past the acquisition window."""
+        raw = self._read_runtime_lock_payload()
+        if raw is None:
+            return False
+
+        if raw.isdigit() and int(raw) > 0:
+            return False
+
+        if self.process_runtime_lock_is_held():
+            return False
+
+        try:
+            age_seconds = time.time() - self.lock_path.stat().st_mtime
+        except OSError:
+            return False
+
+        stale_after_seconds = max(self._timeout_seconds(), self._poll_seconds())
+        if stale_after_seconds > 0 and age_seconds < stale_after_seconds:
+            return False
+
+        return self.try_remove_runtime_lock_file()
+
     def release_runtime_lock(self) -> None:
         """Release lock ownership without reclassifying completed work as failure."""
         fd = self._lock_fd
@@ -142,6 +171,25 @@ class StateRuntimeLockService:
                 pass
 
         self.unregister_process_runtime_lock()
+        self.try_remove_runtime_lock_file()
+
+    def _write_runtime_lock_owner_pid(self, fd: int) -> None:
+        """Persist the current owner pid, failing if the write does not fully complete."""
+        payload = str(self._get_pid()).encode("ascii")
+        written_total = 0
+        while written_total < len(payload):
+            written = os.write(fd, payload[written_total:])
+            if written <= 0:
+                raise OSError(errno.EIO, "failed to persist runtime lock owner pid")
+            written_total += written
+
+    def _cleanup_failed_runtime_lock_acquisition(self, fd: int | None) -> None:
+        """Best-effort cleanup for a lock file that failed before ownership was registered."""
+        if fd is not None:
+            try:
+                os.close(fd)
+            except OSError:
+                pass
         self.try_remove_runtime_lock_file()
 
     @contextmanager
@@ -158,9 +206,10 @@ class StateRuntimeLockService:
         self.cerebro_dir.mkdir(parents=True, exist_ok=True)
         start = self._monotonic()
         while True:
+            fd: int | None = None
             try:
                 fd = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-                os.write(fd, str(self._get_pid()).encode("ascii"))
+                self._write_runtime_lock_owner_pid(fd)
                 self._lock_fd = fd
                 self._lock_depth = 1
                 self.register_process_runtime_lock()
@@ -168,12 +217,17 @@ class StateRuntimeLockService:
             except FileExistsError:
                 if self.try_recover_stale_runtime_lock():
                     continue
+                if self.try_recover_invalid_runtime_lock():
+                    continue
                 if self._monotonic() - start >= self._timeout_seconds():
                     raise self._error_cls(
                         "timed out waiting for runtime lock: "
                         f"{self.lock_path}; another Cerebro process may still be running or a previous run may have left a stale lock"
                     )
                 self._sleep_fn(self._poll_seconds())
+            except Exception:
+                self._cleanup_failed_runtime_lock_acquisition(fd)
+                raise
 
         try:
             yield

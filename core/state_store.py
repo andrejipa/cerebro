@@ -1356,7 +1356,10 @@ class StateStore:
                     }
 
             if session_data is not None:
-                if not self._session_errors_allow_unowned_discard(session_errors):
+                if not self._session_errors_allow_unowned_discard(
+                    session_errors,
+                    session_data=session_data,
+                ):
                     try:
                         self._assert_expected_session_token_for_session(session_data, expected_session_token)
                         self._assert_current_session_owner_binding_for_session(session_data)
@@ -3239,7 +3242,12 @@ class StateStore:
         self._assert_current_session_owner_binding_for_session(session_data)
         return session_data
 
-    def _session_errors_allow_unowned_discard(self, session_errors: list[dict]) -> bool:
+    def _session_errors_allow_unowned_discard(
+        self,
+        session_errors: list[dict],
+        *,
+        session_data: dict | None = None,
+    ) -> bool:
         """Return whether one broken session already lacks enough live proof to require a tokened discard."""
         if not session_errors:
             return False
@@ -3251,12 +3259,26 @@ class StateStore:
             "session_live_proof_mismatch",
         }
         codes = {str(item.get("code", "")) for item in session_errors if isinstance(item, dict)}
-        return bool(codes) and codes.issubset(allowed_codes)
+        if bool(codes) and codes.issubset(allowed_codes):
+            return True
+        if codes == {"session_not_registered"} and session_data is not None:
+            return self._session_not_registered_residue_is_orphaned(session_data)
+        return False
 
     def _session_errors_allow_registry_only_discard(self, session_errors: list[dict]) -> bool:
         """Return whether one registry-only residue is narrow enough for unowned explicit cleanup."""
         codes = {str(item.get("code", "")) for item in session_errors if isinstance(item, dict)}
         return codes == {"session_registry_mismatch"}
+
+    def _session_not_registered_residue_is_orphaned(self, session_data: dict) -> bool:
+        """Return whether a stray local session has already lost its external claim authority."""
+        claim_id = session_data.get("owner_claim_id", "")
+        if not isinstance(claim_id, str) or not claim_id:
+            return False
+        try:
+            return self._read_optional_session_claim_bytes(claim_id) is None
+        except StateStoreError:
+            return False
 
     def _active_session_live_proof_id(self, session_data: dict) -> str | None:
         """Return the current active live-proof id when the claim is readable enough to locate it."""
