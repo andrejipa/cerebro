@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from collections import defaultdict
 
+from core.action_identity import action_runtime_signature
 from core.runtime_event_window import events_since_latest_plan_update
 from core.success_memory import parse_success_memory_note
 from core.work_profile import derive_task_work_profile
@@ -185,13 +186,7 @@ def _summarize_task_actions(task_actions: list[dict]) -> dict:
 
         details = action.get("details", {})
         if isinstance(details, dict):
-            action_signatures.append(
-                (
-                    action.get("kind", ""),
-                    action.get("target", ""),
-                    details.get("fingerprint", ""),
-                )
-            )
+            action_signatures.append(action_runtime_signature(action))
 
         if action.get("approval_id"):
             approval_count += 1

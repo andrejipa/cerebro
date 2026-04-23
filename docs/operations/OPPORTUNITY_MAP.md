@@ -2,7 +2,7 @@
 
 ## Current Snapshot — 2026-04-22
 
-- Suite gate is currently green in this shell: `788` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
+- Suite gate is currently green in this shell: `791` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`.
 - Derived `recall_eval` validation remains green after the latest slice: `49` tests, `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation is green after the latest overlapping-writer lock hardening: `31` tests, `0` failures in `experiments/operational_signals/tests`.
@@ -12,13 +12,13 @@
 - Planning-only `StateStore` decomposition prep is now recorded in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it stays explicitly non-authoritative and does not reopen the freeze.
 - Current executable queue:
   - `canonical runtime: ordered hardening resumed after the canonical gate returned green`
-  - `latest runtime slice: proof-of-stop P1c hardened runtime-lock acquisition cleanup, stale malformed runtime.lock recovery, and orphan session.local.json discard recovery under the unchanged facade`
+  - `latest runtime slice: canonical action-identity semantics now converge in core/action_identity.py, so exec-command signatures, normalized action fingerprints, retry-identity matching, and decision-runtime action signatures no longer drift across action_runtime, discipline_runtime, and decision_runtime`
   - `latest StateStore slice: the mapped decomposition queue now covers explicit contracts, read-models, session artifacts, retention helpers, and coordination/locking helpers behind the unchanged facade`
-  - `next runtime step: collapse the remaining fingerprinting logic spread across action_runtime, discipline_runtime, and decision_runtime into one shared runtime-owned surface without widening authority`
+  - `next runtime step: resume proof-of-stop P1-P5 scout rotation now that the mapped user-directed runtime queue is exhausted`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
 - Current queue mode: execution; the canonical gate is green again, so bounded ordered slices may proceed.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `canonical runtime — consolidate remaining fingerprinting logic across action_runtime, discipline_runtime, and decision_runtime`
+- Current next item: `proof of stop — fresh P1-P5 scout across hotspot, bypass, reliability, duplication, and fragile-edge surfaces`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -29,10 +29,9 @@
 
 ```text
 NEXT_ACTION
-- next_required_step: fingerprint_consolidation
+- next_required_step: proof_of_stop_p1_p5
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: after coordination/locking moved into a helper without widening authority, the remaining question is no longer decomposition but whether proof-of-stop finds a new hotspot, bypass, reliability gap, duplication, or fragile edge case
-- highest_priority_hypothesis: the remaining user-directed structural duplication is fingerprint computation and retry-signature reasoning spread across action_runtime, discipline_runtime, and decision_runtime, so the next bounded slice should collapse that contract behind one shared runtime-owned helper
+- highest_priority_hypothesis: the mapped user-directed StateStore/runtime hardening queue is now exhausted without reopening authority, so the next question is whether a fresh proof-of-stop cycle finds any new hotspot, bypass, reliability gap, duplication, or fragile edge case
 ```
 
 ## Historical Derived Chronology
@@ -40,6 +39,7 @@ NEXT_ACTION
 - A later proof-of-stop slice on 2026-04-22 then closed the first canonical P1 findings in the runtime itself: execution-policy blocking now normalizes path-qualified command heads like `/bin/rm` and `C:\...\powershell.exe`, approvals are now bound to action kind, fingerprint, task, and target across apply/verify/rollback/validation, and the legacy blank-`task_id` approval path now survives only for the single-executable-task fallback instead of remaining broadly reusable.
 - A later proof-of-stop continuation on 2026-04-22 then closed the remaining single-file apply transaction gap in canonical runtime: `cli.commands.apply` now routes the one-action path through `core.action_runtime.execute_apply_cycle()`, which revalidates state and persists the action under the runtime lock before the slice commits, and direct regression now proves that a late `record_agent_action()` rejection rolls the workspace back instead of leaving an unrecorded mutation behind.
 - A later proof-of-stop continuation on 2026-04-22 then closed the next reliability slice in canonical runtime: partial `runtime.lock` acquisitions now clean up leaked descriptors and lock files when owner-pid persistence fails, malformed lock payloads are reclaimed only after they age past the acquisition grace window, and `discard_session()` now clears an orphan `session.local.json` residue without a token only when the external claim authority is already gone.
+- A later canonical-runtime consolidation on 2026-04-22 then closed the remaining mapped fingerprint drift: `core/action_identity.py` now owns exec-command binding signatures, normalized action fingerprint digests, retry-identity matching, and action-signature extraction, so action, discipline, and decision layers reuse one identity contract instead of carrying subtly separate helpers.
 - A later heartbeat wakeup on 2026-04-22 then seeded the first canonical quiet-scout signature in `SCOUT_CONTROL_STATE`, but the mandatory post-edit AGENTS-equivalent gate turned red inside frozen canonical `tests/`: `test_validate_state_recovers_pending_session_refresh_after_crash_before_state_save` failed, and the subsequent focused rerun reproduced the blocker in a different shape as a host-temp `PermissionError` under raw `tempfile.TemporaryDirectory()`, so the queue stayed in blocked-escalation instead of continuing quiet scout rotation.
 - A later governance hardening on 2026-04-22 then completed the stage-2 scout-control split: `SYSTEM_STATE.md` now carries the canonical `SCOUT_CONTROL_STATE`, while this map was reduced to a minimal `NEXT_ACTION` projection so heartbeat routing no longer depends on duplicated control prose.
 - The same wakeup also corrected the live gate again to the currently verified `730` tests, `0` failures, `8` skips result from the exact AGENTS-equivalent runner; the interim `730/0/6` wording had become documentary drift against the shell-authoritative command.

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from core.action_runtime import compute_exec_command_signature
+from core.action_identity import compute_exec_command_signature, matches_action_retry_identity
 from core.agent_runtime import build_command_registry_map
 from core.digests import sha256_file, sha256_text
 from core.runtime_event_window import events_since_latest_plan_update
@@ -67,26 +67,6 @@ def build_action_evidence_token(root: Path, normalized_action: dict, agent_runti
 
     payload = json.dumps(evidence, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
     return sha256_text(payload)
-
-
-def _matches_retry_signature(action: dict, normalized_action: dict, fingerprint: str) -> bool:
-    details = action.get("details", {})
-    if isinstance(details, dict):
-        stored_fingerprint = details.get("fingerprint")
-        if isinstance(stored_fingerprint, str) and stored_fingerprint:
-            return stored_fingerprint == fingerprint
-
-    same_kind = action.get("kind") == normalized_action["kind"]
-    if not same_kind:
-        return False
-
-    if normalized_action["kind"] in {"fs.create_file", "fs.write_patch", "fs.delete_soft"}:
-        return action.get("target") == normalized_action.get("path", "")
-    if normalized_action["kind"] == "fs.move":
-        return action.get("target") == f"{normalized_action.get('from', '')} -> {normalized_action.get('to', '')}"
-    if normalized_action["kind"] == "exec.command":
-        return False
-    return False
 
 
 def _target_matches_last_outcome(root: Path, normalized_action: dict, actions: list[dict]) -> bool:
@@ -189,7 +169,7 @@ def evaluate_retry_discipline(
     actions = [
         action
         for action in agent_runtime.get("actions", [])
-        if isinstance(action, dict) and _matches_retry_signature(action, normalized_action, fingerprint)
+        if isinstance(action, dict) and matches_action_retry_identity(action, normalized_action, fingerprint)
     ]
     recent_history = [
         f"{action.get('id', '')}:{action.get('status', '')}:{action.get('updated_at', '')}"

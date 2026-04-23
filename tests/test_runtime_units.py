@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from core.action_identity import action_runtime_signature, matches_action_retry_identity
 from core.action_runtime import compute_action_fingerprint
 from core.decision_runtime import choose_next_task, evaluate_task_selection_consistency
 from core.discipline_runtime import (
@@ -18,6 +19,60 @@ from core.work_profile import derive_task_work_profile, derive_task_work_profile
 
 
 class RuntimeUnitTests(unittest.TestCase):
+    def test_action_runtime_signature_extracts_kind_target_and_fingerprint(self) -> None:
+        action = {
+            "kind": "fs.create_file",
+            "target": "draft.txt",
+            "details": {"fingerprint": "fp-123"},
+        }
+
+        self.assertEqual(
+            action_runtime_signature(action),
+            ("fs.create_file", "draft.txt", "fp-123"),
+        )
+
+    def test_matches_action_retry_identity_prefers_stored_fingerprint(self) -> None:
+        action = {
+            "kind": "fs.create_file",
+            "target": "draft.txt",
+            "details": {"fingerprint": "fp-123"},
+        }
+        normalized_action = {
+            "kind": "fs.create_file",
+            "path": "draft.txt",
+            "content": "alpha\n",
+        }
+
+        self.assertTrue(matches_action_retry_identity(action, normalized_action, "fp-123"))
+        self.assertFalse(matches_action_retry_identity(action, normalized_action, "fp-other"))
+
+    def test_matches_action_retry_identity_keeps_legacy_target_fallback_narrow(self) -> None:
+        move_action = {
+            "kind": "fs.move",
+            "target": "draft.txt -> moved.txt",
+            "details": {},
+        }
+        normalized_move = {
+            "kind": "fs.move",
+            "from": "draft.txt",
+            "to": "moved.txt",
+            "overwrite": True,
+        }
+        exec_action = {
+            "kind": "exec.command",
+            "target": "cmd-001",
+            "details": {},
+        }
+
+        self.assertTrue(matches_action_retry_identity(move_action, normalized_move, ""))
+        self.assertFalse(
+            matches_action_retry_identity(
+                exec_action,
+                {"kind": "exec.command", "command_id": "cmd-001"},
+                "",
+            )
+        )
+
     def test_derive_task_work_profile_classifies_state_only_task_as_light(self) -> None:
         agent_runtime = {
             "plan": {

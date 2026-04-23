@@ -12,6 +12,10 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 
+from core.action_identity import (
+    compute_exec_command_signature as _compute_exec_command_signature,
+    compute_normalized_action_fingerprint,
+)
 from core.agent_runtime import current_plan_generation_id
 from core.digests import sha256_bytes as _sha256_bytes
 from core.digests import sha256_text as _sha256_text
@@ -119,32 +123,9 @@ def _write_text_atomic(path: Path, content: str) -> None:
             pass
 
 
-def _exec_command_binding_payload(command: dict | None, command_id: str) -> dict:
-    """Return the approval/retry-relevant snapshot for one exec.command entry."""
-    if not isinstance(command, dict):
-        return {"command_id": command_id, "missing": True}
-
-    argv = command.get("argv", [])
-    if not isinstance(argv, list):
-        argv = []
-
-    return {
-        "command_id": command_id,
-        "argv": list(argv),
-        "cwd": command.get("cwd", "") if isinstance(command.get("cwd"), str) else "",
-        "timeout_ms": command.get("timeout_ms"),
-        "determinism": command.get("determinism", "") if isinstance(command.get("determinism"), str) else "",
-        "side_effect": command.get("side_effect", "") if isinstance(command.get("side_effect"), str) else "",
-        "risk": command.get("risk", "") if isinstance(command.get("risk"), str) else "",
-        "allow_in_verify": bool(command.get("allow_in_verify", False)),
-    }
-
-
 def compute_exec_command_signature(command_registry: dict[str, dict], command_id: str) -> str:
     """Return a stable digest for the resolved exec.command registry snapshot."""
-    payload = _exec_command_binding_payload(command_registry.get(command_id), command_id)
-    serialized = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
-    return _sha256_text(serialized)
+    return _compute_exec_command_signature(command_registry, command_id)
 
 
 def _attach_plan_generation(agent_runtime: dict, details: dict) -> dict:
@@ -495,14 +476,16 @@ def normalize_action_payload(payload: dict) -> dict:
 def compute_action_fingerprint(payload: dict, *, command_registry: dict[str, dict] | None = None) -> str:
     """Return a deterministic fingerprint for approval and retry matching."""
     normalized = normalize_action_payload(payload)
-    fingerprint_payload = {key: value for key, value in normalized.items() if key not in {"id", "summary"}}
+    command_signature = None
     if normalized["kind"] == "exec.command" and command_registry is not None:
-        fingerprint_payload["command_signature"] = compute_exec_command_signature(
+        command_signature = compute_exec_command_signature(
             command_registry,
             normalized["command_id"],
         )
-    serialized = json.dumps(fingerprint_payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
-    return _sha256_text(serialized)
+    return compute_normalized_action_fingerprint(
+        normalized,
+        command_signature=command_signature,
+    )
 
 
 def _read_text(path: Path) -> str:
