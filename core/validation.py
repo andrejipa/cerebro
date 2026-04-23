@@ -458,6 +458,96 @@ def _validate_command_registry_block(
     return errors, command_ids, allow_in_verify_command_ids
 
 
+def _validate_audit_block(audit: object, prefix: str = "agent_runtime") -> list[dict]:
+    errors: list[dict] = []
+
+    if not isinstance(audit, dict):
+        errors.append(error("invalid_agent_audit", f"{prefix}.audit must be an object"))
+    else:
+        errors.extend(_require_exact_keys(audit, AUDIT_KEYS, "invalid_agent_audit_keys", f"{prefix}.audit"))
+        for field in (
+            "last_event_at",
+            "last_event_type",
+            "last_action_id",
+            "active_session_id",
+            "active_session_claim_id",
+            "trace_thread_id",
+            "last_trace_error_at",
+            "last_trace_error",
+        ):
+            errors.extend(_validate_string(audit.get(field), "invalid_agent_audit_field", f"{prefix}.audit.{field}"))
+        active_session_id = audit.get("active_session_id", "")
+        active_session_claim_id = audit.get("active_session_claim_id", "")
+        if bool(active_session_id) != bool(active_session_claim_id):
+            errors.append(
+                error(
+                    "invalid_agent_audit_field",
+                    f"{prefix}.audit.active_session_id and {prefix}.audit.active_session_claim_id must both be empty or both be non-empty",
+                )
+            )
+        next_event_id = audit.get("next_event_id")
+        if not _is_int(next_event_id) or next_event_id < 1:
+            errors.append(error("invalid_agent_audit_field", f"{prefix}.audit.next_event_id must be an integer greater than or equal to 1"))
+        trace_status = audit.get("trace_status")
+        if not isinstance(trace_status, str) or trace_status not in VALID_TRACE_STATUSES:
+            errors.append(
+                error(
+                    "invalid_agent_audit_field",
+                    f"{prefix}.audit.trace_status must be one of: {', '.join(sorted(VALID_TRACE_STATUSES))}",
+                )
+            )
+        trace_integrity = audit.get("trace_integrity")
+        if not isinstance(trace_integrity, str) or trace_integrity not in VALID_TRACE_INTEGRITIES:
+            errors.append(
+                error(
+                    "invalid_agent_audit_field",
+                    f"{prefix}.audit.trace_integrity must be one of: {', '.join(sorted(VALID_TRACE_INTEGRITIES))}",
+                )
+            )
+        rollback_points = audit.get("rollback_points")
+        if not isinstance(rollback_points, list):
+            errors.append(error("invalid_agent_audit_rollback_points", f"{prefix}.audit.rollback_points must be an array"))
+        else:
+            if len(rollback_points) > MAX_ROLLBACK_POINTS:
+                errors.append(
+                    error(
+                        "invalid_agent_audit_rollback_points",
+                        f"{prefix}.audit.rollback_points cannot contain more than {MAX_ROLLBACK_POINTS} items",
+                    )
+                )
+            for index, rollback_point in enumerate(rollback_points):
+                rollback_prefix = f"{prefix}.audit.rollback_points[{index}]"
+                if not isinstance(rollback_point, dict):
+                    errors.append(error("invalid_agent_audit_rollback_point_item", f"{rollback_prefix} must be an object"))
+                    continue
+                errors.extend(
+                    _require_exact_keys(
+                        rollback_point,
+                        ROLLBACK_POINT_KEYS,
+                        "invalid_agent_audit_rollback_point_keys",
+                        rollback_prefix,
+                    )
+                )
+                for field in ("id", "artifact_ref", "created_at"):
+                    errors.extend(
+                        _validate_non_empty_string(
+                            rollback_point.get(field),
+                            "invalid_agent_audit_rollback_point_field",
+                            f"{rollback_prefix}.{field}",
+                        )
+                    )
+                kind = rollback_point.get("kind")
+                if not isinstance(kind, str) or kind not in VALID_ROLLBACK_KINDS:
+                    errors.append(
+                        error(
+                            "invalid_agent_audit_rollback_point_kind",
+                            f"{rollback_prefix}.kind must be one of: {', '.join(sorted(VALID_ROLLBACK_KINDS))}",
+                        )
+                    )
+
+    return errors
+
+
 def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_runtime") -> list[dict]:
     errors: list[dict] = []
 
@@ -870,89 +960,7 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
     errors.extend(_validate_memory_block(memory, prefix))
 
     audit = agent_runtime.get("audit")
-    if not isinstance(audit, dict):
-        errors.append(error("invalid_agent_audit", f"{prefix}.audit must be an object"))
-    else:
-        errors.extend(_require_exact_keys(audit, AUDIT_KEYS, "invalid_agent_audit_keys", f"{prefix}.audit"))
-        for field in (
-            "last_event_at",
-            "last_event_type",
-            "last_action_id",
-            "active_session_id",
-            "active_session_claim_id",
-            "trace_thread_id",
-            "last_trace_error_at",
-            "last_trace_error",
-        ):
-            errors.extend(_validate_string(audit.get(field), "invalid_agent_audit_field", f"{prefix}.audit.{field}"))
-        active_session_id = audit.get("active_session_id", "")
-        active_session_claim_id = audit.get("active_session_claim_id", "")
-        if bool(active_session_id) != bool(active_session_claim_id):
-            errors.append(
-                error(
-                    "invalid_agent_audit_field",
-                    f"{prefix}.audit.active_session_id and {prefix}.audit.active_session_claim_id must both be empty or both be non-empty",
-                )
-            )
-        next_event_id = audit.get("next_event_id")
-        if not _is_int(next_event_id) or next_event_id < 1:
-            errors.append(error("invalid_agent_audit_field", f"{prefix}.audit.next_event_id must be an integer greater than or equal to 1"))
-        trace_status = audit.get("trace_status")
-        if not isinstance(trace_status, str) or trace_status not in VALID_TRACE_STATUSES:
-            errors.append(
-                error(
-                    "invalid_agent_audit_field",
-                    f"{prefix}.audit.trace_status must be one of: {', '.join(sorted(VALID_TRACE_STATUSES))}",
-                )
-            )
-        trace_integrity = audit.get("trace_integrity")
-        if not isinstance(trace_integrity, str) or trace_integrity not in VALID_TRACE_INTEGRITIES:
-            errors.append(
-                error(
-                    "invalid_agent_audit_field",
-                    f"{prefix}.audit.trace_integrity must be one of: {', '.join(sorted(VALID_TRACE_INTEGRITIES))}",
-                )
-            )
-        rollback_points = audit.get("rollback_points")
-        if not isinstance(rollback_points, list):
-            errors.append(error("invalid_agent_audit_rollback_points", f"{prefix}.audit.rollback_points must be an array"))
-        else:
-            if len(rollback_points) > MAX_ROLLBACK_POINTS:
-                errors.append(
-                    error(
-                        "invalid_agent_audit_rollback_points",
-                        f"{prefix}.audit.rollback_points cannot contain more than {MAX_ROLLBACK_POINTS} items",
-                    )
-                )
-            for index, rollback_point in enumerate(rollback_points):
-                rollback_prefix = f"{prefix}.audit.rollback_points[{index}]"
-                if not isinstance(rollback_point, dict):
-                    errors.append(error("invalid_agent_audit_rollback_point_item", f"{rollback_prefix} must be an object"))
-                    continue
-                errors.extend(
-                    _require_exact_keys(
-                        rollback_point,
-                        ROLLBACK_POINT_KEYS,
-                        "invalid_agent_audit_rollback_point_keys",
-                        rollback_prefix,
-                    )
-                )
-                for field in ("id", "artifact_ref", "created_at"):
-                    errors.extend(
-                        _validate_non_empty_string(
-                            rollback_point.get(field),
-                            "invalid_agent_audit_rollback_point_field",
-                            f"{rollback_prefix}.{field}",
-                        )
-                    )
-                kind = rollback_point.get("kind")
-                if not isinstance(kind, str) or kind not in VALID_ROLLBACK_KINDS:
-                    errors.append(
-                        error(
-                            "invalid_agent_audit_rollback_point_kind",
-                            f"{rollback_prefix}.kind must be one of: {', '.join(sorted(VALID_ROLLBACK_KINDS))}",
-                        )
-                    )
+    errors.extend(_validate_audit_block(audit, prefix))
     for task_id, depends_on in task_dependencies.items():
         for dep in depends_on:
             if dep == task_id:

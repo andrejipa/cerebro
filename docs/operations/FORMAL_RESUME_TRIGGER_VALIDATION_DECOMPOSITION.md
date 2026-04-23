@@ -122,7 +122,7 @@ Required sub-block coverage before slice 1:
   - title form: `refactor(validate): extract _validate_<block>_block (slice N/M)`
 - continue automatically at one slice per heartbeat round through slice `11/14`
   while the whitelist is unchanged and all required gates stay green
-- do not reintroduce per-slice human review between slices `4/14` and `11/14`
+- do not reintroduce per-slice human review between slices `5/14` and `11/14`
 - reintroduce a mandatory operator checkpoint before slice `12/14`
 
 ## Stop Conditions
@@ -166,8 +166,8 @@ Every approved slice must clear all of:
 - candidate first slice: `_validate_memory_block`
 - approved state today: `yes`
 - characterization precondition status: `satisfied`
-- completed slice count: `4/14`
+- completed slice count: `5/14`
 - observation-center routing:
-  - `validation-slice-5-audit` is the current open queue head in `docs/operations/observation_center.toml`
+  - `validation-slice-6-actions` is the current open queue head in `docs/operations/observation_center.toml`
 - next required step:
-  - `execute slice 5 (_validate_audit_block); autonomous continuation is pre-approved through slice 11 while gates stay green`
+  - `execute slice 6 (_validate_actions_block); autonomous continuation is pre-approved through slice 11 while gates stay green`
