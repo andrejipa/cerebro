@@ -858,6 +858,57 @@ def _validate_task_action_ref_relations_block(
     return errors
 
 
+def _validate_plan_dependency_relations_block(
+    task_dependencies: dict[str, list[str]],
+    task_ids: set[str],
+    task_statuses: dict[str, str],
+) -> tuple[list[dict], set[str]]:
+    errors: list[dict] = []
+
+    for task_id, depends_on in task_dependencies.items():
+        for dep in depends_on:
+            if dep == task_id:
+                errors.append(error("invalid_agent_plan_task_depends_on", f"task {task_id} cannot depend on itself"))
+            elif dep not in task_ids:
+                errors.append(error("invalid_agent_plan_task_depends_on", f"task {task_id} depends on unknown task id: {dep}"))
+        if task_statuses.get(task_id) in {"ready", "running", "done"} and any(
+            task_statuses.get(dep) != "done" for dep in depends_on if dep in task_statuses
+        ):
+            errors.append(
+                error(
+                    "invalid_agent_plan_task_status",
+                    f"task {task_id} cannot be {task_statuses[task_id]!r} while dependencies are incomplete",
+                )
+            )
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(task_id: str) -> None:
+        if task_id in visited:
+            return
+        if task_id in visiting:
+            errors.append(error("invalid_agent_plan_tasks", f"plan dependencies must form a DAG; cycle detected at {task_id}"))
+            return
+        visiting.add(task_id)
+        for dep in task_dependencies.get(task_id, []):
+            if dep in task_dependencies:
+                visit(dep)
+        visiting.remove(task_id)
+        visited.add(task_id)
+
+    for task_id in task_dependencies:
+        visit(task_id)
+
+    executable_task_ids = {
+        task_id
+        for task_id, status in task_statuses.items()
+        if status in {"ready", "running"}
+    }
+
+    return errors, executable_task_ids
+
+
 def _validate_verification_block(
     verification: object,
     prefix: str = "agent_runtime",
@@ -1049,46 +1100,12 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
 
     audit = agent_runtime.get("audit")
     errors.extend(_validate_audit_block(audit, prefix))
-    for task_id, depends_on in task_dependencies.items():
-        for dep in depends_on:
-            if dep == task_id:
-                errors.append(error("invalid_agent_plan_task_depends_on", f"task {task_id} cannot depend on itself"))
-            elif dep not in task_ids:
-                errors.append(error("invalid_agent_plan_task_depends_on", f"task {task_id} depends on unknown task id: {dep}"))
-        if task_statuses.get(task_id) in {"ready", "running", "done"} and any(
-            task_statuses.get(dep) != "done" for dep in depends_on if dep in task_statuses
-        ):
-            errors.append(
-                error(
-                    "invalid_agent_plan_task_status",
-                    f"task {task_id} cannot be {task_statuses[task_id]!r} while dependencies are incomplete",
-                )
-            )
-
-    visiting: set[str] = set()
-    visited: set[str] = set()
-
-    def visit(task_id: str) -> None:
-        if task_id in visited:
-            return
-        if task_id in visiting:
-            errors.append(error("invalid_agent_plan_tasks", f"plan dependencies must form a DAG; cycle detected at {task_id}"))
-            return
-        visiting.add(task_id)
-        for dep in task_dependencies.get(task_id, []):
-            if dep in task_dependencies:
-                visit(dep)
-        visiting.remove(task_id)
-        visited.add(task_id)
-
-    for task_id in task_dependencies:
-        visit(task_id)
-
-    executable_task_ids = {
-        task_id
-        for task_id, status in task_statuses.items()
-        if status in {"ready", "running"}
-    }
+    plan_dependency_relation_errors, executable_task_ids = _validate_plan_dependency_relations_block(
+        task_dependencies,
+        task_ids,
+        task_statuses,
+    )
+    errors.extend(plan_dependency_relation_errors)
 
     errors.extend(_validate_audit_last_action_ref_block(audit, action_ids_seen, prefix))
     errors.extend(_validate_task_action_ref_relations_block(action_ids_by_task, action_ids_seen))

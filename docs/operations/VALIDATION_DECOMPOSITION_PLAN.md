@@ -228,14 +228,17 @@ Halt the future campaign immediately if any of the following becomes true:
     per heartbeat round while gates stayed green
   - that window is now consumed cleanly at `11/14`
 - current next autonomous slice:
-  - `none; manual checkpoint is now active before slice 12`
+  - `none; no autonomous continuation is open beyond slice 12`
 - current checkpoint status:
   - the mandatory operator checkpoint before slice `12/14` was explicitly
     consumed on `2026-04-23`
+  - `_validate_plan_dependency_relations_block` (`slice 12/14`) then landed
+    cleanly under that approval with the characterization oracle and all gates
+    green
 - current next approved slice:
-  - `_validate_plan_dependency_relations_block` (`slice 12/14`)
+  - `none; reassessment is now required before any slice 13 work`
 - next mandatory operator checkpoint:
-  - reassess before any continuation beyond `_validate_plan_dependency_relations_block` (`slice 12/14`)
+  - before `_validate_verification_relations_block` (`slice 13/14`)
 - completed slice commits:
   - `refactor(validate): extract _validate_memory_block (slice 1/14)`
   - `refactor(validate): extract _validate_execution_policy_block (slice 2/14)`
@@ -248,3 +251,4 @@ Halt the future campaign immediately if any of the following becomes true:
   - `refactor(validate): extract _validate_plan_block (slice 9/14)`
   - `refactor(validate): extract _validate_audit_last_action_ref_block (slice 10/14)`
   - `refactor(validate): extract _validate_task_action_ref_relations_block (slice 11/14)`
+  - `refactor(validate): extract _validate_plan_dependency_relations_block (slice 12/14)`

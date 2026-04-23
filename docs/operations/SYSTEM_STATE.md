@@ -14,10 +14,10 @@
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
 - `docs/operations/observation_center.toml` now exists as the machine-readable queue for still-resolvable work; unresolved slices, checkpoints, and blockers should be recorded there first, and the markdown snapshots should be treated as human projections of that center rather than as the queue engine itself.
-- Current queue mode: validation-decomposition checkpoint consumed; slices 1-11 are complete, slice 12 is now explicitly approved as the next narrow extraction, and no further continuation is authorized beyond that slice yet.
+- Current queue mode: validation-decomposition slice 12 is now complete; the mandatory reassessment checkpoint is active before slice 13, and no continuation is authorized beyond slice 12 yet.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `execute slice 12 (_validate_plan_dependency_relations_block) under the active validation-decomposition whitelist`
-- Observation-center head item: `validation-slice-12-plan-dependency-relations`
+- Current next item: `pause for explicit operator reassessment before slice 13 (_validate_verification_relations_block)`
+- Observation-center head item: `validation-slice-13-manual-checkpoint`
 - Observation-center structural note:
   - `queue_authority = machine-primary`
   - authority order is now explicit: `AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests`
@@ -51,7 +51,8 @@
   - `_validate_audit_last_action_ref_block` is now extracted in `core/validation.py` as slice `10/14`, with no detected ordering or message drift
   - `_validate_task_action_ref_relations_block` is now extracted in `core/validation.py` as slice `11/14`, with no detected ordering or message drift
   - the mandatory manual checkpoint before slice `12/14` was consumed by explicit operator approval on `2026-04-23`
-  - slice `12/14` is now the live next approved extraction; no continuation is pre-approved beyond that slice
+  - `_validate_plan_dependency_relations_block` is now extracted in `core/validation.py` as slice `12/14`, with no detected ordering or message drift
+  - the next mandatory reassessment checkpoint is now active before slice `13/14`; no continuation is pre-approved beyond slice `12/14`
   - the preparatory characterization gates are green: targeted `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent full suite
 - Verification scout closeout:
   - the prior P5 coverage gaps identified in `decision_runtime`, `action_identity`, `discipline_runtime`, `state_runtime_lock_service`, `state_session_artifacts_service`, and `state_retention_service` are now covered by direct regression tests

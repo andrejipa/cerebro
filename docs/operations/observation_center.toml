@@ -1,6 +1,6 @@
 [center]
 version = 1
-updated_at = "2026-04-23T15:03:00-04:00"
+updated_at = "2026-04-23T15:48:00-04:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
@@ -186,7 +186,7 @@ halt_if = "Slice 11 is not complete, the whitelist changes, or any required gate
 [[observations]]
 id = "validation-slice-12-plan-dependency-relations"
 title = "Validation decomposition slice 12"
-status = "open"
+status = "resolved"
 kind = "slice"
 priority = "high"
 boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
@@ -196,9 +196,26 @@ source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
 auto_continuation = false
 dependencies = ["validation-slice-12-manual-checkpoint"]
 dependencies_satisfied = true
-next_action = "Extract _validate_plan_dependency_relations_block in core/validation.py, validate with the ordering oracle and the full gate, then pause again for reassessment before any slice 13 work."
+next_action = "Resolved on 2026-04-23 after extracting _validate_plan_dependency_relations_block in core/validation.py and clearing the ordering oracle plus all required gates."
 done_when = "Slice 12 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 11/14 to 12/14."
 halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, a gate turns red, or the DFS/traversal ordering cannot be preserved with confidence."
+
+[[observations]]
+id = "validation-slice-13-manual-checkpoint"
+title = "Validation decomposition post-slice-12 checkpoint"
+status = "waiting"
+kind = "checkpoint"
+priority = "high"
+boundary = "docs/operations/ only until explicit continuation beyond slice 12 is approved"
+trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
+source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = false
+dependencies = ["validation-slice-12-plan-dependency-relations"]
+dependencies_satisfied = true
+next_action = "Pause for explicit operator reassessment before any slice 13 work (_validate_verification_relations_block). No continuation beyond slice 12 is authorized until this checkpoint is cleared."
+done_when = "A later live snapshot explicitly re-authorizes continuation into slice 13 or records a halt/closeout decision for the remaining high-coupling slices."
+halt_if = "Slice 12 is not complete, the whitelist changes, or any required gate is no longer green."
 
 [[observations]]
 id = "observation-center-sqlite-ledger"
