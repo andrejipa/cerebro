@@ -39,7 +39,6 @@
 
 ```text
 NEXT_ACTION
-- next_required_step: execute_validation_slice_5_audit_block
 - next_required_step: execute_validation_slice_6_actions_block
 - observation_center_head: validation-slice-6-actions
 - active_renewal_debt: none while the canonical gate stays green
