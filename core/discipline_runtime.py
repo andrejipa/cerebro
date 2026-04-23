@@ -9,20 +9,11 @@ from core.action_identity import compute_exec_command_signature, matches_action_
 from core.agent_runtime import build_command_registry_map
 from core.digests import sha256_file, sha256_text
 from core.runtime_event_window import events_since_latest_plan_update
+from core.workspace_paths import resolve_workspace_relative_path
 
 
 def _resolve_workspace_path(root: Path, raw_path: str) -> Path:
-    candidate = Path(raw_path)
-    if candidate.is_absolute():
-        raise ValueError(f"path must be relative: {raw_path}")
-    if any(part == ".." for part in candidate.parts):
-        raise ValueError(f"path cannot contain '..': {raw_path}")
-    resolved = (root / candidate).resolve()
-    try:
-        resolved.relative_to(root.resolve())
-    except ValueError as exc:
-        raise ValueError(f"path resolves outside workspace: {raw_path}") from exc
-    return resolved
+    return resolve_workspace_relative_path(root, raw_path)
 
 
 def _file_state_marker(path: Path) -> dict:

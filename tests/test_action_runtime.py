@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 from cli.commands.apply import run_apply
 from cli.commands.init import run_init
-from core.action_runtime import ActionRuntimeError, apply_action
+from core.action_runtime import ActionRuntimeError, _resolve_workspace_path, apply_action
 from core.agent_runtime import build_initial_agent_runtime
 from core.execution_policy import ExecutionPolicyError
 from core.state_store import StateStore
@@ -430,6 +430,40 @@ class ActionRuntimePolicyBoundaryTests(unittest.TestCase):
                 )
 
             self.assertIn("command prefix is blocked by execution policy: powershell", str(ctx.exception))
+
+
+class ActionRuntimeWorkspacePathTests(unittest.TestCase):
+    def test_resolve_workspace_path_rejects_absolute_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+
+            with self.assertRaisesRegex(ActionRuntimeError, "path must be relative"):
+                _resolve_workspace_path(root, str((root / "draft.txt").resolve()))
+
+    def test_resolve_workspace_path_rejects_parent_directory_segments(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+
+            with self.assertRaisesRegex(ActionRuntimeError, "path cannot contain '\\.\\.'"):
+                _resolve_workspace_path(root, "../draft.txt")
+
+    def test_resolve_workspace_path_translates_containment_failure_to_action_runtime_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            candidate = root / "draft.txt"
+            escaped = root.parent / "escaped.txt"
+            original_resolve = Path.resolve
+
+            def fake_resolve(path_self: Path, *args, **kwargs) -> Path:
+                if path_self == root:
+                    return root
+                if path_self == candidate:
+                    return escaped
+                return original_resolve(path_self, *args, **kwargs)
+
+            with patch.object(Path, "resolve", autospec=True, side_effect=fake_resolve):
+                with self.assertRaisesRegex(ActionRuntimeError, "path resolves outside workspace"):
+                    _resolve_workspace_path(root, "draft.txt")
 
 
 if __name__ == "__main__":

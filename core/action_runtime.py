@@ -26,6 +26,7 @@ from core.execution_policy import (
     required_action_approval_error,
 )
 from core.store_protocols import ActionStoreSurface, ApplyCycleStoreSurface
+from core.workspace_paths import resolve_workspace_relative_path
 
 
 class ActionRuntimeError(Exception):
@@ -69,12 +70,11 @@ def _require_int(value: object, label: str) -> int:
 
 
 def _resolve_workspace_path(root: Path, raw_path: str) -> Path:
-    candidate = Path(_require_non_empty_string(raw_path, "path"))
-    if candidate.is_absolute():
-        raise ActionRuntimeError(f"path must be relative: {raw_path}")
-    if any(part == ".." for part in candidate.parts):
-        raise ActionRuntimeError(f"path cannot contain '..': {raw_path}")
-    return (root / candidate).resolve()
+    raw_path = _require_non_empty_string(raw_path, "path")
+    try:
+        return resolve_workspace_relative_path(root, raw_path)
+    except ValueError as exc:
+        raise ActionRuntimeError(str(exc)) from exc
 
 
 def _resolve_runtime_ref(root: Path, store: ActionStoreSurface, ref: str) -> Path:
