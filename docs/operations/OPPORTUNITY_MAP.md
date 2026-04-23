@@ -2,7 +2,7 @@
 
 ## Current Snapshot — 2026-04-23
 
-- Suite gate is currently green in this shell: `840` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
+- Suite gate is currently green in this shell: `846` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`.
 - Derived `recall_eval` validation remains green after the latest slice: `49` tests, `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation is green after the latest overlapping-writer lock hardening: `31` tests, `0` failures in `experiments/operational_signals/tests`.
@@ -17,7 +17,7 @@
   - `direct P5 coverage now exists for decision_runtime, action_identity, discipline_runtime, state_runtime_lock_service, state_session_artifacts_service, and state_retention_service`
   - `the structural P4 workspace-path resolution drift between action_runtime and discipline_runtime is now resolved through core/workspace_paths.py plus module-local wrappers and proportional regression`
   - `the validation-decomposition trigger is now active with a strict whitelist: core/validation.py plus tests/test_validate_error_ordering.py only`
-  - `the characterization-oracle commit is now complete: tests/test_validate_error_ordering.py pins 14 per-block payloads plus 1 mixed aggregate-order case`
+  - `the characterization-oracle baseline is now reinforced: tests/test_validate_error_ordering.py pins 14 per-block payloads plus 1 mixed aggregate-order case and 6 additional action_relations edge-path cases`
   - `slice 1 is now complete: _validate_memory_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 2 is now complete: _validate_execution_policy_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 3 is now complete: _validate_batch_registry_block was extracted in core/validation.py with the ordering oracle still green`
@@ -31,9 +31,9 @@
   - `slice 11 is now complete: _validate_task_action_ref_relations_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 12 is now complete: _validate_plan_dependency_relations_block was extracted in core/validation.py with the ordering oracle still green`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
-- Current queue mode: slice `14` is reopened under a narrow child exception trigger; the final `action_relations` block still exceeds the generic clean-helper fan-out limit, so the next round must first strengthen the oracle and then attempt exactly that final slice under the explicit override.
+- Current queue mode: slice `14` is reopened under a narrow child exception trigger; the final `action_relations` block still exceeds the generic clean-helper fan-out limit, but the required oracle reinforcement is now in place and the next round may attempt exactly that final slice under the explicit override.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `strengthen the action_relations oracle, then execute slice 14 (_validate_action_relations_block) under the narrow exception trigger`
+- Current next item: `execute slice 14 (_validate_action_relations_block) under the narrow exception trigger`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -48,10 +48,10 @@
 
 ```text
 NEXT_ACTION
-- next_required_step: strengthen_action_relations_oracle_then_attempt_validation_slice_14
+- next_required_step: attempt_validation_slice_14_under_exception_trigger
 - observation_center_head: validation-slice-14-action-relations
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: the final `action_relations` tail block remains the predicted late-campaign hotspot, but a new narrow child trigger now authorizes one explicit final attempt as long as the strengthened oracle pins exact shape/order first and no new abstraction is introduced
+- highest_priority_hypothesis: the final `action_relations` tail block remains the predicted late-campaign hotspot, but the narrow child trigger now authorizes one explicit final attempt because the strengthened oracle already pins the required edge-path shape/order and no new abstraction has been introduced
 ```
 
 ## Historical Derived Chronology

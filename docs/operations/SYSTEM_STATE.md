@@ -3,7 +3,7 @@
 ## Current Snapshot — 2026-04-23
 
 - Suite status: green.
-- Last suite result: `840` tests, `0` failures, `6` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
+- Last suite result: `846` tests, `0` failures, `6` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
 - Architecture gate: `51` tests, `0` failures.
 - Derived `recall_eval` validation: green with `49` tests and `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
@@ -16,7 +16,7 @@
 - `docs/operations/observation_center.toml` now exists as the machine-readable queue for still-resolvable work; unresolved slices, checkpoints, and blockers should be recorded there first, and the markdown snapshots should be treated as human projections of that center rather than as the queue engine itself.
 - Current queue mode: validation-decomposition slice 14 is reopened under a narrow child exception trigger; the final `action_relations` block still exceeds the generic clean-helper fan-out limit, but one explicit final attempt is now authorized with stronger oracle pinning and no new abstraction layer.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `execute slice 14 under the narrow exception trigger after strengthening the action_relations oracle`
+- Current next item: `execute slice 14 under the narrow exception trigger`
 - Observation-center head item: `validation-slice-14-action-relations`
 - Observation-center structural note:
   - `queue_authority = machine-primary`
@@ -40,7 +40,7 @@
   - `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md`
 - No broader runtime refactor is currently open beyond the validation-decomposition whitelist.
 - Validation-decomposition progress note:
-  - `tests/test_validate_error_ordering.py` now pins exact `(code, message)` ordering for `14` sub-block payloads plus `1` mixed aggregate-order case
+  - `tests/test_validate_error_ordering.py` now pins exact `(code, message)` ordering for `14` sub-block payloads plus `1` mixed aggregate-order case and `6` reinforced `action_relations` edge-path cases (`21` tests total)
   - `_validate_memory_block` is now extracted in `core/validation.py` as slice `1/14`, with no detected ordering or message drift
   - `_validate_execution_policy_block` is now extracted in `core/validation.py` as slice `2/14`, with no detected ordering or message drift
   - `_validate_batch_registry_block` is now extracted in `core/validation.py` as slice `3/14`, with no detected ordering or message drift
@@ -58,7 +58,7 @@
   - `_validate_verification_relations_block` is now extracted in `core/validation.py` as slice `13/14`, with no detected ordering or message drift
   - the mandatory reassessment checkpoint before slice `14/14` was explicitly consumed by operator approval on `2026-04-23`
   - `_validate_action_relations_block` first reached a documented halt before extraction on `2026-04-23`: the block still requires more than about `6` primitive or collection inputs to isolate cleanly under the parent trigger constraints
-  - a narrow child trigger now authorizes one final same-file attempt for slice `14/14`, provided the action-relations oracle is strengthened first and no context object or broader scope widening is introduced
+  - a narrow child trigger now authorizes one final same-file attempt for slice `14/14`; the required oracle strengthening is now satisfied in `tests/test_validate_error_ordering.py`, and no context object or broader scope widening has been introduced
   - the preparatory characterization gates are green: targeted `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent full suite
 - Verification scout closeout:
   - the prior P5 coverage gaps identified in `decision_runtime`, `action_identity`, `discipline_runtime`, `state_runtime_lock_service`, `state_session_artifacts_service`, and `state_retention_service` are now covered by direct regression tests

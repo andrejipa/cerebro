@@ -77,7 +77,7 @@ Current status:
 
 - satisfied on `2026-04-23`
 - current oracle file: `tests/test_validate_error_ordering.py`
-- current oracle coverage: `15` tests (`14` per-block cases + `1` mixed-order case)
+- current oracle coverage: `21` tests (`14` original per-block cases + `1` mixed-order case + `6` reinforced action_relations edge-path cases)
 
 Required sub-block coverage before slice 1:
 
@@ -171,4 +171,4 @@ Every approved slice must clear all of:
   - `validation-slice-14-action-relations` is now the current open queue head in `docs/operations/observation_center.toml`
   - final-slice authority is now narrowed further by `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md`
 - next required step:
-  - `apply the slice-14 exception trigger: strengthen the action_relations oracle, then attempt _validate_action_relations_block under the narrow final-slice override`
+  - `apply the slice-14 exception trigger: attempt _validate_action_relations_block under the narrow final-slice override`

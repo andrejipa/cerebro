@@ -11,13 +11,13 @@
   - `core/`: authorized for `core/validation.py` only
   - `cli/`: closed
 - characterization status:
-  - `tests/test_validate_error_ordering.py` added with `15` tests
-  - coverage split: `14` per-block malformed payloads + `1` mixed aggregate-order case
+  - `tests/test_validate_error_ordering.py` now carries `21` tests
+  - coverage split: `14` original per-block malformed payloads + `1` mixed aggregate-order case + `6` reinforced action_relations edge-path cases
 - slice progress:
   - completed: `13/14`
   - latest slice: `_validate_verification_relations_block`
 - current live gate:
-  - AGENTS-equivalent suite: `840` tests, `0` failures, `6` skips
+  - AGENTS-equivalent suite: `846` tests, `0` failures, `6` skips
   - architecture gate: `51` tests, `0` failures
 
 ## Scope Statement
@@ -219,10 +219,10 @@ Halt the future campaign immediately if any of the following becomes true:
 - characterization-oracle commit content is now present in:
   - `tests/test_validate_error_ordering.py`
 - characterization gate result:
-  - `python -m unittest tests.test_validate_error_ordering -v` → `15` tests, `0` failures
+  - `python -m unittest tests.test_validate_error_ordering -v` → `21` tests, `0` failures
   - `python -m unittest tests.test_validate -v` → `76` tests, `0` failures, `3` skips
   - `python -m unittest tests.test_architecture -v` → `51` tests, `0` failures
-  - AGENTS-equivalent suite → `840` tests, `0` failures, `6` skips
+  - AGENTS-equivalent suite → `846` tests, `0` failures, `6` skips
 - current autonomous window:
   - slices `10-11` were pre-approved for autonomous continuation at one slice
     per heartbeat round while gates stayed green
@@ -246,6 +246,15 @@ Halt the future campaign immediately if any of the following becomes true:
   - `_validate_action_relations_block` under `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md`
 - next mandatory operator checkpoint:
   - `none before the slice-14 exception attempt; reassess again only if the strengthened oracle cannot pin behavior or the extraction halts`
+- slice-14 preparatory status:
+  - `tests(validate): strengthen action_relations ordering oracle` is now satisfied in the worktree for the seven required action_relations paths:
+    - unknown `task_id`
+    - task/action membership mismatch against `action_ids_by_task`
+    - unknown `approval_id`
+    - `pending_approval` paired with resolved approval
+    - `applied` paired with rejected approval
+    - legacy single-task fallback path through `required_action_approval_error(...)`
+    - unknown `batch_id`
 - current halt detail:
   - `_validate_action_relations_block` was not extracted
   - stop reason: the live block still requires more than about `6` primitive or collection inputs to isolate cleanly under the active trigger constraints

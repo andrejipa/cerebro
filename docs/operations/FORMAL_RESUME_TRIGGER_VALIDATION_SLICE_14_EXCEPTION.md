@@ -125,5 +125,8 @@ Every commit under this trigger must clear all of:
 
 - approved state today: `yes`
 - target slice: `_validate_action_relations_block`
+- preparatory oracle status:
+  - `satisfied on 2026-04-23`
+  - `tests/test_validate_error_ordering.py` now covers `21` tests total (`14` original per-block payloads + `1` mixed aggregate-order case + `6` reinforced action_relations edge-path cases)
 - current next required step:
-  - `strengthen the action_relations oracle, then attempt the final same-file extraction under this narrow exception`
+  - `attempt the final same-file extraction under this narrow exception`

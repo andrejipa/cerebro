@@ -63,6 +63,28 @@ class ValidateAgentRuntimeErrorOrderingTests(unittest.TestCase):
             "updated_at": "",
         }
 
+    def _valid_approval(
+        self,
+        approval_id: str,
+        *,
+        status: str = "pending",
+        action_kind: str = "fs.write_patch",
+        task_id: str = "",
+        target: str = "target.txt",
+        fingerprint: str = "fp-001",
+    ) -> dict:
+        return {
+            "id": approval_id,
+            "status": status,
+            "fingerprint": fingerprint,
+            "action_kind": action_kind,
+            "task_id": task_id,
+            "target": target,
+            "reason": "Approval fixture",
+            "requested_at": "2026-04-16T00:00:00+00:00",
+            "resolved_at": "2026-04-16T00:01:00+00:00",
+        }
+
     def _ordered_errors(self, runtime: dict) -> list[tuple[str, str]]:
         return [
             (item["code"], item["message"])
@@ -244,6 +266,158 @@ class ValidateAgentRuntimeErrorOrderingTests(unittest.TestCase):
             ],
         )
 
+    def test_action_relations_unknown_task_id_error_order(self) -> None:
+        runtime = self._valid_runtime()
+        runtime["plan"]["status"] = "ready"
+        runtime["plan"]["generation_id"] = "plan-001"
+        runtime["plan"]["tasks"] = [self._valid_task("task-1")]
+        runtime["actions"] = [
+            self._valid_action(
+                "act-1",
+                kind="read.plan",
+                task_id="task-missing",
+                status="planned",
+                plan_generation_id="plan-001",
+            )
+        ]
+        self.assertEqual(
+            self._ordered_errors(runtime),
+            [
+                (
+                    "invalid_agent_action_field",
+                    "action act-1 references unknown task id: task-missing",
+                )
+            ],
+        )
+
+    def test_action_relations_task_membership_error_order(self) -> None:
+        runtime = self._valid_runtime()
+        runtime["plan"]["status"] = "ready"
+        runtime["plan"]["generation_id"] = "plan-001"
+        runtime["plan"]["tasks"] = [self._valid_task("task-1", action_ids=[])]
+        runtime["actions"] = [
+            self._valid_action(
+                "act-1",
+                kind="read.plan",
+                task_id="task-1",
+                status="planned",
+                plan_generation_id="plan-001",
+            )
+        ]
+        self.assertEqual(
+            self._ordered_errors(runtime),
+            [
+                (
+                    "invalid_agent_action_field",
+                    "task task-1 must include action act-1 in action_ids",
+                )
+            ],
+        )
+
+    def test_action_relations_unknown_approval_id_error_order(self) -> None:
+        runtime = self._valid_runtime()
+        runtime["actions"] = [
+            self._valid_action(
+                "act-1",
+                kind="fs.write_patch",
+                status="applied",
+                approval_id="apr-missing",
+            )
+        ]
+        self.assertEqual(
+            self._ordered_errors(runtime),
+            [
+                (
+                    "invalid_agent_action_field",
+                    "action act-1 references unknown approval id: apr-missing",
+                )
+            ],
+        )
+
+    def test_action_relations_pending_approval_resolved_error_order(self) -> None:
+        runtime = self._valid_runtime()
+        runtime["approvals"]["items"] = [
+            self._valid_approval("apr-1", status="approved")
+        ]
+        runtime["actions"] = [
+            self._valid_action(
+                "act-1",
+                kind="fs.write_patch",
+                approval_id="apr-1",
+            )
+        ]
+        self.assertEqual(
+            self._ordered_errors(runtime),
+            [
+                (
+                    "invalid_agent_action_status",
+                    "action act-1 cannot be pending_approval with resolved approval apr-1",
+                )
+            ],
+        )
+
+    def test_action_relations_applied_rejected_error_order(self) -> None:
+        runtime = self._valid_runtime()
+        runtime["approvals"]["items"] = [
+            self._valid_approval("apr-1", status="rejected")
+        ]
+        runtime["actions"] = [
+            self._valid_action(
+                "act-1",
+                kind="fs.write_patch",
+                status="applied",
+                approval_id="apr-1",
+            )
+        ]
+        self.assertEqual(
+            self._ordered_errors(runtime),
+            [
+                (
+                    "invalid_agent_action_status",
+                    "action act-1 cannot be applied with rejected approval apr-1",
+                ),
+                (
+                    "invalid_agent_action_status",
+                    "action act-1 kind fs.write_patch requires approval apr-1 to be approved, got rejected",
+                ),
+            ],
+        )
+
+    def test_action_relations_legacy_single_task_fallback_order(self) -> None:
+        runtime = self._valid_runtime()
+        runtime["plan"]["status"] = "ready"
+        runtime["plan"]["tasks"] = [
+            self._valid_task("task-1", action_ids=["act-1"])
+        ]
+        runtime["approvals"]["items"] = [
+            self._valid_approval(
+                "apr-1",
+                status="approved",
+                task_id="",
+                target="tracked.txt",
+            )
+        ]
+        runtime["actions"] = [
+            self._valid_action(
+                "act-1",
+                kind="fs.write_patch",
+                status="applied",
+                task_id="task-1",
+                batch_id="batch-missing",
+                approval_id="apr-1",
+                target="tracked.txt",
+            )
+        ]
+        self.assertEqual(
+            self._ordered_errors(runtime),
+            [
+                (
+                    "invalid_agent_action_field",
+                    "action act-1 references unknown batch_id registry entry: batch-missing",
+                )
+            ],
+        )
+
     def test_verification_relations_error_order(self) -> None:
         runtime = self._valid_runtime()
         runtime["verification"]["required_command_ids"] = ["cmd-missing"]
@@ -271,4 +445,3 @@ class ValidateAgentRuntimeErrorOrderingTests(unittest.TestCase):
                 ),
             ],
         )
-
