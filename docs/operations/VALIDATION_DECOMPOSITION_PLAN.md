@@ -235,10 +235,13 @@ Halt the future campaign immediately if any of the following becomes true:
   - `_validate_plan_dependency_relations_block` (`slice 12/14`) then landed
     cleanly under that approval with the characterization oracle and all gates
     green
+  - the mandatory operator checkpoint before slice `13/14` was explicitly
+    consumed on `2026-04-23`
 - current next approved slice:
-  - `none; reassessment is now required before any slice 13 work`
+  - `_validate_verification_relations_block` (`slice 13/14`)
 - next mandatory operator checkpoint:
-  - before `_validate_verification_relations_block` (`slice 13/14`)
+  - reassess before any continuation beyond
+    `_validate_verification_relations_block` (`slice 13/14`)
 - completed slice commits:
   - `refactor(validate): extract _validate_memory_block (slice 1/14)`
   - `refactor(validate): extract _validate_execution_policy_block (slice 2/14)`
