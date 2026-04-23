@@ -11,6 +11,7 @@
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now open with explicit current snapshots that mark their remaining body as historical evidence by default, reducing residual-intake ambiguity during heartbeat triage.
 - Planning-only `StateStore` decomposition prep is now recorded in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it stays explicitly non-authoritative and does not reopen the freeze.
 - `docs/operations/observation_center.toml` now carries the structured unresolved-work queue; the heartbeat should reconcile and consume that center before falling back to the narrative snapshot fields below, and the markdown snapshots should now be treated as projections of that queue rather than as the primary scheduler surface.
+- Live heartbeat authority order is now explicit: `AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests`; if those surfaces diverge, the next round must reconcile first instead of implementing.
 - Current executable queue:
   - `the tests-only coverage tranche completed without touching core/ or cli/`
   - `direct P5 coverage now exists for decision_runtime, action_identity, discipline_runtime, state_runtime_lock_service, state_session_artifacts_service, and state_retention_service`
@@ -21,7 +22,7 @@
   - `slice 2 is now complete: _validate_execution_policy_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 3 is now complete: _validate_batch_registry_block was extracted in core/validation.py with the ordering oracle still green`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
-- Current queue mode: controlled corrective validation-decomposition slice; slice 3 is complete, autonomous continuation is now pre-approved through slice 11, and the campaign should pause again before slice 12.
+- Current queue mode: autonomous corrective validation-decomposition slice loop; slice 3 is complete, slices `4-11` should continue automatically one per round while gates stay green, and the campaign must pause again before slice `12`.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
 - Current next item: `execute slice 4 (_validate_command_registry_block) under the active validation-decomposition whitelist`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
@@ -39,7 +40,7 @@ NEXT_ACTION
 - next_required_step: execute_validation_slice_4_command_registry_block
 - observation_center_head: validation-slice-4-command-registry
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: slices `1-3` stayed green without ordering drift, so the automation should continue with `_validate_command_registry_block` and then advance one slice per round through slice `11/14` unless a halt condition appears
+- highest_priority_hypothesis: slices `1-3` stayed green without ordering drift, so the automation should continue with `_validate_command_registry_block` and then advance one slice per round through slice `11/14` unless a halt condition appears; no extra human checkpoint is expected before slice `12/14`
 ```
 
 ## Historical Derived Chronology

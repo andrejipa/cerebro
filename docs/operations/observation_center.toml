@@ -1,15 +1,18 @@
 [center]
 version = 1
-updated_at = "2026-04-23T12:05:00-04:00"
+updated_at = "2026-04-23T12:45:00-04:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
+authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
 selection_contract = "Select the highest-priority observation whose status is open, whose boundary is authorized, whose trigger requirements are satisfied, and whose dependencies are already resolved."
 selection_order = "status=open first, then priority, then the current checked-in order unless a later docs-only reconciliation records a different stable tie-break."
+reconciliation_rule = "If AGENTS, the active trigger, the observation center, and the markdown projections diverge, the round becomes docs-only reconciliation before any implementation slice."
 single_flight = true
 overlap_policy = "If a prior round is still in flight, wait instead of starting overlapping work."
 idempotency_contract = "Each round may move at most one observation materially forward; repeated wakeups must reconcile the same head item instead of duplicating progress."
 notify_once_blocked = true
 history_policy = "Resolved, blocked, and waiting observations remain recorded here until a later docs-only reconciliation retires or supersedes them."
+checkpoint_policy = "Continue autonomously one slice per round through explicitly pre-approved windows; reintroduce a mandatory human checkpoint only where the live trigger or plan says to pause."
 
 # Status vocabulary:
 # - open: executable now inside the current authorized boundary

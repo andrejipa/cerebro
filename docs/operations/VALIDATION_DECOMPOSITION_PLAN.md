@@ -220,6 +220,7 @@ Halt the future campaign immediately if any of the following becomes true:
 - current autonomous window:
   - slices `4-11` are pre-approved for autonomous continuation at one slice per
     heartbeat round while gates stay green
+  - no additional human-review checkpoint is expected inside that window
 - current next autonomous slice:
   - `_validate_command_registry_block` (`slice 4/14`)
 - next mandatory operator checkpoint:

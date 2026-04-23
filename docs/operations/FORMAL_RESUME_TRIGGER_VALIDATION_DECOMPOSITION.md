@@ -4,6 +4,7 @@
 
 - state: `approved / active on 2026-04-23`
 - drafted on: `2026-04-23`
+- authority note: `within AGENTS.md, this trigger is the approved boundary override for the validation-decomposition campaign and outranks snapshot prose when they diverge`
 - active boundary:
   - `docs/`: authorized
   - `tests/`: authorized for `tests/test_validate_error_ordering.py` only
@@ -121,6 +122,7 @@ Required sub-block coverage before slice 1:
   - title form: `refactor(validate): extract _validate_<block>_block (slice N/M)`
 - continue automatically at one slice per heartbeat round through slice `11/14`
   while the whitelist is unchanged and all required gates stay green
+- do not reintroduce per-slice human review between slices `4/14` and `11/14`
 - reintroduce a mandatory operator checkpoint before slice `12/14`
 
 ## Stop Conditions

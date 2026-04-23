@@ -65,20 +65,24 @@ O contexto do agente reseta entre iterações.
 A memória persiste via arquivos — não via contexto.
 
 Leia sempre antes de começar:
-1. `docs/operations/observation_center.toml` — fila estruturada de observações ainda resolvíveis
-2. `docs/operations/OPPORTUNITY_MAP.md` — o que falta fazer
+1. triggers formais ativos em `docs/operations/` — boundary vivo e stop conditions
+2. `docs/operations/observation_center.toml` — fila estruturada de observações ainda resolvíveis
 3. `docs/operations/SYSTEM_STATE.md` — estado atual
-4. `docs/operations/BUG_REPORT.md` — problemas abertos
-5. `docs/operations/PHASE_CLOSURE.md` — o que já foi encerrado
-6. `docs/operations/FREEZE_POLICY.md` — o que está bloqueado
+4. `docs/operations/OPPORTUNITY_MAP.md` — projeção humana do próximo passo
+5. planos vivos específicos do trabalho corrente
+6. `docs/operations/BUG_REPORT.md` — problemas abertos
+7. `docs/operations/PHASE_CLOSURE.md` — o que já foi encerrado
+8. `docs/operations/FREEZE_POLICY.md` — o que está bloqueado
 
 Se `OPPORTUNITY_MAP.md` não existe: execute Modo Bootstrap abaixo.
 
 Use `docs/operations/observation_center.toml` como fila canônica legível por
 máquina. `SYSTEM_STATE.md` e `OPPORTUNITY_MAP.md` continuam sendo projeções
-humanas do estado vivo; se divergirem do centro, reconcilie a divergência antes
-de iniciar um novo slice. Sempre que surgir um item ainda resolvível, registre
-ou atualize esse item no centro antes de resumi-lo nos snapshots narrativos.
+humanas do estado vivo. Um trigger formal ativo pode estreitar ou reabrir um
+boundary específico dentro do freeze; quando trigger, centro e projeções
+divergirem, a iteração vira reconciliação-first e nenhum novo slice começa
+antes desse fechamento. Sempre que surgir um item ainda resolvível, registre ou
+atualize esse item no centro antes de resumi-lo nos snapshots narrativos.
 
 ## Arquitetura — nunca viole estas fronteiras
 
@@ -93,10 +97,11 @@ docs/          ← documenta comportamento real, não intenção
 Nunca: extension adquire autoridade sobre core.
 Nunca: CLI toca `state.json` diretamente.
 Nunca: segunda fonte de verdade.
-Nunca: toque `core/schema.py` ou `core/validation.py` sem
-decisão de arquitetura explícita documentada.
-Nesta trilha documental, limite mutações a `docs/` e a este
-arquivo. Não toque `core/`, `cli/` ou `tests/` a partir deste loop.
+Nunca: toque `core/schema.py` sem decisão de arquitetura explícita
+documentada.
+Sem trigger formal ativo, limite mutações a `docs/` e a este arquivo. Com
+trigger formal ativo, siga exatamente a whitelist e as stop conditions do
+trigger; não extrapole o boundary reaberto.
 
 ## Comandos de teste
 
@@ -164,7 +169,8 @@ marque como decisão humana necessária.
 
 ## Nunca faça isto
 
-- Modificar `core/` sem decisão de arquitetura explícita
+- Modificar `core/` fora do boundary autorizado por trigger formal ativo ou
+  decisão de arquitetura explícita
 - Violar o freeze sem Formal Resume Trigger satisfeito
 - Declarar melhoria sem teste ou evidência rastreável
 - Declarar idempotência sem teste que force o mesmo segundo
@@ -186,24 +192,27 @@ Descoberto nos rounds 8-9. Use sempre:
 
 ```
 TODA ITERAÇÃO:
-1. Leia `docs/operations/observation_center.toml`
-2. Leia `OPPORTUNITY_MAP.md`
-3. Confirme suíte verde
-4. Declare o que esta iteração vai fazer (seja específico)
-5. Execute com o nível de esforço correto
-6. Atualize `observation_center.toml` e `OPPORTUNITY_MAP.md` com resultado
-7. Confirme suíte verde novamente
-8. Atualize `SYSTEM_STATE.md`
-9. Encerre limpo
+1. Localize triggers formais ativos
+2. Leia `docs/operations/observation_center.toml`
+3. Leia `SYSTEM_STATE.md`, `OPPORTUNITY_MAP.md` e os planos vivos relevantes
+4. Se trigger, centro e projeções divergirem, faça reconciliação first
+5. Confirme suíte verde quando um slice real sobreviver à triagem
+6. Declare o único slice desta iteração (seja específico)
+7. Execute com o nível de esforço correto
+8. Atualize `observation_center.toml` e `OPPORTUNITY_MAP.md` com resultado
+9. Confirme suíte verde novamente
+10. Atualize `SYSTEM_STATE.md`
+11. Encerre limpo
 
 PRIORIDADE:
 1. Suíte vermelha → corrija antes de tudo
-2. CRÍTICO aberto → ataque imediatamente
-3. ALTO aberto → em seguida
-4. observação `open` com boundary autorizado → execute pela ordem do centro
-5. MELHORIA → por ordem do mapa
-6. Fila vazia → prova de parada (P1-P5)
-7. Prova limpa → encerramento formal
+2. divergência viva entre trigger, centro e projeções → reconcilie antes de implementar
+3. CRÍTICO aberto → ataque imediatamente
+4. ALTO aberto → em seguida
+5. observação `open` com boundary autorizado → execute pela ordem do centro
+6. MELHORIA → por ordem do mapa
+7. Fila vazia → prova de parada (P1-P5)
+8. Prova limpa → encerramento formal
 ```
 
 ## Modo Bootstrap — se OPPORTUNITY_MAP não existe
