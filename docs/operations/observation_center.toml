@@ -1,6 +1,6 @@
 [center]
 version = 1
-updated_at = "2026-04-23T20:20:00-04:00"
+updated_at = "2026-04-23T20:30:00-04:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
@@ -254,7 +254,7 @@ halt_if = "Slice 13 is not complete, the whitelist changes, or any required gate
 [[observations]]
 id = "validation-slice-14-action-relations"
 title = "Validation decomposition slice 14"
-status = "open"
+status = "resolved"
 kind = "slice"
 priority = "high"
 boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
@@ -264,8 +264,8 @@ source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
 auto_continuation = false
 dependencies = ["validation-slice-14-manual-checkpoint"]
 dependencies_satisfied = true
-next_action = "Attempt _validate_action_relations_block under the narrow slice-14 exception trigger; the required action_relations oracle reinforcement in tests/test_validate_error_ordering.py is now satisfied, and no new container abstraction is authorized."
-done_when = "Slice 14 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 13/14 to 14/14 or record a halt with evidence."
+next_action = "Resolved on 2026-04-23 after extracting _validate_action_relations_block in core/validation.py under the narrow slice-14 exception trigger and clearing the ordering oracle plus all required gates."
+done_when = "Slice 14 landed cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advanced from 13/14 to 14/14."
 halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md fires, the whitelist changes, a gate turns red, or validation shape/order confidence cannot be preserved with confidence."
 
 [[observations]]

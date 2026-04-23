@@ -2,7 +2,7 @@
 
 ## Status
 
-- state: `approved / active on 2026-04-23`
+- state: `consumed / completed on 2026-04-23`
 - drafted on: `2026-04-23`
 - authority note: `within AGENTS.md, this trigger is the approved boundary override for the validation-decomposition campaign and outranks snapshot prose when they diverge`
 - active boundary:
@@ -162,13 +162,13 @@ Every approved slice must clear all of:
 
 ## Active Outcome
 
-- continuation requires trigger approval: `yes`
+- continuation requires trigger approval: `no active continuation remains`
 - candidate first slice: `_validate_memory_block`
-- approved state today: `yes`
+- approved state today: `consumed`
 - characterization precondition status: `satisfied`
-- completed slice count: `13/14`
+- completed slice count: `14/14`
 - observation-center routing:
-  - `validation-slice-14-action-relations` is now the current open queue head in `docs/operations/observation_center.toml`
-  - final-slice authority is now narrowed further by `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md`
+  - `validation-slice-14-action-relations` is now resolved in `docs/operations/observation_center.toml`
+  - the narrow child trigger `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md` is now consumed
 - next required step:
-  - `apply the slice-14 exception trigger: attempt _validate_action_relations_block under the narrow final-slice override`
+  - `none; the validation-decomposition campaign is complete at 14/14`

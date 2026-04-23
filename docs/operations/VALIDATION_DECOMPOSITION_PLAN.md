@@ -14,8 +14,8 @@
   - `tests/test_validate_error_ordering.py` now carries `21` tests
   - coverage split: `14` original per-block malformed payloads + `1` mixed aggregate-order case + `6` reinforced action_relations edge-path cases
 - slice progress:
-  - completed: `13/14`
-  - latest slice: `_validate_verification_relations_block`
+  - completed: `14/14`
+  - latest slice: `_validate_action_relations_block`
 - current live gate:
   - AGENTS-equivalent suite: `846` tests, `0` failures, `6` skips
   - architecture gate: `51` tests, `0` failures
@@ -228,7 +228,7 @@ Halt the future campaign immediately if any of the following becomes true:
     per heartbeat round while gates stayed green
   - that window is now consumed cleanly at `11/14`
 - current next autonomous slice:
-  - `none; no autonomous continuation is open beyond slice 12`
+  - `none; the campaign is complete`
 - current checkpoint status:
   - the mandatory operator checkpoint before slice `12/14` was explicitly
     consumed on `2026-04-23`
@@ -243,7 +243,7 @@ Halt the future campaign immediately if any of the following becomes true:
   - the mandatory operator checkpoint before slice `14/14` was explicitly
     consumed on `2026-04-23`
 - current next approved slice:
-  - `_validate_action_relations_block` under `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md`
+  - `none; all approved slices are complete`
 - next mandatory operator checkpoint:
   - `none before the slice-14 exception attempt; reassess again only if the strengthened oracle cannot pin behavior or the extraction halts`
 - slice-14 preparatory status:
@@ -255,7 +255,7 @@ Halt the future campaign immediately if any of the following becomes true:
     - `applied` paired with rejected approval
     - legacy single-task fallback path through `required_action_approval_error(...)`
     - unknown `batch_id`
-- current halt detail:
+- historical halt detail before the child exception trigger:
   - `_validate_action_relations_block` was not extracted
   - stop reason: the live block still requires more than about `6` primitive or collection inputs to isolate cleanly under the active trigger constraints
   - concrete fan-out at [core/validation.py:1171](/D:/projetos_cli/cerebro/core/validation.py:1171):
@@ -270,6 +270,10 @@ Halt the future campaign immediately if any of the following becomes true:
     - `batch_registry_used_ids`
     - `executable_task_ids`
   - outcome: the original halt remains historically correct and compliant with the parent trigger; a new narrow child trigger now authorizes one explicit final attempt without introducing a context object or widening scope beyond the existing whitelist
+- final slice outcome:
+  - `_validate_action_relations_block` is now extracted in `core/validation.py` under the narrow child exception trigger
+  - the helper accepts the same direct high-fan-out inputs explicitly, with no context object or new abstraction layer
+  - `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent suite all remained green after the extraction
 - completed slice commits:
   - `refactor(validate): extract _validate_memory_block (slice 1/14)`
   - `refactor(validate): extract _validate_execution_policy_block (slice 2/14)`
@@ -284,3 +288,4 @@ Halt the future campaign immediately if any of the following becomes true:
   - `refactor(validate): extract _validate_task_action_ref_relations_block (slice 11/14)`
   - `refactor(validate): extract _validate_plan_dependency_relations_block (slice 12/14)`
   - `refactor(validate): extract _validate_verification_relations_block (slice 13/14)`
+  - `refactor(validate): extract _validate_action_relations_block (slice 14/14)`

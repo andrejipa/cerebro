@@ -9,15 +9,15 @@
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
 - Derived `operational_signals/suggestions` validation: green with `97` tests and `0` failures in `experiments/operational_signals/suggestions/tests`.
 - Runtime continuity state: no local `.cerebro/state.json` present in this workspace.
-- Current posture: deliberate freeze for speculative canonical-runtime growth remains active; the latest user-directed session closed the narrow P4 workspace-path resolution slice after the earlier bounded tests-only corrective tranche, and the validation-decomposition campaign now runs under its parent trigger plus one narrow child exception trigger for the final slice only.
+- Current posture: deliberate freeze for speculative canonical-runtime growth remains active; the latest user-directed session closed the narrow P4 workspace-path resolution slice after the earlier bounded tests-only corrective tranche, and the validation-decomposition campaign is now complete at `14/14` with both formal resume triggers consumed.
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now expose explicit current snapshots that classify their remaining content as historical evidence by default, reducing ambiguity during live triage.
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
 - `docs/operations/observation_center.toml` now exists as the machine-readable queue for still-resolvable work; unresolved slices, checkpoints, and blockers should be recorded there first, and the markdown snapshots should be treated as human projections of that center rather than as the queue engine itself.
-- Current queue mode: validation-decomposition slice 14 is reopened under a narrow child exception trigger; the final `action_relations` block still exceeds the generic clean-helper fan-out limit, but one explicit final attempt is now authorized with stronger oracle pinning and no new abstraction layer.
+- Current queue mode: the validation-decomposition campaign is complete; the slice-14 exception was consumed cleanly and no `core/validation.py` continuation remains open.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `execute slice 14 under the narrow exception trigger`
-- Observation-center head item: `validation-slice-14-action-relations`
+- Current next item: `none in the validation-decomposition lane; await a new authorized item or proof-of-stop decision`
+- Observation-center head item: `none open in the validation-decomposition lane; latest resolved item is validation-slice-14-action-relations`
 - Observation-center structural note:
   - `queue_authority = machine-primary`
   - authority order is now explicit: `AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests`
@@ -32,12 +32,11 @@
 - Formal resume trigger consumed: `FORMAL_RESUME_TRIGGER_CORE_PATH_RESOLUTION.md` completed with one shared helper in `core/workspace_paths.py`, wrapper-level adjustments in `core/action_runtime.py` and `core/discipline_runtime.py`, and proportional regression added in `tests/test_action_runtime.py` and `tests/test_discipline_runtime.py`.
 - Current boundary:
   - `docs/`: authorized
-  - `tests/`: authorized for `tests/test_validate_error_ordering.py` only
-  - `core/`: authorized for `core/validation.py` only
+  - `tests/`: closed
+  - `core/`: closed
   - `cli/`: closed
 - Active formal resume triggers:
-  - `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`
-  - `FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md`
+  - `none`
 - No broader runtime refactor is currently open beyond the validation-decomposition whitelist.
 - Validation-decomposition progress note:
   - `tests/test_validate_error_ordering.py` now pins exact `(code, message)` ordering for `14` sub-block payloads plus `1` mixed aggregate-order case and `6` reinforced `action_relations` edge-path cases (`21` tests total)
@@ -59,7 +58,9 @@
   - the mandatory reassessment checkpoint before slice `14/14` was explicitly consumed by operator approval on `2026-04-23`
   - `_validate_action_relations_block` first reached a documented halt before extraction on `2026-04-23`: the block still requires more than about `6` primitive or collection inputs to isolate cleanly under the parent trigger constraints
   - a narrow child trigger now authorizes one final same-file attempt for slice `14/14`; the required oracle strengthening is now satisfied in `tests/test_validate_error_ordering.py`, and no context object or broader scope widening has been introduced
-  - the preparatory characterization gates are green: targeted `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent full suite
+  - `_validate_action_relations_block` is now extracted in `core/validation.py` as slice `14/14`, with no detected ordering, message, or shape drift under the reinforced oracle
+  - both validation-decomposition triggers are now consumed, and the whitelist for `core/validation.py` / `tests.test_validate_error_ordering.py` is closed again
+  - the final characterization gates are green: targeted `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent full suite
 - Verification scout closeout:
   - the prior P5 coverage gaps identified in `decision_runtime`, `action_identity`, `discipline_runtime`, `state_runtime_lock_service`, `state_session_artifacts_service`, and `state_retention_service` are now covered by direct regression tests
   - the prior P4 structural duplication/drift between `core/action_runtime.py` and `core/discipline_runtime.py` around workspace-path resolution is now closed through one shared leaf helper plus module-local wrappers, with no contract drift detected by regression

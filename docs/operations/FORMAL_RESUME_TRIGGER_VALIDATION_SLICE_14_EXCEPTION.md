@@ -2,7 +2,7 @@
 
 ## Status
 
-- state: `approved / active on 2026-04-23`
+- state: `consumed / completed on 2026-04-23`
 - drafted on: `2026-04-23`
 - authority note: `within AGENTS.md, this trigger is a narrow child override for slice 14 only; it does not reopen any broader validation-decomposition scope`
 - parent trigger: `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`
@@ -123,10 +123,14 @@ Every commit under this trigger must clear all of:
 
 ## Active Outcome
 
-- approved state today: `yes`
+- approved state today: `consumed`
 - target slice: `_validate_action_relations_block`
 - preparatory oracle status:
   - `satisfied on 2026-04-23`
   - `tests/test_validate_error_ordering.py` now covers `21` tests total (`14` original per-block payloads + `1` mixed aggregate-order case + `6` reinforced action_relations edge-path cases)
+- final slice result:
+  - `_validate_action_relations_block` landed cleanly in `core/validation.py` on `2026-04-23`
+  - exact ordering/message coverage stayed green under `tests.test_validate_error_ordering`
+  - no new abstraction layer, context object, or scope widening was introduced
 - current next required step:
-  - `attempt the final same-file extraction under this narrow exception`
+  - `none; this narrow child trigger is fully consumed`

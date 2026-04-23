@@ -1102,6 +1102,78 @@ def _validate_verification_relations_block(
     return errors
 
 
+def _validate_action_relations_block(
+    actions: object,
+    agent_runtime: object,
+    task_ids: set[str],
+    action_ids_by_task: dict[str, set[str]],
+    approval_ids: set[str],
+    approval_items: list[dict],
+    approval_statuses: dict[str, str],
+    approval_required_kinds: list[str],
+    batch_registry_used_ids: set[str],
+    executable_task_ids: set[str],
+) -> list[dict]:
+    errors: list[dict] = []
+
+    for action in actions if isinstance(actions, list) else []:
+        if not isinstance(action, dict):
+            continue
+        action_id = action.get("id")
+        task_id = action.get("task_id")
+        batch_id = action.get("batch_id")
+        current_plan_action = action_belongs_to_current_plan(agent_runtime, action)
+        if current_plan_action and isinstance(task_id, str) and task_id:
+            if task_id not in task_ids:
+                errors.append(error("invalid_agent_action_field", f"action {action_id} references unknown task id: {task_id}"))
+            elif isinstance(action_id, str) and action_id and action_id not in action_ids_by_task.get(task_id, set()):
+                errors.append(error("invalid_agent_action_field", f"task {task_id} must include action {action_id} in action_ids"))
+        approval_id = action.get("approval_id")
+        if isinstance(approval_id, str) and approval_id:
+            if approval_id not in approval_ids:
+                errors.append(error("invalid_agent_action_field", f"action {action_id} references unknown approval id: {approval_id}"))
+            else:
+                approval_status = approval_statuses.get(approval_id)
+                action_status = action.get("status")
+                if action_status == "pending_approval" and approval_status != "pending":
+                    errors.append(error("invalid_agent_action_status", f"action {action_id} cannot be pending_approval with resolved approval {approval_id}"))
+                if action_status == "applied" and approval_status == "rejected":
+                    errors.append(error("invalid_agent_action_status", f"action {action_id} cannot be applied with rejected approval {approval_id}"))
+        action_status = action.get("status")
+        if action_status in {"applied", "failed", "rolled_back"}:
+            approval = next(
+                (
+                    item
+                    for item in approval_items
+                    if isinstance(item, dict) and item.get("id") == approval_id
+                ),
+                None,
+            )
+            legacy_single_task_fallback = (
+                isinstance(approval, dict)
+                and not approval.get("task_id")
+                and isinstance(task_id, str)
+                and task_id
+                and executable_task_ids == {task_id}
+            )
+            approval_error = required_action_approval_error(
+                action,
+                approval_id,
+                approval_items,
+                approval_required_kinds,
+                action_task_id="" if legacy_single_task_fallback else None,
+            )
+            if approval_error:
+                if isinstance(approval_id, str) and approval_id and approval_id not in approval_ids:
+                    pass
+                else:
+                    errors.append(error("invalid_agent_action_status", f"action {action_id} {approval_error}"))
+        if current_plan_action and isinstance(batch_id, str) and batch_id and batch_id not in batch_registry_used_ids:
+            errors.append(error("invalid_agent_action_field", f"action {action_id} references unknown batch_id registry entry: {batch_id}"))
+
+    return errors
+
+
 def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_runtime") -> list[dict]:
     errors: list[dict] = []
 
@@ -1167,61 +1239,20 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
 
     errors.extend(_validate_audit_last_action_ref_block(audit, action_ids_seen, prefix))
     errors.extend(_validate_task_action_ref_relations_block(action_ids_by_task, action_ids_seen))
-
-    for action in actions if isinstance(actions, list) else []:
-        if not isinstance(action, dict):
-            continue
-        action_id = action.get("id")
-        task_id = action.get("task_id")
-        batch_id = action.get("batch_id")
-        current_plan_action = action_belongs_to_current_plan(agent_runtime, action)
-        if current_plan_action and isinstance(task_id, str) and task_id:
-            if task_id not in task_ids:
-                errors.append(error("invalid_agent_action_field", f"action {action_id} references unknown task id: {task_id}"))
-            elif isinstance(action_id, str) and action_id and action_id not in action_ids_by_task.get(task_id, set()):
-                errors.append(error("invalid_agent_action_field", f"task {task_id} must include action {action_id} in action_ids"))
-        approval_id = action.get("approval_id")
-        if isinstance(approval_id, str) and approval_id:
-            if approval_id not in approval_ids:
-                errors.append(error("invalid_agent_action_field", f"action {action_id} references unknown approval id: {approval_id}"))
-            else:
-                approval_status = approval_statuses.get(approval_id)
-                action_status = action.get("status")
-                if action_status == "pending_approval" and approval_status != "pending":
-                    errors.append(error("invalid_agent_action_status", f"action {action_id} cannot be pending_approval with resolved approval {approval_id}"))
-                if action_status == "applied" and approval_status == "rejected":
-                    errors.append(error("invalid_agent_action_status", f"action {action_id} cannot be applied with rejected approval {approval_id}"))
-        action_status = action.get("status")
-        if action_status in {"applied", "failed", "rolled_back"}:
-            approval = next(
-                (
-                    item
-                    for item in approval_items
-                    if isinstance(item, dict) and item.get("id") == approval_id
-                ),
-                None,
-            )
-            legacy_single_task_fallback = (
-                isinstance(approval, dict)
-                and not approval.get("task_id")
-                and isinstance(task_id, str)
-                and task_id
-                and executable_task_ids == {task_id}
-            )
-            approval_error = required_action_approval_error(
-                action,
-                approval_id,
-                approval_items,
-                approval_required_kinds,
-                action_task_id="" if legacy_single_task_fallback else None,
-            )
-            if approval_error:
-                if isinstance(approval_id, str) and approval_id and approval_id not in approval_ids:
-                    pass
-                else:
-                    errors.append(error("invalid_agent_action_status", f"action {action_id} {approval_error}"))
-        if current_plan_action and isinstance(batch_id, str) and batch_id and batch_id not in batch_registry_used_ids:
-            errors.append(error("invalid_agent_action_field", f"action {action_id} references unknown batch_id registry entry: {batch_id}"))
+    errors.extend(
+        _validate_action_relations_block(
+            actions,
+            agent_runtime,
+            task_ids,
+            action_ids_by_task,
+            approval_ids,
+            approval_items,
+            approval_statuses,
+            approval_required_kinds,
+            batch_registry_used_ids,
+            executable_task_ids,
+        )
+    )
 
     errors.extend(
         _validate_verification_relations_block(
