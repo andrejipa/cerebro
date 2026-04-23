@@ -2,7 +2,7 @@
 
 ## Current Snapshot — 2026-04-22
 
-- Suite gate is currently green in this shell: `775` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
+- Suite gate is currently green in this shell: `778` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`.
 - Derived `recall_eval` validation remains green after the latest slice: `49` tests, `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation is green after the latest overlapping-writer lock hardening: `31` tests, `0` failures in `experiments/operational_signals/tests`.
@@ -12,13 +12,13 @@
 - Planning-only `StateStore` decomposition prep is now recorded in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it stays explicitly non-authoritative and does not reopen the freeze.
 - Current executable queue:
   - `canonical runtime: ordered hardening resumed after the canonical gate returned green`
-  - `latest runtime slice: raw sha256 helpers now converge in core/digests.py with direct regression coverage`
-  - `latest StateStore slice: Slice 4 extracted the retention policy/report/journal cluster behind the existing facade via core/state_retention_service.py while keeping validate_state* orchestration, revision ordering, pending refresh, and locking in StateStore`
-  - `next runtime slice: continue StateStore decomposition with Slice 5 (coordination/locking extraction)`
+  - `latest runtime slice: Slice 5 extracted runtime_lock and stale-lock recovery plumbing into core/state_runtime_lock_service.py while keeping verify/apply orchestration, validation authority, session recovery, and revision ordering in StateStore`
+  - `latest StateStore slice: the mapped decomposition queue now covers explicit contracts, read-models, session artifacts, retention helpers, and coordination/locking helpers behind the unchanged facade`
+  - `next runtime step: queue the canonical proof-of-stop (P1-P5) because the ordered StateStore hardening map is now exhausted`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
 - Current queue mode: execution; the canonical gate is green again, so bounded ordered slices may proceed.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `ordered execution — continue the mapped StateStore sequence with Slice 5 (coordination/locking extraction)`
+- Current next item: `proof of stop — the mapped StateStore hardening queue is now exhausted, so the next canonical step is P1-P5`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -29,9 +29,9 @@
 
 ```text
 NEXT_ACTION
-- next_required_step: coordination_locking_extraction
+- next_required_step: proof_of_stop_p1_p5
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: after the retention helper moved cleanly behind the facade, the remaining highest-leverage StateStore seam is coordination/locking, which still concentrates runtime_lock choreography, verify/apply serialization, and cross-cutting authority guards under the same object
+- highest_priority_hypothesis: after coordination/locking moved into a helper without widening authority, the remaining question is no longer decomposition but whether proof-of-stop finds a new hotspot, bypass, reliability gap, duplication, or fragile edge case
 ```
 
 ## Historical Derived Chronology

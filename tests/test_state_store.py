@@ -2498,6 +2498,48 @@ class StateStoreTests(unittest.TestCase):
             self.assertIn("stale lock", message)
             self.assertEqual(store.lock_path.read_text(encoding="utf-8"), "999999")
 
+    def test_runtime_lock_serializes_two_store_instances_after_extraction(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store, _ = self._seed_valid_runtime(root)
+            peer = StateStore(root)
+            holder_entered = threading.Event()
+            release_holder = threading.Event()
+            contender_acquired = threading.Event()
+            holder_errors: list[Exception] = []
+            contender_errors: list[Exception] = []
+
+            def holder() -> None:
+                try:
+                    with store.runtime_lock():
+                        holder_entered.set()
+                        release_holder.wait(timeout=2)
+                except Exception as exc:  # pragma: no cover - failure collected below
+                    holder_errors.append(exc)
+
+            def contender() -> None:
+                holder_entered.wait(timeout=2)
+                try:
+                    with peer.runtime_lock():
+                        contender_acquired.set()
+                except Exception as exc:  # pragma: no cover - failure collected below
+                    contender_errors.append(exc)
+
+            holder_thread = threading.Thread(target=holder)
+            contender_thread = threading.Thread(target=contender)
+            holder_thread.start()
+            self.assertTrue(holder_entered.wait(timeout=2))
+            contender_thread.start()
+            self.assertFalse(contender_acquired.wait(timeout=0.1))
+            release_holder.set()
+            holder_thread.join(timeout=2)
+            contender_thread.join(timeout=2)
+
+            self.assertEqual(holder_errors, [])
+            self.assertEqual(contender_errors, [])
+            self.assertTrue(contender_acquired.is_set())
+            self.assertFalse(store.lock_path.exists())
+
     def test_close_session_does_not_fail_without_existing_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             store = StateStore(tmp_dir)

@@ -4,8 +4,9 @@
 
 - Slice 1 (Contract Extraction) executada em 2026-04-22 e commitada em `441facf`.
 - Slice 2 (Read-Model Extraction) executada em 2026-04-22 e commitada em `579c4a4`.
-- Slice 3 (Session Lifecycle Extraction) executada em 2026-04-22 no working tree corrente; gate pós-slice confirmado verde.
-- Slices 4–5 planejadas; aguardam execução incremental.
+- Slice 3 (Session Lifecycle Extraction) executada em 2026-04-22 e commitada em `591d06a`.
+- Slice 4 (Validation/Retention Seam) executada em 2026-04-22 e commitada em `3ab67c0`.
+- Slice 5 (Coordination/Locking Extraction) executada em 2026-04-22 no working tree corrente; gate pós-slice confirmado verde.
 
 ### Slice 1 — Contract Extraction (Concluída 2026-04-22)
 
@@ -95,6 +96,29 @@
   seam. `validate_state*` permanece em `StateStore` até existir um motor
   estateless que compute erros sem carregar junto recovery de sessão e
   persistência de `last_validation`
+
+### Slice 5 — Coordination/Locking Extraction (Concluída 2026-04-22)
+
+- `core/state_runtime_lock_service.py` criado para encapsular o cluster de
+  coordenação de lock que já estava coeso e subordinate à facade:
+  - `runtime_lock()` reentrante
+  - lifecycle do arquivo `runtime.lock`
+  - stale-lock detection/recovery
+  - current-process lock ownership tracking
+  - timeout/poll/release retry choreography
+- `core/state_store.py` preserva a surface pública e agora delega esse cluster
+  para o serviço, mantendo no facade:
+  - verify/apply orchestration
+  - validation authority
+  - session recovery
+  - revision ordering and canonical persistence
+- `tests/test_state_runtime_lock_service.py`: 2 testes diretos do serviço
+- `tests/test_state_store.py`: 1 guard novo de serialização entre duas
+  instâncias de `StateStore` após a extração
+- Gate pós-slice: 778 testes, 0 falhas, 6 skips; 51 testes arquiteturais, 0 falhas
+- Debate de boundary: a posição vencedora extraiu apenas o cluster
+  `runtime_lock`/stale-lock recovery. Guards de verify/apply continuam em
+  `StateStore` porque ainda cruzam autoridade de validação, sessão e revisão
 
 ## Why This Exists
 
