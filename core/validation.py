@@ -205,6 +205,7 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
     action_statuses: dict[str, str] = {}
     approval_ids: set[str] = set()
     approval_statuses: dict[str, str] = {}
+    approval_items: list[dict] = []
     command_ids: set[str] = set()
     allow_in_verify_command_ids: set[str] = set()
 
@@ -550,6 +551,7 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
                         errors.append(error("invalid_agent_approvals_items", f"duplicate approval id: {approval_id}"))
                     approval_ids.add(approval_id)
                     approval_statuses[approval_id] = approval.get("status", "")
+                    approval_items.append(approval)
                 status = approval.get("status")
                 if not isinstance(status, str) or status not in VALID_APPROVAL_STATUSES:
                     errors.append(
@@ -937,6 +939,12 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
     for task_id in task_dependencies:
         visit(task_id)
 
+    executable_task_ids = {
+        task_id
+        for task_id, status in task_statuses.items()
+        if status in {"ready", "running"}
+    }
+
     if isinstance(audit, dict):
         last_action_id = audit.get("last_action_id", "")
         if isinstance(last_action_id, str) and last_action_id and last_action_id not in action_ids_seen:
@@ -972,11 +980,27 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
                     errors.append(error("invalid_agent_action_status", f"action {action_id} cannot be applied with rejected approval {approval_id}"))
         action_status = action.get("status")
         if action_status in {"applied", "failed", "rolled_back"}:
+            approval = next(
+                (
+                    item
+                    for item in approval_items
+                    if isinstance(item, dict) and item.get("id") == approval_id
+                ),
+                None,
+            )
+            legacy_single_task_fallback = (
+                isinstance(approval, dict)
+                and not approval.get("task_id")
+                and isinstance(task_id, str)
+                and task_id
+                and executable_task_ids == {task_id}
+            )
             approval_error = required_action_approval_error(
                 action,
                 approval_id,
-                approval_statuses,
+                approval_items,
                 approval_required_kinds,
+                action_task_id="" if legacy_single_task_fallback else None,
             )
             if approval_error:
                 if isinstance(approval_id, str) and approval_id and approval_id not in approval_ids:

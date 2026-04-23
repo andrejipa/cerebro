@@ -2,13 +2,13 @@
 
 ## Current Live Gate — 2026-04-22
 
-- Suite gate: `778` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner
+- Suite gate: `781` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner
 - Architecture gate: `51` tests, `0` failures
 - Derived `recall_eval` gate: `49` tests, `0` failures in `experiments/recall_eval/tests`
 - Derived `operational_signals` base gate: `31` tests, `0` failures in `experiments/operational_signals/tests`
 - Derived `operational_signals/suggestions` gate: `97` tests, `0` failures in `experiments/operational_signals/suggestions/tests`
 - Canonical-runtime posture: deliberate freeze remains active for new core capability growth
-- Canonical-runtime status: gate green; raw digest primitives now converge in `core/digests.py` with direct regression coverage, the mapped `StateStore` sequence now also routes runtime-lock and stale-lock recovery plumbing through `core/state_runtime_lock_service.py` behind the unchanged facade, and the current user-directed session is moving from ordered decomposition slices into canonical proof-of-stop
+- Canonical-runtime status: gate green; raw digest primitives now converge in `core/digests.py` with direct regression coverage, the mapped `StateStore` sequence now also routes runtime-lock and stale-lock recovery plumbing through `core/state_runtime_lock_service.py` behind the unchanged facade, proof-of-stop P1 already closed path-qualified command-block and approval-binding gaps across apply/verify/rollback/validation, and the next active slice is the single-file apply transaction gap
 - Derived-track posture:
   - `experiments/recall_eval/` has been implemented and benchmarked against real corpora; it remains experimental, derived, and not promoted
   - `experiments/operational_signals/` has been implemented and is ready for opt-in derived use; its initial registry is currently empty, which is the correct state until real insufficiency signals are observed

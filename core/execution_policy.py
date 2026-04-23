@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 
 class ExecutionPolicyError(Exception):
@@ -45,11 +45,40 @@ def ensure_command_allowed(
         )
     if not argv:
         raise ExecutionPolicyError("command argv must be non-empty")
-    head = argv[0].strip().lower()
-    if not head:
+    head = argv[0].strip()
+    aliases = _command_head_aliases(head)
+    if not aliases:
         raise ExecutionPolicyError("command argv[0] must be a non-empty string")
-    if head in {item.lower() for item in blocked_prefixes}:
-        raise ExecutionPolicyError(f"command prefix is blocked by execution policy: {head}")
+    normalized_blocklist = {
+        item.strip().lower()
+        for item in blocked_prefixes
+        if isinstance(item, str) and item.strip()
+    }
+    blocked_aliases = sorted(aliases & normalized_blocklist)
+    if blocked_aliases:
+        raise ExecutionPolicyError(
+            f"command prefix is blocked by execution policy: {blocked_aliases[0]}"
+        )
+
+
+def _command_head_aliases(head: str) -> set[str]:
+    normalized = head.strip().lower()
+    if not normalized:
+        return set()
+
+    aliases = {normalized}
+    for candidate in (PurePosixPath(normalized).name, PureWindowsPath(normalized).name):
+        if not candidate:
+            continue
+        aliases.add(candidate)
+        stem = candidate
+        while True:
+            next_stem = PurePosixPath(stem).stem
+            if not next_stem or next_stem == stem:
+                break
+            aliases.add(next_stem)
+            stem = next_stem
+    return aliases
 
 
 def _normalize_required_kinds(approval_required_kinds: list[str]) -> set[str]:
@@ -68,6 +97,55 @@ def _action_kind(action: object) -> str:
         if isinstance(kind, str):
             return kind
     return ""
+
+
+def _action_target(action: object) -> str:
+    if not isinstance(action, Mapping):
+        return ""
+    details = action.get("details")
+    if isinstance(details, Mapping):
+        for field in ("path", "to_path", "command_id"):
+            value = details.get(field)
+            if isinstance(value, str) and value:
+                return value
+    for field in ("target", "path", "to", "command_id"):
+        value = action.get(field)
+        if isinstance(value, str) and value:
+            return value
+    return ""
+
+
+def _action_fingerprint(action: object) -> str:
+    if not isinstance(action, Mapping):
+        return ""
+    details = action.get("details")
+    if not isinstance(details, Mapping):
+        return ""
+    fingerprint = details.get("fingerprint")
+    return fingerprint if isinstance(fingerprint, str) else ""
+
+
+def _approval_lookup(approval_items_or_statuses: object) -> dict[str, dict]:
+    lookup: dict[str, dict] = {}
+    if isinstance(approval_items_or_statuses, Mapping):
+        for approval_id, value in approval_items_or_statuses.items():
+            if not isinstance(approval_id, str) or not approval_id:
+                continue
+            if isinstance(value, Mapping):
+                lookup[approval_id] = {"id": approval_id, **value}
+                continue
+            if isinstance(value, str):
+                lookup[approval_id] = {"id": approval_id, "status": value}
+        return lookup
+    if isinstance(approval_items_or_statuses, list):
+        for item in approval_items_or_statuses:
+            if not isinstance(item, Mapping):
+                continue
+            approval_id = item.get("id")
+            if not isinstance(approval_id, str) or not approval_id:
+                continue
+            lookup[approval_id] = dict(item)
+    return lookup
 
 
 def _effect_requires_approval(action: object, *, target_exists: bool | None = None) -> bool:
@@ -116,10 +194,13 @@ def action_requires_approval(
 def required_action_approval_error(
     action: object,
     approval_id: object,
-    approval_statuses: dict[str, str],
+    approval_items_or_statuses: object,
     approval_required_kinds: list[str],
     *,
     target_exists: bool | None = None,
+    action_fingerprint: str = "",
+    action_task_id: str | None = None,
+    action_target: str = "",
 ) -> str:
     """Return one policy error when a sensitive action lacks an approved approval."""
     action_kind = _action_kind(action)
@@ -131,9 +212,32 @@ def required_action_approval_error(
         return ""
     if not isinstance(approval_id, str) or not approval_id:
         return f"kind {action_kind} requires a non-empty approval_id under execution policy"
-    approval_status = approval_statuses.get(approval_id, "")
+    approval = _approval_lookup(approval_items_or_statuses).get(approval_id)
+    approval_status = approval.get("status", "") if isinstance(approval, Mapping) else ""
     if approval_status != "approved":
         if approval_status:
             return f"kind {action_kind} requires approval {approval_id} to be approved, got {approval_status}"
         return f"kind {action_kind} requires approval {approval_id} to exist and be approved"
+    approval_kind = approval.get("action_kind", "") if isinstance(approval, Mapping) else ""
+    if isinstance(approval_kind, str) and approval_kind and approval_kind != action_kind:
+        return f"approval {approval_id} does not match action kind {action_kind}"
+    expected_fingerprint = action_fingerprint or _action_fingerprint(action)
+    if expected_fingerprint:
+        approval_fingerprint = approval.get("fingerprint", "") if isinstance(approval, Mapping) else ""
+        if approval_fingerprint != expected_fingerprint:
+            return f"approval {approval_id} does not match expected action fingerprint"
+    expected_task_id = action_task_id
+    if expected_task_id is None and isinstance(action, Mapping):
+        task_id = action.get("task_id")
+        if isinstance(task_id, str):
+            expected_task_id = task_id
+    if expected_task_id:
+        approval_task_id = approval.get("task_id", "") if isinstance(approval, Mapping) else ""
+        if approval_task_id != expected_task_id:
+            return f"approval {approval_id} does not match task_id {expected_task_id}"
+    expected_target = action_target or _action_target(action)
+    if expected_target:
+        approval_target = approval.get("target", "") if isinstance(approval, Mapping) else ""
+        if approval_target != expected_target:
+            return f"approval {approval_id} does not match target {expected_target}"
     return ""

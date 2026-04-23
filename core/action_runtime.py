@@ -154,20 +154,38 @@ def _attach_plan_generation(agent_runtime: dict, details: dict) -> dict:
     }
 
 
-def _approval_statuses(agent_runtime: dict) -> dict[str, str]:
+def _approval_items(agent_runtime: dict) -> list[dict]:
     approvals = agent_runtime.get("approvals", {})
     items = approvals.get("items", []) if isinstance(approvals, dict) else []
     if not isinstance(items, list):
-        return {}
-    return {
-        approval_id: status
+        return []
+    return [
+        item
         for item in items
         if isinstance(item, dict)
-        and isinstance((approval_id := item.get("id")), str)
-        and approval_id
-        and isinstance((status := item.get("status")), str)
-        and status
-    }
+    ]
+
+
+def _approval_item_by_id(agent_runtime: dict, approval_id: str) -> dict | None:
+    for item in _approval_items(agent_runtime):
+        if item.get("id") == approval_id:
+            return item
+    return None
+
+
+def _executable_task_ids(agent_runtime: dict) -> tuple[str, ...]:
+    plan = agent_runtime.get("plan", {})
+    tasks = plan.get("tasks", []) if isinstance(plan, dict) else []
+    task_ids: list[str] = []
+    for task in tasks:
+        if not isinstance(task, dict):
+            continue
+        task_id = task.get("id")
+        if not isinstance(task_id, str) or not task_id:
+            continue
+        if task.get("status") in {"ready", "running"}:
+            task_ids.append(task_id)
+    return tuple(task_ids)
 
 
 def _ensure_action_approval(
@@ -176,14 +194,27 @@ def _ensure_action_approval(
     approval_id: str,
     *,
     target_exists: bool | None = None,
+    fingerprint: str = "",
+    task_id: str = "",
+    target: str = "",
 ) -> None:
     policy = agent_runtime["execution_policy"]
+    approval = _approval_item_by_id(agent_runtime, approval_id) if approval_id else None
+    legacy_single_task_fallback = (
+        task_id
+        and isinstance(approval, dict)
+        and not approval.get("task_id")
+        and _executable_task_ids(agent_runtime) == (task_id,)
+    )
     approval_error = required_action_approval_error(
         action,
         approval_id,
-        _approval_statuses(agent_runtime),
+        _approval_items(agent_runtime),
         policy["approval_required_kinds"],
         target_exists=target_exists,
+        action_fingerprint=fingerprint,
+        action_task_id="" if legacy_single_task_fallback else task_id,
+        action_target=target,
     )
     if approval_error:
         raise ActionRuntimeError(approval_error)
@@ -762,6 +793,7 @@ def apply_action(
     action = normalize_action_payload(payload)
     policy = agent_runtime["execution_policy"]
     action_dir = store.artifacts_dir / "actions" / action["id"]
+    fingerprint = compute_action_fingerprint(payload, command_registry=command_registry)
 
     if action["kind"] == "fs.create_file":
         target = _resolve_workspace_path(root, action["path"])
@@ -771,7 +803,15 @@ def apply_action(
             raise ActionRuntimeError(f"target file already exists: {normalized}")
         if target_exists and not target.is_file():
             raise ActionRuntimeError(f"target path must be a file: {normalized}")
-        _ensure_action_approval(agent_runtime, action, approval_id, target_exists=target_exists)
+        _ensure_action_approval(
+            agent_runtime,
+            action,
+            approval_id,
+            target_exists=target_exists,
+            fingerprint=fingerprint,
+            task_id=task_id,
+            target=normalized,
+        )
 
         rollback_ref = ""
         created_new = not target_exists
@@ -816,7 +856,15 @@ def apply_action(
             raise ActionRuntimeError(f"target path already exists: {normalized_target}")
         if target_exists and not target.is_file():
             raise ActionRuntimeError(f"target path must be a file: {normalized_target}")
-        _ensure_action_approval(agent_runtime, action, approval_id, target_exists=target_exists)
+        _ensure_action_approval(
+            agent_runtime,
+            action,
+            approval_id,
+            target_exists=target_exists,
+            fingerprint=fingerprint,
+            task_id=task_id,
+            target=normalized_target,
+        )
 
         original_content = _read_text(source)
         target_preimage_ref = ""
@@ -859,7 +907,14 @@ def apply_action(
         normalized = ensure_mutation_path_allowed(root, source, policy["protected_paths"], registered_paths)
         if not source.exists() or not source.is_file():
             raise ActionRuntimeError(f"source file does not exist: {normalized}")
-        _ensure_action_approval(agent_runtime, action, approval_id)
+        _ensure_action_approval(
+            agent_runtime,
+            action,
+            approval_id,
+            fingerprint=fingerprint,
+            task_id=task_id,
+            target=normalized,
+        )
         trash_target = store.trash_dir / action["id"] / Path(normalized)
         trash_target.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(source), str(trash_target))
@@ -891,7 +946,14 @@ def apply_action(
         original = _read_text(target)
         if _sha256_text(original) != action["expected_sha256"]:
             raise ActionRuntimeError(f"expected_sha256 does not match current file: {normalized}")
-        _ensure_action_approval(agent_runtime, action, approval_id)
+        _ensure_action_approval(
+            agent_runtime,
+            action,
+            approval_id,
+            fingerprint=fingerprint,
+            task_id=task_id,
+            target=normalized,
+        )
         updated = original
         for replacement in action["replacements"]:
             occurrences = updated.count(replacement["old"])
@@ -936,7 +998,14 @@ def apply_action(
         raise ActionRuntimeError(
             f"apply does not execute command_id declared side_effect=read_only: {action['command_id']}; run it through verify"
         )
-    _ensure_action_approval(agent_runtime, action, approval_id)
+    _ensure_action_approval(
+        agent_runtime,
+        action,
+        approval_id,
+        fingerprint=fingerprint,
+        task_id=task_id,
+        target=action["command_id"],
+    )
     try:
         result = subprocess.run(
             command["argv"],

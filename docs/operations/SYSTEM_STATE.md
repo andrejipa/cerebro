@@ -3,7 +3,7 @@
 ## Current Snapshot — 2026-04-22
 
 - Suite status: green.
-- Last suite result: `778` tests, `0` failures, `6` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
+- Last suite result: `781` tests, `0` failures, `6` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
 - Architecture gate: `51` tests, `0` failures.
 - Derived `recall_eval` validation: green with `49` tests and `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
@@ -15,7 +15,7 @@
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
 - Current queue mode: execution; the canonical gate is green again and the ordered hardening queue may proceed.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `proof of stop — the ordered StateStore decomposition queue is exhausted and the canonical runtime should now run P1-P5`
+- Current next item: `proof of stop — single-file apply still has a transaction-gap candidate after the approval/policy slice closed`
 - Active derived boundaries: `experiments/recall_eval` and `experiments/operational_signals` remain active but non-authoritative; `experiments/operational_signals/suggestions` stays marginal/advisory-only and should not expand without new evidence.
 - The canonical `SCOUT_CONTROL_STATE` block is now materialized below; `OPPORTUNITY_MAP.md` carries only a minimal next-action projection so scout-control state remains single-sourced.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -51,6 +51,7 @@ SCOUT_CONTROL_STATE
 
 ## Historical Derived Chronology
 
+- A later proof-of-stop slice on 2026-04-22 then closed the first canonical P1 runtime findings: execution-policy blocking now normalizes path-qualified command heads, approvals are now validated against action kind, fingerprint, task, and target across apply/verify/rollback/validation, and the only remaining legacy blank-`task_id` reuse is the explicit single-executable-task fallback.
 - A later heartbeat wakeup on 2026-04-22 then seeded the first canonical quiet-scout signature in `SCOUT_CONTROL_STATE`, but the mandatory post-edit AGENTS-equivalent gate turned red inside frozen canonical `tests/`: `test_validate_state_recovers_pending_session_refresh_after_crash_before_state_save` failed, and the subsequent focused rerun reproduced the blocker in a different shape as a host-temp `PermissionError` under raw `tempfile.TemporaryDirectory()`, so the loop stayed in blocked-escalation instead of continuing scout rotation.
 - A later governance hardening on 2026-04-22 then materialized the stage-2 scout-control state in `SYSTEM_STATE.md` and reduced `OPPORTUNITY_MAP.md` to a minimal next-action projection: the loop now has one canonical home for `quiet_streak`, renewal debt, and prompt-hardening status instead of inferring those fields from repeated snapshot prose.
 - The same wakeup also corrected the live gate again to the currently verified `730` tests, `0` failures, `8` skips result from the exact AGENTS-equivalent runner; the interim `730/0/6` wording had become documentary drift against the shell-authoritative command.

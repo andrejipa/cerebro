@@ -57,6 +57,18 @@ class ExecutionPolicyTests(unittest.TestCase):
             ensure_command_allowed("A2", ["PoWeRsHeLl", "-c", "echo ok"], ["powershell"])
         self.assertIn("command prefix is blocked by execution policy: powershell", str(blocked_ctx.exception))
 
+        with self.assertRaises(ExecutionPolicyError) as posix_path_ctx:
+            ensure_command_allowed("A2", ["/bin/rm", "-rf", "tmp"], ["rm"])
+        self.assertIn("command prefix is blocked by execution policy: rm", str(posix_path_ctx.exception))
+
+        with self.assertRaises(ExecutionPolicyError) as windows_path_ctx:
+            ensure_command_allowed(
+                "A2",
+                [r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", "-c", "echo ok"],
+                ["powershell"],
+            )
+        self.assertIn("command prefix is blocked by execution policy: powershell", str(windows_path_ctx.exception))
+
         ensure_command_allowed("A2", ["python", "-V"], ["powershell"])
 
     def test_action_requires_approval_ignores_invalid_entries_and_required_action_approval_error_is_explicit(self) -> None:
@@ -128,6 +140,25 @@ class ExecutionPolicyTests(unittest.TestCase):
                 approval_required_kinds,
             ),
             "",
+        )
+        self.assertEqual(
+            required_action_approval_error(
+                {"kind": "fs.write_patch", "task_id": "task-001", "details": {"fingerprint": "fp-live"}},
+                "apr-003",
+                [
+                    {
+                        "id": "apr-003",
+                        "status": "approved",
+                        "fingerprint": "fp-other",
+                        "action_kind": "fs.write_patch",
+                        "task_id": "task-001",
+                        "target": "draft.txt",
+                    }
+                ],
+                approval_required_kinds,
+                action_target="draft.txt",
+            ),
+            "approval apr-003 does not match expected action fingerprint",
         )
         self.assertEqual(
             required_action_approval_error(

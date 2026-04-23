@@ -242,6 +242,58 @@ class VerificationRuntimeTests(unittest.TestCase):
             self.assertIn("verification command cmd-001 is blocked by execution policy", str(ctx.exception))
             self.assertIn("autonomy level A1 does not allow command execution", str(ctx.exception))
 
+    def test_verify_blocks_path_qualified_blocked_command_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            validation = store.validate_state()
+            store.update_agent_plan(
+                {
+                    "goal": "Verify blocked path-qualified shell",
+                    "summary": "verify must normalize blocked command prefixes before subprocess spawn",
+                    "tasks": [
+                        {
+                            "id": "task-001",
+                            "title": "Run verify",
+                            "status": "ready",
+                            "details": "Run verify",
+                            "depends_on": [],
+                            "working_set": ["tracked.txt"],
+                            "acceptance_criteria": ["path-qualified blocked shell is rejected"],
+                            "action_ids": [],
+                        }
+                    ],
+                    "command_registry": [
+                        {
+                            "id": "cmd-001",
+                            "argv": [r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", "-c", "echo ok"],
+                            "cwd": ".",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "read_only",
+                            "risk": "low",
+                            "allow_in_verify": True,
+                        }
+                    ],
+                    "required_command_ids": ["cmd-001"],
+                    "autonomy_level": "A2",
+                    "protected_paths": [".cerebro/**", ".git/**"],
+                    "blocked_command_prefixes": ["powershell"],
+                    "approval_required_kinds": ["fs.write_patch"],
+                },
+                validated_revision=validation["revision"],
+            )
+
+            with self.assertRaises(VerificationRuntimeError) as ctx:
+                run_verification_commands(root, store, store.read_agent_runtime())
+
+            self.assertIn("verification command cmd-001 is blocked by execution policy", str(ctx.exception))
+            self.assertIn("command prefix is blocked by execution policy: powershell", str(ctx.exception))
+
     def test_verify_artifact_write_failure_records_failed_verification(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)

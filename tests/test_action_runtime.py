@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import hashlib
 import json
 import sys
 import tempfile
@@ -13,6 +14,7 @@ from cli.commands.apply import run_apply
 from cli.commands.init import run_init
 from core.action_runtime import ActionRuntimeError, apply_action
 from core.agent_runtime import build_initial_agent_runtime
+from core.execution_policy import ExecutionPolicyError
 from core.state_store import StateStore
 
 
@@ -347,6 +349,87 @@ class ActionRuntimePolicyBoundaryTests(unittest.TestCase):
             self.assertEqual(source.read_text(encoding="utf-8"), "source\n")
             self.assertEqual(target.read_text(encoding="utf-8"), "target\n")
             self.assertFalse((store.artifacts_dir / "actions" / "act-move-direct").exists())
+
+    def test_apply_action_rejects_approved_id_bound_to_different_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            draft = root / "draft.txt"
+            draft.write_text("before\n", encoding="utf-8")
+            runtime = self._build_agent_runtime()
+            runtime["approvals"]["items"] = [
+                {
+                    "id": "apr-001",
+                    "status": "approved",
+                    "fingerprint": "fp-other",
+                    "action_kind": "fs.write_patch",
+                    "task_id": "task-001",
+                    "target": "draft.txt",
+                    "reason": "approved elsewhere",
+                    "requested_at": "",
+                    "resolved_at": "",
+                }
+            ]
+
+            with self.assertRaises(ActionRuntimeError) as ctx:
+                apply_action(
+                    root,
+                    store,
+                    runtime,
+                    {
+                        "id": "act-patch-direct",
+                        "kind": "fs.write_patch",
+                        "summary": "patch draft directly",
+                        "path": "draft.txt",
+                        "expected_sha256": hashlib.sha256(b"before\n").hexdigest(),
+                        "replacements": [{"old": "before", "new": "after", "count": 1}],
+                    },
+                    {},
+                    set(),
+                    task_id="task-001",
+                    approval_id="apr-001",
+                )
+
+            self.assertIn("does not match expected action fingerprint", str(ctx.exception))
+            self.assertEqual(draft.read_text(encoding="utf-8"), "before\n")
+
+    def test_apply_action_blocks_path_qualified_blocked_command_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            runtime = build_initial_agent_runtime()
+            runtime["execution_policy"]["autonomy_level"] = "A2"
+            runtime["execution_policy"]["blocked_command_prefixes"] = ["powershell"]
+
+            with self.assertRaises(ExecutionPolicyError) as ctx:
+                apply_action(
+                    root,
+                    store,
+                    runtime,
+                    {
+                        "id": "act-command-direct",
+                        "kind": "exec.command",
+                        "summary": "run blocked shell directly",
+                        "command_id": "cmd-001",
+                    },
+                    {
+                        "cmd-001": {
+                            "id": "cmd-001",
+                            "argv": [r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", "-c", "echo ok"],
+                            "cwd": ".",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "workspace_write",
+                            "risk": "medium",
+                            "allow_in_verify": False,
+                        }
+                    },
+                    set(),
+                )
+
+            self.assertIn("command prefix is blocked by execution policy: powershell", str(ctx.exception))
 
 
 if __name__ == "__main__":

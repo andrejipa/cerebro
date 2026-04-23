@@ -60,12 +60,16 @@ def _missing_target_message(agent_runtime: dict, action_id: str, batch_id: str) 
 def _ensure_selected_actions_have_required_approval(agent_runtime: dict, selected: list[dict]) -> None:
     approvals = agent_runtime.get("approvals", {})
     approval_items = approvals.get("items", []) if isinstance(approvals, dict) else []
-    approval_statuses = {
-        item.get("id"): item.get("status", "")
-        for item in approval_items
-        if isinstance(item, dict) and isinstance(item.get("id"), str) and item.get("id")
-    }
     execution_policy = agent_runtime.get("execution_policy", {})
+    plan = agent_runtime.get("plan", {})
+    tasks = plan.get("tasks", []) if isinstance(plan, dict) else []
+    executable_task_ids = {
+        task.get("id")
+        for task in tasks
+        if isinstance(task, dict)
+        and isinstance(task.get("id"), str)
+        and task.get("status") in {"ready", "running"}
+    }
     approval_required_kinds = (
         execution_policy.get("approval_required_kinds", [])
         if isinstance(execution_policy, dict)
@@ -74,11 +78,28 @@ def _ensure_selected_actions_have_required_approval(agent_runtime: dict, selecte
     for action in selected:
         if not isinstance(action, dict):
             continue
+        approval = next(
+            (
+                item
+                for item in approval_items
+                if isinstance(item, dict) and item.get("id") == action.get("approval_id")
+            ),
+            None,
+        )
+        task_id = action.get("task_id")
+        legacy_single_task_fallback = (
+            isinstance(approval, dict)
+            and not approval.get("task_id")
+            and isinstance(task_id, str)
+            and task_id
+            and executable_task_ids == {task_id}
+        )
         approval_error = required_action_approval_error(
             action,
             action.get("approval_id"),
-            approval_statuses,
+            approval_items if isinstance(approval_items, list) else [],
             approval_required_kinds if isinstance(approval_required_kinds, list) else [],
+            action_task_id="" if legacy_single_task_fallback else None,
         )
         if approval_error:
             raise ExecutionPolicyError(
