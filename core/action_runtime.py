@@ -7,7 +7,8 @@ import os
 import shutil
 import subprocess
 import tempfile
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -20,7 +21,7 @@ from core.execution_policy import (
     ensure_mutation_path_allowed,
     required_action_approval_error,
 )
-from core.store_protocols import ActionStoreSurface
+from core.store_protocols import ActionStoreSurface, ApplyCycleStoreSurface
 
 
 class ActionRuntimeError(Exception):
@@ -1062,6 +1063,68 @@ def apply_action(
         ],
         failure_message=failure_message,
     )
+
+
+def execute_apply_cycle(
+    root: Path,
+    store: ApplyCycleStoreSurface,
+    payload: dict,
+    command_registry: dict[str, dict],
+    registered_paths: set[str],
+    *,
+    task_id: str = "",
+    batch_id: str = "",
+    approval_id: str = "",
+    expected_session_token: str | None = None,
+    detail_updates: dict[str, object] | None = None,
+) -> tuple[dict, dict]:
+    """Run one single-action apply transaction under the core runtime boundary."""
+    resolved_root = Path(root).resolve()
+    if resolved_root != store.root:
+        raise StateStoreError("apply cycle root must match state store root")
+
+    normalized_action = normalize_action_payload(payload)
+    with store.runtime_lock():
+        validation_result, state_data = store.validate_state_locked()
+        if not validation_result["ok"] or state_data is None:
+            raise StateValidationError(validation_result["errors"])
+        store.read_owned_active_session(state_data, expected_session_token)
+        working_runtime = deepcopy(state_data["agent_runtime"])
+
+        mutation_guard = (
+            guarded_apply_batch(resolved_root, store, [normalized_action])
+            if normalized_action["kind"] in TRANSACTIONAL_BATCH_ACTION_KINDS
+            else nullcontext()
+        )
+        with mutation_guard:
+            action_record = apply_action(
+                resolved_root,
+                store,
+                working_runtime,
+                payload,
+                command_registry,
+                registered_paths,
+                task_id=task_id,
+                batch_id=batch_id,
+                approval_id=approval_id,
+            )
+            if detail_updates:
+                details = action_record.get("details", {})
+                if not isinstance(details, dict):
+                    raise ActionRuntimeError("action details must be an object")
+                action_record = {
+                    **action_record,
+                    "details": {
+                        **details,
+                        **detail_updates,
+                    },
+                }
+            updated = store.record_agent_action(
+                action_record,
+                validated_revision=validation_result["revision"],
+                expected_session_token=expected_session_token,
+            )
+            return action_record, updated
 
 
 def rollback_action(root: Path, store: ActionStoreSurface, agent_runtime: dict, action_record: dict, registered_paths: set[str]) -> dict:

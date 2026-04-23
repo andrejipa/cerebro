@@ -5497,7 +5497,7 @@ class AlphaRuntimeTests(unittest.TestCase):
             runtime = store.read_agent_runtime()
             self.assertEqual(runtime["actions"][-1]["id"], "act-create")
 
-    def test_apply_single_file_uses_one_canonical_state_load_for_snapshot_and_runtime(self) -> None:
+    def test_apply_single_file_revalidates_state_before_mutating_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             tracked = root / "tracked.txt"
@@ -5531,9 +5531,9 @@ class AlphaRuntimeTests(unittest.TestCase):
                 load_state_calls += 1
                 return original_load_state(self)
 
-            from cli.commands import apply as apply_command_module
+            from core import action_runtime as action_runtime_module
 
-            original_apply_action = apply_command_module.apply_action
+            original_apply_action = action_runtime_module.apply_action
 
             def counting_apply_action(*apply_args, **apply_kwargs):
                 pre_mutation_load_state_calls.append(load_state_calls)
@@ -5541,7 +5541,7 @@ class AlphaRuntimeTests(unittest.TestCase):
 
             with (
                 patch.object(StateStore, "load_state", counting_load_state),
-                patch.object(apply_command_module, "apply_action", side_effect=counting_apply_action),
+                patch.object(action_runtime_module, "apply_action", side_effect=counting_apply_action),
             ):
                 exit_code = run_apply(
                     root,
@@ -5549,10 +5549,52 @@ class AlphaRuntimeTests(unittest.TestCase):
                 )
 
             self.assertEqual(exit_code, 0)
-            self.assertEqual(pre_mutation_load_state_calls, [2])
-            self.assertEqual(load_state_calls, 4)
+            self.assertEqual(len(pre_mutation_load_state_calls), 1)
+            self.assertGreaterEqual(pre_mutation_load_state_calls[0], 1)
+            self.assertGreater(load_state_calls, pre_mutation_load_state_calls[0])
             runtime = store.read_agent_runtime()
             self.assertEqual(runtime["actions"][-1]["id"], "act-create")
+
+    def test_single_file_apply_rolls_back_workspace_when_late_record_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            self.assertEqual(run_plan(root, self._plan_args(summary="Late record rejection.")), 0)
+
+            action_file = root / "create.json"
+            action_file.write_text(
+                json.dumps(
+                    {
+                        "id": "act-create",
+                        "kind": "fs.create_file",
+                        "summary": "create draft",
+                        "path": "draft.txt",
+                        "content": "alpha\n",
+                        "overwrite": False,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            output = io.StringIO()
+            with (
+                redirect_stdout(output),
+                patch.object(StateStore, "record_agent_action", side_effect=StateStoreError("state changed after validation")),
+            ):
+                exit_code = run_apply(
+                    root,
+                    type("Args", (), {"action_file": str(action_file), "task_id": "", "batch_id": "", "retry_justification": ""}),
+                )
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("operation_failed", output.getvalue())
+            self.assertFalse((root / "draft.txt").exists())
+            runtime = store.read_agent_runtime()
+            self.assertFalse(any(action["id"] == "act-create" for action in runtime["actions"]))
 
     def test_verify_allows_rerun_after_workspace_drift_outside_runtime(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

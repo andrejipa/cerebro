@@ -14,6 +14,7 @@ from core.action_runtime import (
     apply_action,
     compute_action_fingerprint,
     compute_exec_command_signature,
+    execute_apply_cycle,
     guarded_apply_batch,
     load_action_payload,
     normalize_action_payload,
@@ -435,31 +436,29 @@ def run_apply(root: Path, args) -> int:
                 planned_actions.append(plan_entry)
                 continue
 
-            action_record = apply_action(
+            detail_updates: dict[str, object] = {
+                "fingerprint": fingerprint,
+                "evidence_token": discipline["evidence_token"],
+                "retry_justification": retry_justification.strip(),
+                "redundant_attempts_before_apply": discipline["redundant_attempts"],
+                "recent_history": discipline["recent_history"],
+            }
+            if normalized_action["kind"] == "exec.command":
+                detail_updates["command_signature"] = compute_exec_command_signature(
+                    command_registry,
+                    normalized_action["command_id"],
+                )
+            action_record, updated = execute_apply_cycle(
                 root,
                 store,
-                agent_runtime,
                 payload,
                 command_registry,
                 registered_paths,
                 task_id=task_id,
                 batch_id=batch_id,
                 approval_id=approval_id,
-            )
-            action_record["details"]["fingerprint"] = fingerprint
-            action_record["details"]["evidence_token"] = discipline["evidence_token"]
-            if normalized_action["kind"] == "exec.command":
-                action_record["details"]["command_signature"] = compute_exec_command_signature(
-                    command_registry,
-                    normalized_action["command_id"],
-                )
-            action_record["details"]["retry_justification"] = retry_justification.strip()
-            action_record["details"]["redundant_attempts_before_apply"] = discipline["redundant_attempts"]
-            action_record["details"]["recent_history"] = discipline["recent_history"]
-            updated = store.record_agent_action(
-                action_record,
-                validated_revision=validated_revision,
                 expected_session_token=expected_session_token,
+                detail_updates=detail_updates,
             )
             validated_revision = updated["revision"]
             completed_actions.append(action_record)
