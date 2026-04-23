@@ -166,8 +166,8 @@ Every approved slice must clear all of:
 - candidate first slice: `_validate_memory_block`
 - approved state today: `yes`
 - characterization precondition status: `satisfied`
-- completed slice count: `6/14`
+- completed slice count: `7/14`
 - observation-center routing:
-  - `validation-slice-7-approvals` is the current open queue head in `docs/operations/observation_center.toml`
+  - `validation-slice-8-verification` is the current open queue head in `docs/operations/observation_center.toml`
 - next required step:
-  - `execute slice 7 (_validate_approvals_block); autonomous continuation is pre-approved through slice 11 while gates stay green`
+  - `execute slice 8 (_validate_verification_block); autonomous continuation is pre-approved through slice 11 while gates stay green`

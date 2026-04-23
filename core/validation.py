@@ -458,6 +458,92 @@ def _validate_command_registry_block(
     return errors, command_ids, allow_in_verify_command_ids
 
 
+def _validate_approvals_block(
+    approvals: object,
+    task_ids: set[str],
+    prefix: str = "agent_runtime",
+) -> tuple[list[dict], set[str], dict[str, str], list[dict]]:
+    errors: list[dict] = []
+    approval_ids: set[str] = set()
+    approval_statuses: dict[str, str] = {}
+    approval_items: list[dict] = []
+
+    if not isinstance(approvals, dict):
+        errors.append(error("invalid_agent_approvals", f"{prefix}.approvals must be an object"))
+    else:
+        errors.extend(_require_exact_keys(approvals, APPROVALS_KEYS, "invalid_agent_approvals_keys", f"{prefix}.approvals"))
+        items = approvals.get("items")
+        if not isinstance(items, list):
+            errors.append(error("invalid_agent_approvals_items", f"{prefix}.approvals.items must be an array"))
+        else:
+            if len(items) > MAX_APPROVAL_ITEMS:
+                errors.append(
+                    error(
+                        "invalid_agent_approvals_items",
+                        f"{prefix}.approvals.items cannot contain more than {MAX_APPROVAL_ITEMS} items",
+                    )
+                )
+            for index, approval in enumerate(items):
+                approval_prefix = f"{prefix}.approvals.items[{index}]"
+                if not isinstance(approval, dict):
+                    errors.append(error("invalid_agent_approval_item", f"{approval_prefix} must be an object"))
+                    continue
+                errors.extend(
+                    _require_exact_keys(
+                        approval,
+                        APPROVAL_RECORD_KEYS,
+                        "invalid_agent_approval_keys",
+                        approval_prefix,
+                    )
+                )
+                for field in ("id", "fingerprint", "action_kind", "target", "reason", "requested_at"):
+                    errors.extend(
+                        _validate_non_empty_string(
+                            approval.get(field),
+                            "invalid_agent_approval_field",
+                            f"{approval_prefix}.{field}",
+                        )
+                    )
+                errors.extend(
+                    _validate_string(
+                        approval.get("task_id"),
+                        "invalid_agent_approval_field",
+                        f"{approval_prefix}.task_id",
+                    )
+                )
+                errors.extend(
+                    _validate_string(
+                        approval.get("resolved_at"),
+                        "invalid_agent_approval_field",
+                        f"{approval_prefix}.resolved_at",
+                    )
+                )
+                approval_id = approval.get("id")
+                if isinstance(approval_id, str) and approval_id:
+                    if approval_id in approval_ids:
+                        errors.append(error("invalid_agent_approvals_items", f"duplicate approval id: {approval_id}"))
+                    approval_ids.add(approval_id)
+                    approval_statuses[approval_id] = approval.get("status", "")
+                    approval_items.append(approval)
+                status = approval.get("status")
+                if not isinstance(status, str) or status not in VALID_APPROVAL_STATUSES:
+                    errors.append(
+                        error(
+                            "invalid_agent_approval_status",
+                            f"{approval_prefix}.status must be one of: {', '.join(sorted(VALID_APPROVAL_STATUSES))}",
+                        )
+                    )
+                elif status == "pending" and approval.get("resolved_at"):
+                    errors.append(error("invalid_agent_approval_status", f"{approval_prefix}.resolved_at must be empty for pending approvals"))
+                elif status in {"approved", "rejected"} and not approval.get("resolved_at"):
+                    errors.append(error("invalid_agent_approval_status", f"{approval_prefix}.resolved_at must be set once approval is resolved"))
+                approval_task_id = approval.get("task_id")
+                if isinstance(approval_task_id, str) and approval_task_id and approval_task_id not in task_ids:
+                    errors.append(error("invalid_agent_approval_field", f"{approval_prefix}.task_id references unknown task id: {approval_task_id}"))
+
+    return errors, approval_ids, approval_statuses, approval_items
+
+
 def _validate_actions_block(
     actions: object,
     prefix: str = "agent_runtime",
@@ -763,78 +849,8 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
     errors.extend(command_registry_errors)
 
     approvals = agent_runtime.get("approvals")
-    if not isinstance(approvals, dict):
-        errors.append(error("invalid_agent_approvals", f"{prefix}.approvals must be an object"))
-    else:
-        errors.extend(_require_exact_keys(approvals, APPROVALS_KEYS, "invalid_agent_approvals_keys", f"{prefix}.approvals"))
-        items = approvals.get("items")
-        if not isinstance(items, list):
-            errors.append(error("invalid_agent_approvals_items", f"{prefix}.approvals.items must be an array"))
-        else:
-            if len(items) > MAX_APPROVAL_ITEMS:
-                errors.append(
-                    error(
-                        "invalid_agent_approvals_items",
-                        f"{prefix}.approvals.items cannot contain more than {MAX_APPROVAL_ITEMS} items",
-                    )
-                )
-            for index, approval in enumerate(items):
-                approval_prefix = f"{prefix}.approvals.items[{index}]"
-                if not isinstance(approval, dict):
-                    errors.append(error("invalid_agent_approval_item", f"{approval_prefix} must be an object"))
-                    continue
-                errors.extend(
-                    _require_exact_keys(
-                        approval,
-                        APPROVAL_RECORD_KEYS,
-                        "invalid_agent_approval_keys",
-                        approval_prefix,
-                    )
-                )
-                for field in ("id", "fingerprint", "action_kind", "target", "reason", "requested_at"):
-                    errors.extend(
-                        _validate_non_empty_string(
-                            approval.get(field),
-                            "invalid_agent_approval_field",
-                            f"{approval_prefix}.{field}",
-                        )
-                    )
-                errors.extend(
-                    _validate_string(
-                        approval.get("task_id"),
-                        "invalid_agent_approval_field",
-                        f"{approval_prefix}.task_id",
-                    )
-                )
-                errors.extend(
-                    _validate_string(
-                        approval.get("resolved_at"),
-                        "invalid_agent_approval_field",
-                        f"{approval_prefix}.resolved_at",
-                    )
-                )
-                approval_id = approval.get("id")
-                if isinstance(approval_id, str) and approval_id:
-                    if approval_id in approval_ids:
-                        errors.append(error("invalid_agent_approvals_items", f"duplicate approval id: {approval_id}"))
-                    approval_ids.add(approval_id)
-                    approval_statuses[approval_id] = approval.get("status", "")
-                    approval_items.append(approval)
-                status = approval.get("status")
-                if not isinstance(status, str) or status not in VALID_APPROVAL_STATUSES:
-                    errors.append(
-                        error(
-                            "invalid_agent_approval_status",
-                            f"{approval_prefix}.status must be one of: {', '.join(sorted(VALID_APPROVAL_STATUSES))}",
-                        )
-                    )
-                elif status == "pending" and approval.get("resolved_at"):
-                    errors.append(error("invalid_agent_approval_status", f"{approval_prefix}.resolved_at must be empty for pending approvals"))
-                elif status in {"approved", "rejected"} and not approval.get("resolved_at"):
-                    errors.append(error("invalid_agent_approval_status", f"{approval_prefix}.resolved_at must be set once approval is resolved"))
-                approval_task_id = approval.get("task_id")
-                if isinstance(approval_task_id, str) and approval_task_id and approval_task_id not in task_ids:
-                    errors.append(error("invalid_agent_approval_field", f"{approval_prefix}.task_id references unknown task id: {approval_task_id}"))
+    approval_errors, approval_ids, approval_statuses, approval_items = _validate_approvals_block(approvals, task_ids, prefix)
+    errors.extend(approval_errors)
 
     actions = agent_runtime.get("actions")
     action_errors, action_ids_seen, action_statuses = _validate_actions_block(actions, prefix)

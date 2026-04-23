@@ -1,6 +1,6 @@
 [center]
 version = 1
-updated_at = "2026-04-23T13:16:10-04:00"
+updated_at = "2026-04-23T13:23:53-04:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
@@ -84,7 +84,7 @@ halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITIO
 [[observations]]
 id = "validation-slice-7-approvals"
 title = "Validation decomposition slice 7"
-status = "open"
+status = "resolved"
 kind = "slice"
 priority = "high"
 boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
@@ -94,8 +94,25 @@ source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
 auto_continuation = true
 dependencies = ["validation-slice-6-actions"]
 dependencies_satisfied = true
-next_action = "Extract _validate_approvals_block in core/validation.py, validate with the ordering oracle and the full gate, then reconcile docs to slice 7 complete."
+next_action = "Resolved on 2026-04-23 after extracting _validate_approvals_block in core/validation.py and clearing the ordering oracle plus all required gates."
 done_when = "Slice 7 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 6/14 to 7/14."
+halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
+
+[[observations]]
+id = "validation-slice-8-verification"
+title = "Validation decomposition slice 8"
+status = "open"
+kind = "slice"
+priority = "high"
+boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
+trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
+source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["validation-slice-7-approvals"]
+dependencies_satisfied = true
+next_action = "Extract _validate_verification_block in core/validation.py, validate with the ordering oracle and the full gate, then reconcile docs to slice 8 complete."
+done_when = "Slice 8 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 7/14 to 8/14."
 halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
 
 [[observations]]
