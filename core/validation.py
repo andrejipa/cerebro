@@ -697,6 +697,141 @@ def _validate_audit_block(audit: object, prefix: str = "agent_runtime") -> list[
     return errors
 
 
+def _validate_verification_block(
+    verification: object,
+    prefix: str = "agent_runtime",
+) -> tuple[list[dict], object]:
+    errors: list[dict] = []
+    state_check = None
+
+    if not isinstance(verification, dict):
+        errors.append(error("invalid_agent_verification", f"{prefix}.verification must be an object"))
+    else:
+        errors.extend(
+            _require_exact_keys(
+                verification,
+                VERIFICATION_KEYS,
+                "invalid_agent_verification_keys",
+                f"{prefix}.verification",
+            )
+        )
+        errors.extend(_validate_string(verification.get("last_run_at"), "invalid_agent_verification_field", f"{prefix}.verification.last_run_at"))
+        verification_status = verification.get("status")
+        if not isinstance(verification_status, str) or verification_status not in VALID_VERIFICATION_STATUSES:
+            errors.append(
+                error(
+                    "invalid_agent_verification_status",
+                    f"{prefix}.verification.status must be one of: {', '.join(sorted(VALID_VERIFICATION_STATUSES))}",
+                )
+            )
+        errors.extend(
+            _validate_string_list(
+                verification.get("required_command_ids"),
+                code="invalid_agent_verification_required_command_ids",
+                label=f"{prefix}.verification.required_command_ids",
+            )
+        )
+        errors.extend(
+            _validate_string_list(
+                verification.get("pending_action_ids"),
+                code="invalid_agent_verification_pending_action_ids",
+                label=f"{prefix}.verification.pending_action_ids",
+            )
+        )
+        failed_attempt_count = verification.get("failed_attempt_count")
+        if not _is_int(failed_attempt_count) or failed_attempt_count < 0:
+            errors.append(
+                error(
+                    "invalid_agent_verification_failed_attempt_count",
+                    f"{prefix}.verification.failed_attempt_count must be a non-negative integer",
+                )
+            )
+        state_check = verification.get("state_check")
+        if not isinstance(state_check, dict):
+            errors.append(error("invalid_agent_verification_state_check", f"{prefix}.verification.state_check must be an object"))
+        else:
+            errors.extend(
+                _require_exact_keys(
+                    state_check,
+                    VERIFICATION_STATE_CHECK_KEYS,
+                    "invalid_agent_verification_state_check_keys",
+                    f"{prefix}.verification.state_check",
+                )
+            )
+            state_check_status = state_check.get("status")
+            if not isinstance(state_check_status, str) or state_check_status not in VALID_VERIFICATION_STATUSES:
+                errors.append(
+                    error(
+                        "invalid_agent_verification_state_check_status",
+                        f"{prefix}.verification.state_check.status must be one of: {', '.join(sorted(VALID_VERIFICATION_STATUSES))}",
+                    )
+                )
+            state_check_exit_code = state_check.get("exit_code")
+            if not _is_int(state_check_exit_code):
+                errors.append(
+                    error(
+                        "invalid_agent_verification_state_check_exit_code",
+                        f"{prefix}.verification.state_check.exit_code must be an integer",
+                    )
+                )
+            errors.extend(
+                _validate_string(
+                    state_check.get("message"),
+                    "invalid_agent_verification_state_check_field",
+                    f"{prefix}.verification.state_check.message",
+                )
+            )
+        checks = verification.get("checks")
+        if not isinstance(checks, list):
+            errors.append(error("invalid_agent_verification_checks", f"{prefix}.verification.checks must be an array"))
+        else:
+            if len(checks) > MAX_VERIFICATION_CHECKS:
+                errors.append(
+                    error(
+                        "invalid_agent_verification_checks",
+                        f"{prefix}.verification.checks cannot contain more than {MAX_VERIFICATION_CHECKS} items",
+                    )
+                )
+            for index, check in enumerate(checks):
+                check_prefix = f"{prefix}.verification.checks[{index}]"
+                if not isinstance(check, dict):
+                    errors.append(error("invalid_agent_verification_check_item", f"{check_prefix} must be an object"))
+                    continue
+                errors.extend(
+                    _require_exact_keys(
+                        check,
+                        VERIFICATION_CHECK_KEYS,
+                        "invalid_agent_verification_check_keys",
+                        check_prefix,
+                    )
+                )
+                for field in ("id", "command_id", "artifact_ref", "artifact_sha256", "message"):
+                    errors.extend(_validate_string(check.get(field), "invalid_agent_verification_check_field", f"{check_prefix}.{field}"))
+                artifact_sha256 = check.get("artifact_sha256")
+                if isinstance(artifact_sha256, str) and artifact_sha256 and not _is_valid_sha256(artifact_sha256):
+                    errors.append(
+                        error(
+                            "invalid_agent_verification_check_field",
+                            f"{check_prefix}.artifact_sha256 must be a 64-character lowercase hex string",
+                        )
+                    )
+                errors.extend(
+                    _validate_string_list(
+                        check.get("covered_action_ids"),
+                        code="invalid_agent_verification_check_covered_action_ids",
+                        label=f"{check_prefix}.covered_action_ids",
+                    )
+                )
+                status = check.get("status")
+                if not isinstance(status, str) or status not in {"passed", "failed"}:
+                    errors.append(error("invalid_agent_verification_check_status", f"{check_prefix}.status must be one of: failed, passed"))
+                exit_code = check.get("exit_code")
+                if not _is_int(exit_code):
+                    errors.append(error("invalid_agent_verification_check_exit_code", f"{check_prefix}.exit_code must be an integer"))
+
+    return errors, state_check
+
+
 def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_runtime") -> list[dict]:
     errors: list[dict] = []
 
@@ -861,130 +996,8 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
     errors.extend(batch_registry_errors)
 
     verification = agent_runtime.get("verification")
-    if not isinstance(verification, dict):
-        errors.append(error("invalid_agent_verification", f"{prefix}.verification must be an object"))
-    else:
-        errors.extend(
-            _require_exact_keys(
-                verification,
-                VERIFICATION_KEYS,
-                "invalid_agent_verification_keys",
-                f"{prefix}.verification",
-            )
-        )
-        errors.extend(_validate_string(verification.get("last_run_at"), "invalid_agent_verification_field", f"{prefix}.verification.last_run_at"))
-        verification_status = verification.get("status")
-        if not isinstance(verification_status, str) or verification_status not in VALID_VERIFICATION_STATUSES:
-            errors.append(
-                error(
-                    "invalid_agent_verification_status",
-                    f"{prefix}.verification.status must be one of: {', '.join(sorted(VALID_VERIFICATION_STATUSES))}",
-                )
-            )
-        errors.extend(
-            _validate_string_list(
-                verification.get("required_command_ids"),
-                code="invalid_agent_verification_required_command_ids",
-                label=f"{prefix}.verification.required_command_ids",
-            )
-        )
-        errors.extend(
-            _validate_string_list(
-                verification.get("pending_action_ids"),
-                code="invalid_agent_verification_pending_action_ids",
-                label=f"{prefix}.verification.pending_action_ids",
-            )
-        )
-        failed_attempt_count = verification.get("failed_attempt_count")
-        if not _is_int(failed_attempt_count) or failed_attempt_count < 0:
-            errors.append(
-                error(
-                    "invalid_agent_verification_failed_attempt_count",
-                    f"{prefix}.verification.failed_attempt_count must be a non-negative integer",
-                )
-            )
-        state_check = verification.get("state_check")
-        if not isinstance(state_check, dict):
-            errors.append(error("invalid_agent_verification_state_check", f"{prefix}.verification.state_check must be an object"))
-        else:
-            errors.extend(
-                _require_exact_keys(
-                    state_check,
-                    VERIFICATION_STATE_CHECK_KEYS,
-                    "invalid_agent_verification_state_check_keys",
-                    f"{prefix}.verification.state_check",
-                )
-            )
-            state_check_status = state_check.get("status")
-            if not isinstance(state_check_status, str) or state_check_status not in VALID_VERIFICATION_STATUSES:
-                errors.append(
-                    error(
-                        "invalid_agent_verification_state_check_status",
-                        f"{prefix}.verification.state_check.status must be one of: {', '.join(sorted(VALID_VERIFICATION_STATUSES))}",
-                    )
-                )
-            state_check_exit_code = state_check.get("exit_code")
-            if not _is_int(state_check_exit_code):
-                errors.append(
-                    error(
-                        "invalid_agent_verification_state_check_exit_code",
-                        f"{prefix}.verification.state_check.exit_code must be an integer",
-                    )
-                )
-            errors.extend(
-                _validate_string(
-                    state_check.get("message"),
-                    "invalid_agent_verification_state_check_field",
-                    f"{prefix}.verification.state_check.message",
-                )
-            )
-        checks = verification.get("checks")
-        if not isinstance(checks, list):
-            errors.append(error("invalid_agent_verification_checks", f"{prefix}.verification.checks must be an array"))
-        else:
-            if len(checks) > MAX_VERIFICATION_CHECKS:
-                errors.append(
-                    error(
-                        "invalid_agent_verification_checks",
-                        f"{prefix}.verification.checks cannot contain more than {MAX_VERIFICATION_CHECKS} items",
-                    )
-                )
-            for index, check in enumerate(checks):
-                check_prefix = f"{prefix}.verification.checks[{index}]"
-                if not isinstance(check, dict):
-                    errors.append(error("invalid_agent_verification_check_item", f"{check_prefix} must be an object"))
-                    continue
-                errors.extend(
-                    _require_exact_keys(
-                        check,
-                        VERIFICATION_CHECK_KEYS,
-                        "invalid_agent_verification_check_keys",
-                        check_prefix,
-                    )
-                )
-                for field in ("id", "command_id", "artifact_ref", "artifact_sha256", "message"):
-                    errors.extend(_validate_string(check.get(field), "invalid_agent_verification_check_field", f"{check_prefix}.{field}"))
-                artifact_sha256 = check.get("artifact_sha256")
-                if isinstance(artifact_sha256, str) and artifact_sha256 and not _is_valid_sha256(artifact_sha256):
-                    errors.append(
-                        error(
-                            "invalid_agent_verification_check_field",
-                            f"{check_prefix}.artifact_sha256 must be a 64-character lowercase hex string",
-                        )
-                    )
-                errors.extend(
-                    _validate_string_list(
-                        check.get("covered_action_ids"),
-                        code="invalid_agent_verification_check_covered_action_ids",
-                        label=f"{check_prefix}.covered_action_ids",
-                    )
-                )
-                status = check.get("status")
-                if not isinstance(status, str) or status not in {"passed", "failed"}:
-                    errors.append(error("invalid_agent_verification_check_status", f"{check_prefix}.status must be one of: failed, passed"))
-                exit_code = check.get("exit_code")
-                if not _is_int(exit_code):
-                    errors.append(error("invalid_agent_verification_check_exit_code", f"{check_prefix}.exit_code must be an integer"))
+    verification_errors, state_check = _validate_verification_block(verification, prefix)
+    errors.extend(verification_errors)
 
     memory = agent_runtime.get("memory")
     errors.extend(_validate_memory_block(memory, prefix))
