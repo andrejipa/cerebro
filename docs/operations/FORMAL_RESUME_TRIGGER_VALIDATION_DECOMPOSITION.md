@@ -119,7 +119,9 @@ Required sub-block coverage before slice 1:
 - subsequent commits:
   - one extracted helper per commit
   - title form: `refactor(validate): extract _validate_<block>_block (slice N/M)`
-- stop after every commit for operator review
+- continue automatically at one slice per heartbeat round through slice `11/14`
+  while the whitelist is unchanged and all required gates stay green
+- reintroduce a mandatory operator checkpoint before slice `12/14`
 
 ## Stop Conditions
 
@@ -160,5 +162,7 @@ Every approved slice must clear all of:
 - approved state today: `yes`
 - characterization precondition status: `satisfied`
 - completed slice count: `3/14`
+- observation-center routing:
+  - `validation-slice-4-command-registry` is the current open queue head in `docs/operations/observation_center.toml`
 - next required step:
-  - `operator review of slice 3 (_validate_batch_registry_block) before slice 4 (_validate_command_registry_block)`
+  - `execute slice 4 (_validate_command_registry_block); autonomous continuation is pre-approved through slice 11 while gates stay green`

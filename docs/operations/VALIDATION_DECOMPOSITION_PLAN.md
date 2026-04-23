@@ -3,7 +3,7 @@
 ## Status
 
 - phase: `B`
-- mode: `slice-review-stop`
+- mode: `autonomous-slice-loop`
 - trigger status: `approved / active`
 - current boundary:
   - `docs/`: authorized
@@ -167,7 +167,13 @@ Every future slice under an approved trigger must follow this exact protocol:
    - `python -m unittest tests.test_architecture -v`
    - `python -m unittest tests.test_validate -v`
    - `python -m unittest tests.test_validate_error_ordering -v`
-10. stop after each commit and await operator approval before the next slice
+10. continue automatically at one slice per heartbeat round while all of these
+    stay true:
+    - the next slice is still within slices `4-11`
+    - the active whitelist is unchanged
+    - every required gate stays green
+11. reintroduce a mandatory operator checkpoint before slice `12/14`
+12. stop immediately for operator review on any halt condition
 
 ## Stop Conditions
 
@@ -211,8 +217,13 @@ Halt the future campaign immediately if any of the following becomes true:
   - `python -m unittest tests.test_validate -v` → `76` tests, `0` failures, `3` skips
   - `python -m unittest tests.test_architecture -v` → `51` tests, `0` failures
   - AGENTS-equivalent suite → `840` tests, `0` failures, `6` skips
-- current mandatory stop:
-  - pause for operator review before slice 4 (`_validate_command_registry_block`)
+- current autonomous window:
+  - slices `4-11` are pre-approved for autonomous continuation at one slice per
+    heartbeat round while gates stay green
+- current next autonomous slice:
+  - `_validate_command_registry_block` (`slice 4/14`)
+- next mandatory operator checkpoint:
+  - before `_validate_plan_dependency_relations_block` (`slice 12/14`)
 - completed slice commits:
   - `refactor(validate): extract _validate_memory_block (slice 1/14)`
   - `refactor(validate): extract _validate_execution_policy_block (slice 2/14)`

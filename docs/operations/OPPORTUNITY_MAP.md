@@ -10,6 +10,7 @@
 - Current posture: deliberate freeze remains active for speculative canonical-runtime growth; the latest user-directed session closed the narrow P4 workspace-path resolution slice, and one new formal resume trigger is now active for the validation-decomposition campaign only.
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now open with explicit current snapshots that mark their remaining body as historical evidence by default, reducing residual-intake ambiguity during heartbeat triage.
 - Planning-only `StateStore` decomposition prep is now recorded in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it stays explicitly non-authoritative and does not reopen the freeze.
+- `docs/operations/observation_center.toml` now carries the structured unresolved-work queue; the heartbeat should reconcile and consume that center before falling back to the narrative snapshot fields below, and the markdown snapshots should now be treated as projections of that queue rather than as the primary scheduler surface.
 - Current executable queue:
   - `the tests-only coverage tranche completed without touching core/ or cli/`
   - `direct P5 coverage now exists for decision_runtime, action_identity, discipline_runtime, state_runtime_lock_service, state_session_artifacts_service, and state_retention_service`
@@ -20,23 +21,25 @@
   - `slice 2 is now complete: _validate_execution_policy_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 3 is now complete: _validate_batch_registry_block was extracted in core/validation.py with the ordering oracle still green`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
-- Current queue mode: controlled corrective validation-decomposition slice; slice 3 is complete and the campaign is paused for operator review before slice 4.
+- Current queue mode: controlled corrective validation-decomposition slice; slice 3 is complete, autonomous continuation is now pre-approved through slice 11, and the campaign should pause again before slice 12.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `review slice 3 (_validate_batch_registry_block), then decide whether to start slice 4 (_validate_command_registry_block)`
+- Current next item: `execute slice 4 (_validate_command_registry_block) under the active validation-decomposition whitelist`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
 - Formal resume trigger consumed: `FORMAL_RESUME_TRIGGER_CORE_PATH_RESOLUTION.md`; that slice ended green with `825` tests, `0` failures, `6` skips plus a green `tests.test_architecture` gate.
 - Formal resume trigger active: `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`; authorized scope is limited to `core/validation.py`, `tests/test_validate_error_ordering.py`, and closeout updates in `docs/operations/`.
+- Future local-first improvement note: the observation center now records a blocked follow-on item for a SQLite ledger promotion, but no trigger is open for that migration today.
 - Historical ledger note: the detailed derived-fix chronology and prior queue states remain preserved below under an explicit historical heading; the snapshot above is the only live operational reference.
 
 ## NEXT_ACTION
 
 ```text
 NEXT_ACTION
-- next_required_step: operator_review_validation_slice_3_commit
+- next_required_step: execute_validation_slice_4_command_registry_block
+- observation_center_head: validation-slice-4-command-registry
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: slice 3 extracted `_validate_batch_registry_block` without ordering drift; if operator review accepts it, continue with `_validate_command_registry_block`
+- highest_priority_hypothesis: slices `1-3` stayed green without ordering drift, so the automation should continue with `_validate_command_registry_block` and then advance one slice per round through slice `11/14` unless a halt condition appears
 ```
 
 ## Historical Derived Chronology

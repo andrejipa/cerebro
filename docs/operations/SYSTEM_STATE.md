@@ -13,9 +13,16 @@
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now expose explicit current snapshots that classify their remaining content as historical evidence by default, reducing ambiguity during live triage.
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
-- Current queue mode: controlled corrective validation-decomposition slice; slice 3 is complete and the campaign is paused for operator review before slice 4.
+- `docs/operations/observation_center.toml` now exists as the machine-readable queue for still-resolvable work; unresolved slices, checkpoints, and blockers should be recorded there first, and the markdown snapshots should be treated as human projections of that center rather than as the queue engine itself.
+- Current queue mode: controlled corrective validation-decomposition slice; slice 3 is complete, autonomous continuation is now pre-approved through slice 11, and the campaign should pause again before slice 12.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `review slice 3 (_validate_batch_registry_block), then decide whether to start slice 4 (_validate_command_registry_block)`
+- Current next item: `execute slice 4 (_validate_command_registry_block) under the active validation-decomposition whitelist`
+- Observation-center head item: `validation-slice-4-command-registry`
+- Observation-center structural note:
+  - `queue_authority = machine-primary`
+  - `single_flight = true`
+  - `overlap_policy = wait`
+  - the future SQLite-ledger promotion is recorded only as a blocked follow-on item; no migration boundary is open today
 - Active derived boundaries: `experiments/recall_eval` and `experiments/operational_signals` remain active but non-authoritative; `experiments/operational_signals/suggestions` stays marginal/advisory-only and should not expand without new evidence.
 - The canonical `SCOUT_CONTROL_STATE` block is now materialized below; `OPPORTUNITY_MAP.md` carries only a minimal next-action projection so scout-control state remains single-sourced.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.

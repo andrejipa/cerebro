@@ -42,6 +42,7 @@ At the start of every wakeup:
 
 1. Read `AGENTS.md`.
 2. Read:
+   - `docs/operations/observation_center.toml`
    - `docs/operations/OPPORTUNITY_MAP.md`
    - `docs/operations/SYSTEM_STATE.md`
    - `docs/operations/BUG_REPORT.md`
@@ -52,6 +53,12 @@ At the start of every wakeup:
 Treat only the top `## Current Snapshot` sections and explicit live fields such
 as `Current next item`, `Current next derived item`, `Current queue mode`, and
 `Last suite result` as authoritative for the current loop.
+
+Treat `docs/operations/observation_center.toml` as the machine-readable
+front-door queue for unresolved work. If it disagrees with the live snapshot or
+trigger state, reconcile that contradiction before starting a new slice.
+It is the machine-primary queue. `SYSTEM_STATE.md` and `OPPORTUNITY_MAP.md`
+should be updated as projections after real work lands.
 
 Anything under headings containing `Historical`, `Bootstrap`, `Closure`,
 `Appendix`, or preserved history is archival context only unless the live
@@ -69,11 +76,12 @@ that contradiction itself as a potential corrective slice.
 Use this authority order when deciding what to do:
 
 1. Mandatory gate status in the current workspace
-2. Live snapshot fields in `OPPORTUNITY_MAP.md` and `SYSTEM_STATE.md`
-3. Current checked-in derived artifacts and current workspace evidence
-4. Fresh user instructions in this thread
-5. Recent completed loop iterations
-6. Historical context
+2. Open observations in `docs/operations/observation_center.toml`
+3. Live snapshot fields in `OPPORTUNITY_MAP.md` and `SYSTEM_STATE.md`
+4. Current checked-in derived artifacts and current workspace evidence
+5. Fresh user instructions in this thread
+6. Recent completed loop iterations
+7. Historical context
 
 Do not let historical intent override present evidence.
 
@@ -234,6 +242,19 @@ Non-goals:
 ## Queue Philosophy
 
 When a live queue item exists, execute it.
+
+When `observation_center.toml` contains at least one `open` observation whose
+boundary is currently authorized and whose dependencies are satisfied, treat the
+highest-priority such observation as the live queue head.
+
+Maintain the center mechanically:
+
+- move only one observation materially forward per wakeup
+- do not start overlapping work while another round is still in flight
+- if an observation becomes blocked by gate, boundary, or trigger drift, record
+  that fact in the center before updating the projections
+- keep future or unauthorized work recorded as `waiting` or `blocked`, not as
+  improvised narrative in the markdown snapshots
 
 When the live queue is clean, do not stop automatically. Instead, move into
 quiet scouting mode:

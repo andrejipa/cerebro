@@ -1,0 +1,79 @@
+[center]
+version = 1
+updated_at = "2026-04-23T12:05:00-04:00"
+queue_authority = "machine-primary"
+projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
+selection_contract = "Select the highest-priority observation whose status is open, whose boundary is authorized, whose trigger requirements are satisfied, and whose dependencies are already resolved."
+selection_order = "status=open first, then priority, then the current checked-in order unless a later docs-only reconciliation records a different stable tie-break."
+single_flight = true
+overlap_policy = "If a prior round is still in flight, wait instead of starting overlapping work."
+idempotency_contract = "Each round may move at most one observation materially forward; repeated wakeups must reconcile the same head item instead of duplicating progress."
+notify_once_blocked = true
+history_policy = "Resolved, blocked, and waiting observations remain recorded here until a later docs-only reconciliation retires or supersedes them."
+
+# Status vocabulary:
+# - open: executable now inside the current authorized boundary
+# - waiting: real item, but intentionally paused on a dependency or checkpoint
+# - blocked: real item, but not executable under the current boundary or gate
+# - resolved: closed with evidence and retained only for nearby continuity
+#
+# Kind vocabulary:
+# - slice: one bounded implementation unit
+# - checkpoint: explicit human or gate review stop before the next slice
+# - blocker: real item that cannot proceed until boundary, trigger, or gate changes
+
+[projections]
+system_state = "Mirror the live queue mode, queue head, and gate summary after each real round."
+opportunity_map = "Mirror the live next action and minimal human-facing rationale after each real round."
+trigger_docs = "Keep any active trigger aligned with the current open slice and mandatory stop conditions."
+
+[[observations]]
+id = "validation-slice-4-command-registry"
+title = "Validation decomposition slice 4"
+status = "open"
+kind = "slice"
+priority = "high"
+boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
+trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
+source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = []
+dependencies_satisfied = true
+next_action = "Extract _validate_command_registry_block in core/validation.py, validate with the ordering oracle and the full gate, then reconcile docs to slice 4 complete."
+done_when = "Slice 4 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 3/14 to 4/14."
+halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
+
+[[observations]]
+id = "validation-slice-12-manual-checkpoint"
+title = "Validation decomposition high-coupling checkpoint"
+status = "waiting"
+kind = "checkpoint"
+priority = "high"
+boundary = "docs/operations/ only until slices 4-11 finish"
+trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
+source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = false
+dependencies = ["validation-slice-11-task-action-ref-relations"]
+dependencies_satisfied = false
+next_action = "Pause for explicit operator review before _validate_plan_dependency_relations_block (slice 12/14)."
+done_when = "A later live snapshot explicitly re-authorizes continuation beyond slice 11."
+halt_if = "Slice 11 is not complete, the whitelist changes, or any required gate is no longer green."
+
+[[observations]]
+id = "observation-center-sqlite-ledger"
+title = "Promote the local observation center from TOML to SQLite"
+status = "blocked"
+kind = "blocker"
+priority = "medium"
+boundary = "new formal resume trigger required before any runtime, tooling, or migration work outside docs/"
+trigger = "not open"
+source_plan = "none yet"
+source_snapshot = "research conclusion recorded on 2026-04-23"
+auto_continuation = false
+dependencies = ["validation-slice-4-command-registry", "validation-slice-12-manual-checkpoint"]
+dependencies_satisfied = false
+next_action = "If the hardened TOML center proves insufficient, open a new docs-only decision/trigger for a local SQLite ledger with observations, observation_dependencies, round_runs, round_events, leases, and projections."
+done_when = "A later trigger authorizes and closes a local-first ledger migration."
+halt_if = "The current docs-only/TOML center remains sufficient, or a higher-priority open observation still dominates."
