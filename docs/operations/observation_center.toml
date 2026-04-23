@@ -237,7 +237,7 @@ halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITIO
 [[observations]]
 id = "validation-slice-14-manual-checkpoint"
 title = "Validation decomposition post-slice-13 checkpoint"
-status = "waiting"
+status = "resolved"
 kind = "checkpoint"
 priority = "high"
 boundary = "docs/operations/ only until explicit continuation beyond slice 13 is approved"
@@ -247,9 +247,26 @@ source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
 auto_continuation = false
 dependencies = ["validation-slice-13-verification-relations"]
 dependencies_satisfied = true
-next_action = "Pause for explicit operator reassessment before any slice 14 work (_validate_action_relations_block). No continuation beyond slice 13 is authorized until this checkpoint is cleared."
+next_action = "Resolved on 2026-04-23 after explicit operator reassessment authorized continuation into _validate_action_relations_block (slice 14/14)."
 done_when = "A later live snapshot explicitly re-authorizes continuation into slice 14 or records a halt/closeout decision for the final high-coupling slice."
 halt_if = "Slice 13 is not complete, the whitelist changes, or any required gate is no longer green."
+
+[[observations]]
+id = "validation-slice-14-action-relations"
+title = "Validation decomposition slice 14"
+status = "open"
+kind = "slice"
+priority = "high"
+boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
+trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
+source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = false
+dependencies = ["validation-slice-14-manual-checkpoint"]
+dependencies_satisfied = true
+next_action = "Extract _validate_action_relations_block in core/validation.py, preserve exact ordering/shape behavior, and stop for closeout reassessment afterward."
+done_when = "Slice 14 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 13/14 to 14/14 or record a halt with evidence."
+halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, a gate turns red, or validation shape/order confidence cannot be preserved with confidence."
 
 [[observations]]
 id = "observation-center-sqlite-ledger"

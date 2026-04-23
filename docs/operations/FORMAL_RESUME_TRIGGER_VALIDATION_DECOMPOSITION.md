@@ -168,6 +168,6 @@ Every approved slice must clear all of:
 - characterization precondition status: `satisfied`
 - completed slice count: `13/14`
 - observation-center routing:
-  - `validation-slice-14-manual-checkpoint` is the current waiting queue head in `docs/operations/observation_center.toml`
+  - `validation-slice-14-action-relations` is the current open queue head in `docs/operations/observation_center.toml`
 - next required step:
-  - `pause for explicit operator reassessment before slice 14 (_validate_action_relations_block); continuation beyond slice 13 remains not pre-approved`
+  - `execute slice 14 (_validate_action_relations_block); continuation beyond slice 14 remains not pre-approved`

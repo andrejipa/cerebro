@@ -31,9 +31,9 @@
   - `slice 11 is now complete: _validate_task_action_ref_relations_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 12 is now complete: _validate_plan_dependency_relations_block was extracted in core/validation.py with the ordering oracle still green`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
-- Current queue mode: validation-decomposition slice `13` is complete; the mandatory reassessment checkpoint is now active before slice `14`, and no continuation is pre-approved beyond slice `13`.
+- Current queue mode: the mandatory reassessment checkpoint before slice `14` is now consumed; slice `14` is the current authorized head, and no continuation is pre-approved beyond it.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `pause for explicit operator reassessment before slice 14 (_validate_action_relations_block)`
+- Current next item: `execute slice 14 (_validate_action_relations_block)`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -46,10 +46,10 @@
 
 ```text
 NEXT_ACTION
-- next_required_step: operator_reassess_validation_slice_14_checkpoint
-- observation_center_head: validation-slice-14-manual-checkpoint
+- next_required_step: execute_validation_slice_14_action_relations
+- observation_center_head: validation-slice-14-action-relations
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: slice `13` also stayed green without ordering drift, but `action_relations` remains the highest-coupling tail block in the campaign, so the live trigger and plan require a fresh operator reassessment before any continuation into `_validate_action_relations_block` (`slice 14/14`)
+- highest_priority_hypothesis: the reassessment checkpoint is now explicitly cleared, so the highest-priority executable item is `_validate_action_relations_block` (`slice 14/14`); because this is the final and highest-coupling tail block, the loop must still halt if ordering/shape confidence exceeds the pinned coverage
 ```
 
 ## Historical Derived Chronology
