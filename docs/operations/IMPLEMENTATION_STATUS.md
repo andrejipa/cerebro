@@ -2,13 +2,13 @@
 
 ## Current Live Gate — 2026-04-22
 
-- Suite gate: `759` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner
+- Suite gate: `770` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner
 - Architecture gate: `51` tests, `0` failures
 - Derived `recall_eval` gate: `49` tests, `0` failures in `experiments/recall_eval/tests`
 - Derived `operational_signals` base gate: `31` tests, `0` failures in `experiments/operational_signals/tests`
 - Derived `operational_signals/suggestions` gate: `97` tests, `0` failures in `experiments/operational_signals/suggestions/tests`
 - Canonical-runtime posture: deliberate freeze remains active for new core capability growth
-- Canonical-runtime status: gate green; raw digest primitives now converge in `core/digests.py` with direct regression coverage, Slice 2 now routes the read-model trio through `core/state_read_model_service.py` behind the unchanged `StateStore` facade, and the current user-directed session is continuing through the mapped StateStore sequence with Slice 3
+- Canonical-runtime status: gate green; raw digest primitives now converge in `core/digests.py` with direct regression coverage, Slice 3 now routes the session artifact/authority cluster through `core/state_session_artifacts_service.py` behind the unchanged `StateStore` facade while leaving revision ordering and pending refresh in `StateStore`, and the current user-directed session is continuing through the mapped StateStore sequence with Slice 4
 - Derived-track posture:
   - `experiments/recall_eval/` has been implemented and benchmarked against real corpora; it remains experimental, derived, and not promoted
   - `experiments/operational_signals/` has been implemented and is ready for opt-in derived use; its initial registry is currently empty, which is the correct state until real insufficiency signals are observed

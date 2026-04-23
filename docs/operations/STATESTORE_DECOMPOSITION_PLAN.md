@@ -3,8 +3,9 @@
 ## Status
 
 - Slice 1 (Contract Extraction) executada em 2026-04-22 e commitada em `441facf`.
-- Slice 2 (Read-Model Extraction) executada em 2026-04-22 no working tree corrente; gate pós-slice confirmado verde.
-- Slices 3–5 planejadas; aguardam execução incremental.
+- Slice 2 (Read-Model Extraction) executada em 2026-04-22 e commitada em `579c4a4`.
+- Slice 3 (Session Lifecycle Extraction) executada em 2026-04-22 no working tree corrente; gate pós-slice confirmado verde.
+- Slices 4–5 planejadas; aguardam execução incremental.
 
 ### Slice 1 — Contract Extraction (Concluída 2026-04-22)
 
@@ -43,6 +44,30 @@
 - `tests/test_state_store.py`: 3 guards de passthrough da facade
 - Gate pós-slice: 759 testes, 0 falhas, 6 skips; 51 testes arquiteturais, 0 falhas
 - Comportamento canônico preservado; nenhuma mudança de CLI, schema ou autoridade
+
+### Slice 3 — Session Lifecycle Extraction (Concluída 2026-04-22)
+
+- `core/state_session_artifacts_service.py` criado para encapsular o cluster de
+  artefatos/autoridade de sessão:
+  - claim/live-proof storage e addressing
+  - owner-binding e hash helpers
+  - leitura/validação de claim, live proof e `session.local.json`
+  - snapshots/restore de claim e live proof
+- `core/state_store.py` preserva a surface existente e agora delega esse
+  cluster para o serviço via wrappers tardios, mantendo no facade a ordenação
+  de revisão, `session.refresh.pending.json`, recovery transacional e locking
+- `tests/test_state_session_artifacts_service.py`: 4 testes diretos do serviço
+- `tests/test_state_store.py`: 3 guards de delegação da facade
+- `tests/test_windows_credential_store.py`: bateria direta convertida para mocks
+  de `Advapi32`, removendo dependência do host real e mantendo cobertura do
+  módulo WinCred
+- `tests/test_architecture.py`: allowlist ajustada para permitir serialização
+  JSON nesse helper específico sem reabrir autoridade sobre `state.json`
+- Gate pós-slice: 770 testes, 0 falhas, 6 skips; 51 testes arquiteturais, 0 falhas
+- Debate de boundary: a posição vencedora manteve `open_session`,
+  `close_session`, `discard_session`, pending refresh e locking em `StateStore`,
+  extraindo apenas a camada de artefatos/autoridade para evitar cruzar cedo com
+  o seam de validation/retention
 
 ## Why This Exists
 

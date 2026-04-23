@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import base64
 from copy import deepcopy
 import errno
 import hashlib
@@ -13,7 +12,6 @@ import secrets
 import shutil
 import threading
 import time
-import zlib
 from contextlib import contextmanager
 from collections import deque
 from datetime import datetime, timezone
@@ -43,57 +41,38 @@ from core.read_models import (
     ValidationRecord,
 )
 from core.state_read_model_service import StateReadModelService
+from core.state_session_artifacts_service import (
+    SESSION_CLAIMS_DIR_ENV_VAR,
+    SESSION_CLAIM_BACKEND_FILE,
+    SESSION_CLAIM_BACKEND_WINCRED,
+    SESSION_LIVE_PROOFS_DIR_ENV_VAR,
+    SESSION_LIVE_PROOF_BACKEND_FILE,
+    SESSION_LIVE_PROOF_BACKEND_WINCRED,
+    WINCRED_COMPRESSED_PAYLOAD_PREFIX,
+    WINCRED_PACKED_SESSION_CLAIM_PREFIX,
+    WINCRED_PACKED_SESSION_LIVE_PROOF_PREFIX,
+    WINCRED_SESSION_CLAIM_FIELDS,
+    WINCRED_SESSION_LIVE_PROOF_FIELDS,
+    StateSessionArtifactsService,
+    WindowsCredentialStoreError,
+    delete_generic_credential,
+    read_generic_credential,
+    write_generic_credential,
+)
 from core.schema import build_initial_state
 from core.validation import error, validate_session_data, validate_state_data
-
-if os.name == "nt":
-    from core.windows_credential_store import (
-        WindowsCredentialStoreError,
-        delete_generic_credential,
-        read_generic_credential,
-        write_generic_credential,
-    )
-else:  # pragma: no cover - imported only on Windows-backed live-proof storage
-    WindowsCredentialStoreError = RuntimeError
-    delete_generic_credential = None
-    read_generic_credential = None
-    write_generic_credential = None
 
 VALIDATION_RETRY_LIMIT = 3
 RUNTIME_LOCK_TIMEOUT_SECONDS = 5.0
 RUNTIME_LOCK_POLL_SECONDS = 0.01
 RUNTIME_LOCK_RELEASE_RETRY_LIMIT = 3
 TRACE_DURABILITY_ENV_VAR = "CEREBRO_TRACE_DURABILITY"
-SESSION_CLAIMS_DIR_ENV_VAR = "CEREBRO_SESSION_CLAIMS_DIR"
-SESSION_LIVE_PROOFS_DIR_ENV_VAR = "CEREBRO_SESSION_LIVE_PROOFS_DIR"
 TRACE_DURABILITY_BALANCED = "balanced"
 TRACE_DURABILITY_STRICT = "strict"
 TRACE_DURABILITY_MODES = {TRACE_DURABILITY_BALANCED, TRACE_DURABILITY_STRICT}
-SESSION_CLAIM_BACKEND_FILE = "file"
-SESSION_CLAIM_BACKEND_WINCRED = "wincred"
-SESSION_LIVE_PROOF_BACKEND_FILE = "file"
-SESSION_LIVE_PROOF_BACKEND_WINCRED = "wincred"
 RETENTION_NON_CONSOLIDATION_EVENT_LIMIT = 20_000
 RETENTION_VERIFICATION_GROUP_LIMIT = 20
 RETENTION_ACTION_GROUP_LIMIT = 64
-WINCRED_COMPRESSED_PAYLOAD_PREFIX = b"CZX1"
-WINCRED_PACKED_SESSION_CLAIM_PREFIX = b"CZX2"
-WINCRED_PACKED_SESSION_LIVE_PROOF_PREFIX = b"CZX3"
-WINCRED_SESSION_CLAIM_FIELDS = (
-    "claim_id",
-    "session_id",
-    "root_sha256",
-    "session_token_sha256",
-    "live_proof_id",
-    "session_live_proof_sha256",
-    "owner_binding_sha256",
-)
-WINCRED_SESSION_LIVE_PROOF_FIELDS = (
-    "proof_id",
-    "session_id",
-    "root_sha256",
-    "session_live_proof",
-)
 _T = TypeVar("_T")
 
 
@@ -121,8 +100,19 @@ class StateStore:
         self.state_path = self.cerebro_dir / "state.json"
         self.session_path = self.cerebro_dir / "session.local.json"
         self.session_refresh_pending_path = self.cerebro_dir / "session.refresh.pending.json"
-        self.claims_dir = self._resolve_session_claims_dir()
-        self.live_proofs_dir = self._resolve_session_live_proofs_dir()
+        self._session_artifacts = StateSessionArtifactsService(
+            root=self.root,
+            session_path=self.session_path,
+            read_optional_file_bytes=self._read_optional_file_bytes,
+            write_bytes_atomic=self._write_bytes_atomic,
+            error_cls=StateStoreError,
+            read_generic_credential_func=lambda target_name: read_generic_credential(target_name),
+            write_generic_credential_func=lambda target_name, payload: write_generic_credential(target_name, payload),
+            delete_generic_credential_func=lambda target_name: delete_generic_credential(target_name),
+            windows_credential_store_error_cls=WindowsCredentialStoreError,
+        )
+        self.claims_dir = self._session_artifacts.claims_dir
+        self.live_proofs_dir = self._session_artifacts.live_proofs_dir
         self.lock_path = self.cerebro_dir / "runtime.lock"
         self.logs_dir = self.cerebro_dir / "logs"
         self.events_path = self.logs_dir / "events.jsonl"
@@ -4992,3 +4982,128 @@ class StateStore:
             yield
         finally:
             self._release_runtime_lock()
+
+    # Session artifact extraction wrappers.
+    # These late-bound method redefinitions keep the existing StateStore
+    # surface stable while delegating the session artifact/authority cluster to
+    # StateSessionArtifactsService.
+
+    def _hash_session_token(self, token: str) -> str:
+        return self._session_artifacts.hash_session_token(token)
+
+    def _hash_session_live_proof(self, proof: str) -> str:
+        return self._session_artifacts.hash_session_live_proof(proof)
+
+    def _resolve_session_claims_dir(self) -> Path:
+        return self._session_artifacts.resolve_session_claims_dir()
+
+    def _resolve_session_live_proofs_dir(self) -> Path:
+        return self._session_artifacts.resolve_session_live_proofs_dir()
+
+    def _session_claim_path(self, claim_id: str) -> Path:
+        return self._session_artifacts.session_claim_path(claim_id)
+
+    def _session_live_proof_path(self, proof_id: str) -> Path:
+        return self._session_artifacts.session_live_proof_path(proof_id)
+
+    def _session_claim_backend(self) -> str:
+        return self._session_artifacts.session_claim_backend()
+
+    def _session_claim_target_name(self, claim_id: str) -> str:
+        return self._session_artifacts.session_claim_target_name(claim_id)
+
+    def _legacy_session_claim_target_name(self, claim_id: str) -> str:
+        return self._session_artifacts.legacy_session_claim_target_name(claim_id)
+
+    def _session_claim_location(self, claim_id: str, *, backend: str | None = None) -> str:
+        return self._session_artifacts.session_claim_location(claim_id, backend=backend)
+
+    def _session_live_proof_backend(self) -> str:
+        return self._session_artifacts.session_live_proof_backend()
+
+    def _session_live_proof_target_name(self, proof_id: str) -> str:
+        return self._session_artifacts.session_live_proof_target_name(proof_id)
+
+    def _legacy_session_live_proof_target_name(self, proof_id: str) -> str:
+        return self._session_artifacts.legacy_session_live_proof_target_name(proof_id)
+
+    def _session_live_proof_location(self, proof_id: str, *, backend: str | None = None) -> str:
+        return self._session_artifacts.session_live_proof_location(proof_id, backend=backend)
+
+    def _hash_root_identity(self) -> str:
+        return self._session_artifacts.hash_root_identity()
+
+    def _hash_session_owner_binding(self, binding: str) -> str:
+        return self._session_artifacts.hash_session_owner_binding(binding)
+
+    def _current_session_owner_binding(self) -> str:
+        return self._session_artifacts.current_session_owner_binding()
+
+    def _process_binding_identity(self, pid: int) -> str:
+        return self._session_artifacts.process_binding_identity(pid)
+
+    def _proc_process_binding_identity(self, pid: int) -> str:
+        return self._session_artifacts.proc_process_binding_identity(pid)
+
+    def _windows_process_binding_identity(self, pid: int) -> str:
+        return self._session_artifacts.windows_process_binding_identity(pid)
+
+    def _write_session_claim(self, claim_data: dict) -> None:
+        self._session_artifacts.write_session_claim(claim_data)
+
+    def _write_session_live_proof(self, proof_data: dict) -> None:
+        self._session_artifacts.write_session_live_proof(proof_data)
+
+    def _read_optional_session_claim_bytes(self, claim_id: object, *, backend: str | None = None) -> bytes | None:
+        return self._session_artifacts.read_optional_session_claim_bytes(claim_id, backend=backend)
+
+    def _write_session_claim_bytes(self, claim_id: object, payload: bytes, *, backend: str | None = None) -> None:
+        self._session_artifacts.write_session_claim_bytes(claim_id, payload, backend=backend)
+
+    def _read_optional_session_live_proof_bytes(self, proof_id: object, *, backend: str | None = None) -> bytes | None:
+        return self._session_artifacts.read_optional_session_live_proof_bytes(proof_id, backend=backend)
+
+    def _write_session_live_proof_bytes(self, proof_id: object, payload: bytes, *, backend: str | None = None) -> None:
+        self._session_artifacts.write_session_live_proof_bytes(proof_id, payload, backend=backend)
+
+    def _read_session_claim_file(self, claim_id: object) -> tuple[dict | None, list[dict]]:
+        return self._session_artifacts.read_session_claim_file(claim_id)
+
+    def _read_validated_session_claim(self, session_data: dict) -> tuple[dict | None, list[dict]]:
+        return self._session_artifacts.read_validated_session_claim(session_data)
+
+    def _remove_session_claim(self, claim_id: object, *, backend: str | None = None) -> None:
+        self._session_artifacts.remove_session_claim(claim_id, backend=backend)
+
+    def _capture_session_claim_snapshot(self, claim_id: object, *, label: str) -> dict | None:
+        return self._session_artifacts.capture_session_claim_snapshot(claim_id, label=label)
+
+    def _restore_session_claim_snapshot(self, snapshot: dict) -> None:
+        self._session_artifacts.restore_session_claim_snapshot(snapshot)
+
+    def _read_session_live_proof_file(self, proof_id: object) -> tuple[dict | None, list[dict]]:
+        return self._session_artifacts.read_session_live_proof_file(proof_id)
+
+    def _read_validated_session_live_proof(self, session_data: dict, claim_data: dict) -> tuple[dict | None, list[dict]]:
+        return self._session_artifacts.read_validated_session_live_proof(session_data, claim_data)
+
+    def _remove_session_live_proof(self, proof_id: object, *, backend: str | None = None) -> None:
+        self._session_artifacts.remove_session_live_proof(proof_id, backend=backend)
+
+    def _remove_session_live_proof_by_path(self, proof_path: Path) -> None:
+        self._session_artifacts.remove_session_live_proof_by_path(proof_path)
+
+    def _is_valid_sha256_string(self, value: str) -> bool:
+        return self._session_artifacts.is_valid_sha256_string(value)
+
+    def _read_session_file(self) -> tuple[dict | None, list[dict]]:
+        return self._session_artifacts.read_session_file()
+
+    def _active_session_live_proof_id(self, session_data: dict) -> str | None:
+        return self._session_artifacts.active_session_live_proof_id(session_data)
+
+    def _capture_session_live_proof_snapshot(self, proof_id: object, *, label: str) -> dict | None:
+        return self._session_artifacts.capture_session_live_proof_snapshot(proof_id, label=label)
+
+    def _restore_session_live_proof_snapshot(self, snapshot: dict) -> None:
+        self._session_artifacts.restore_session_live_proof_snapshot(snapshot)

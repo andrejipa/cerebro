@@ -1122,10 +1122,14 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
     def test_only_state_store_serializes_json_for_runtime(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
+        allowed_json_helpers = {
+            REPO_ROOT / "core" / "state_store.py",
+            REPO_ROOT / "core" / "state_session_artifacts_service.py",
+        }
         offenders: list[str] = []
 
         for path in runtime_files:
-            if path == REPO_ROOT / "core" / "state_store.py":
+            if path in allowed_json_helpers:
                 continue
             content = path.read_text(encoding="utf-8")
             if "json.load(" in content or "json.dump(" in content:

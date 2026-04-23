@@ -2,7 +2,7 @@
 
 ## Current Snapshot — 2026-04-22
 
-- Suite gate is currently green in this shell: `759` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
+- Suite gate is currently green in this shell: `770` tests, `0` failures, `6` skips via the exact AGENTS-equivalent workspace-local-temp runner; this is the live source of truth for the shell.
 - Architecture gate confirmed green: `51` tests, `0` failures via `python -m unittest tests.test_architecture -v`.
 - Derived `recall_eval` validation remains green after the latest slice: `49` tests, `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation is green after the latest overlapping-writer lock hardening: `31` tests, `0` failures in `experiments/operational_signals/tests`.
@@ -13,12 +13,12 @@
 - Current executable queue:
   - `canonical runtime: ordered hardening resumed after the canonical gate returned green`
   - `latest runtime slice: raw sha256 helpers now converge in core/digests.py with direct regression coverage`
-  - `latest StateStore slice: Slice 2 extracted the read-model trio behind the existing facade via core/state_read_model_service.py`
-  - `next runtime slice: continue StateStore decomposition with Slice 3 (session lifecycle extraction)`
+  - `latest StateStore slice: Slice 3 extracted the session artifact/authority cluster behind the existing facade via core/state_session_artifacts_service.py while keeping revision ordering, pending refresh, and locking in StateStore`
+  - `next runtime slice: continue StateStore decomposition with Slice 4 (validation/retention extraction)`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
 - Current queue mode: execution; the canonical gate is green again, so bounded ordered slices may proceed.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `ordered execution — continue the mapped StateStore sequence with Slice 3 (session lifecycle extraction)`
+- Current next item: `ordered execution — continue the mapped StateStore sequence with Slice 4 (validation/retention extraction)`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -29,9 +29,9 @@
 
 ```text
 NEXT_ACTION
-- next_required_step: session_lifecycle_extraction
+- next_required_step: validation_retention_extraction
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: after the read-model cluster moved cleanly behind the facade, the next highest-leverage StateStore seam is session ownership and crash-recovery lifecycle, still isolated from validation/retention and low-level locking
+- highest_priority_hypothesis: after the session artifact/authority helper moved cleanly behind the facade, the next highest-leverage StateStore seam is the validation/retention cycle, which still clusters retry rules, structural checks, and retention side effects under the same authority object
 ```
 
 ## Historical Derived Chronology

@@ -962,6 +962,58 @@ class StateStoreTests(unittest.TestCase):
             self.assertIs(result, expected)
             delegated.assert_called_once_with(agent_runtime=agent_runtime)
 
+    def test_write_session_claim_delegates_to_session_artifacts_service(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            store = StateStore(Path(tmp_dir))
+            claim_data = {"claim_id": "claim-1"}
+
+            with mock.patch.object(
+                store._session_artifacts,
+                "write_session_claim",
+                return_value=None,
+            ) as delegated:
+                store._write_session_claim(claim_data)
+
+            delegated.assert_called_once_with(claim_data)
+
+    def test_read_session_file_delegates_to_session_artifacts_service(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            store = StateStore(Path(tmp_dir))
+            expected = ({"session_id": "session-1"}, [])
+
+            with mock.patch.object(
+                store._session_artifacts,
+                "read_session_file",
+                return_value=expected,
+            ) as delegated:
+                result = store._read_session_file()
+
+            delegated.assert_called_once_with()
+            self.assertEqual(result, expected)
+
+    def test_capture_session_live_proof_snapshot_delegates_to_session_artifacts_service(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            store = StateStore(Path(tmp_dir))
+            expected = {
+                "label": "external session live proof",
+                "proof_id": "proof-1",
+                "backend": "file",
+                "bytes": b"payload",
+            }
+
+            with mock.patch.object(
+                store._session_artifacts,
+                "capture_session_live_proof_snapshot",
+                return_value=expected,
+            ) as delegated:
+                snapshot = store._capture_session_live_proof_snapshot(
+                    "proof-1",
+                    label="external session live proof",
+                )
+
+            delegated.assert_called_once_with("proof-1", label="external session live proof")
+            self.assertEqual(snapshot, expected)
+
     def test_trace_events_remain_single_writer_under_concurrent_runtime_event_appends(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
