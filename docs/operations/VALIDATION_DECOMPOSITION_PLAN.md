@@ -13,6 +13,9 @@
 - characterization status:
   - `tests/test_validate_error_ordering.py` added with `15` tests
   - coverage split: `14` per-block malformed payloads + `1` mixed aggregate-order case
+- slice progress:
+  - completed: `1/14`
+  - latest slice: `_validate_memory_block`
 - current live gate:
   - AGENTS-equivalent suite: `840` tests, `0` failures, `6` skips
   - architecture gate: `51` tests, `0` failures
@@ -209,4 +212,6 @@ Halt the future campaign immediately if any of the following becomes true:
   - `python -m unittest tests.test_architecture -v` → `51` tests, `0` failures
   - AGENTS-equivalent suite → `840` tests, `0` failures, `6` skips
 - current mandatory stop:
-  - pause for operator review before slice 1 (`_validate_memory_block`)
+  - pause for operator review before slice 2 (`_validate_execution_policy_block`)
+- completed slice commits:
+  - `refactor(validate): extract _validate_memory_block (slice 1/14)`

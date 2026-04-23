@@ -159,5 +159,6 @@ Every approved slice must clear all of:
 - candidate first slice: `_validate_memory_block`
 - approved state today: `yes`
 - characterization precondition status: `satisfied`
+- completed slice count: `1/14`
 - next required step:
-  - `operator review of the characterization-oracle commit before slice 1 (_validate_memory_block)`
+  - `operator review of slice 1 (_validate_memory_block) before slice 2 (_validate_execution_policy_block)`

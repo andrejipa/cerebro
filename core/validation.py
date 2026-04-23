@@ -189,6 +189,53 @@ def _validate_checkpoint_block(checkpoint: object, prefix: str = "checkpoint") -
     return errors
 
 
+def _validate_memory_block(memory: object, prefix: str = "agent_runtime") -> list[dict]:
+    errors: list[dict] = []
+
+    if not isinstance(memory, dict):
+        errors.append(error("invalid_agent_memory", f"{prefix}.memory must be an object"))
+    else:
+        errors.extend(_require_exact_keys(memory, MEMORY_KEYS, "invalid_agent_memory_keys", f"{prefix}.memory"))
+        notes = memory.get("notes")
+        if not isinstance(notes, list):
+            errors.append(error("invalid_agent_memory_notes", f"{prefix}.memory.notes must be an array"))
+        else:
+            if len(notes) > MAX_MEMORY_NOTES:
+                errors.append(error("invalid_agent_memory_notes", f"{prefix}.memory.notes cannot contain more than {MAX_MEMORY_NOTES} items"))
+            for index, note in enumerate(notes):
+                note_prefix = f"{prefix}.memory.notes[{index}]"
+                if not isinstance(note, dict):
+                    errors.append(error("invalid_agent_memory_note_item", f"{note_prefix} must be an object"))
+                    continue
+                errors.extend(_require_exact_keys(note, MEMORY_NOTE_KEYS, "invalid_agent_memory_note_keys", note_prefix))
+                for field in ("id", "summary", "source", "updated_at"):
+                    errors.extend(
+                        _validate_non_empty_string(
+                            note.get(field),
+                            "invalid_agent_memory_note_field",
+                            f"{note_prefix}.{field}",
+                        )
+                    )
+                kind = note.get("kind")
+                if not isinstance(kind, str) or kind not in VALID_MEMORY_KINDS:
+                    errors.append(
+                        error(
+                            "invalid_agent_memory_note_kind",
+                            f"{note_prefix}.kind must be one of: {', '.join(sorted(VALID_MEMORY_KINDS))}",
+                        )
+                    )
+                ttl_days = note.get("ttl_days")
+                if not _is_int(ttl_days) or ttl_days < 0 or ttl_days > MAX_MEMORY_TTL_DAYS:
+                    errors.append(
+                        error(
+                            "invalid_agent_memory_note_ttl_days",
+                            f"{note_prefix}.ttl_days must be an integer between 0 and {MAX_MEMORY_TTL_DAYS}",
+                        )
+                    )
+
+    return errors
+
+
 def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_runtime") -> list[dict]:
     errors: list[dict] = []
 
@@ -779,46 +826,7 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
                     errors.append(error("invalid_agent_verification_check_exit_code", f"{check_prefix}.exit_code must be an integer"))
 
     memory = agent_runtime.get("memory")
-    if not isinstance(memory, dict):
-        errors.append(error("invalid_agent_memory", f"{prefix}.memory must be an object"))
-    else:
-        errors.extend(_require_exact_keys(memory, MEMORY_KEYS, "invalid_agent_memory_keys", f"{prefix}.memory"))
-        notes = memory.get("notes")
-        if not isinstance(notes, list):
-            errors.append(error("invalid_agent_memory_notes", f"{prefix}.memory.notes must be an array"))
-        else:
-            if len(notes) > MAX_MEMORY_NOTES:
-                errors.append(error("invalid_agent_memory_notes", f"{prefix}.memory.notes cannot contain more than {MAX_MEMORY_NOTES} items"))
-            for index, note in enumerate(notes):
-                note_prefix = f"{prefix}.memory.notes[{index}]"
-                if not isinstance(note, dict):
-                    errors.append(error("invalid_agent_memory_note_item", f"{note_prefix} must be an object"))
-                    continue
-                errors.extend(_require_exact_keys(note, MEMORY_NOTE_KEYS, "invalid_agent_memory_note_keys", note_prefix))
-                for field in ("id", "summary", "source", "updated_at"):
-                    errors.extend(
-                        _validate_non_empty_string(
-                            note.get(field),
-                            "invalid_agent_memory_note_field",
-                            f"{note_prefix}.{field}",
-                        )
-                    )
-                kind = note.get("kind")
-                if not isinstance(kind, str) or kind not in VALID_MEMORY_KINDS:
-                    errors.append(
-                        error(
-                            "invalid_agent_memory_note_kind",
-                            f"{note_prefix}.kind must be one of: {', '.join(sorted(VALID_MEMORY_KINDS))}",
-                        )
-                    )
-                ttl_days = note.get("ttl_days")
-                if not _is_int(ttl_days) or ttl_days < 0 or ttl_days > MAX_MEMORY_TTL_DAYS:
-                    errors.append(
-                        error(
-                            "invalid_agent_memory_note_ttl_days",
-                            f"{note_prefix}.ttl_days must be an integer between 0 and {MAX_MEMORY_TTL_DAYS}",
-                        )
-                    )
+    errors.extend(_validate_memory_block(memory, prefix))
 
     audit = agent_runtime.get("audit")
     if not isinstance(audit, dict):
