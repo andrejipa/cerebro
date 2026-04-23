@@ -3,21 +3,22 @@
 ## Current Snapshot — 2026-04-23
 
 - Suite status: green.
-- Last suite result: `846` tests, `0` failures, `6` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
+- Canonical git HEAD gate: `846` tests, `0` failures, `6` skips measured from a clean detached worktree after the governance reconciliation commit with the AGENTS-equivalent runner.
+- Proposed working-tree gate: `916` tests, `0` failures, `6` skips via the same runner; this result is contingent on the quarantined untracked foundation proposal files being present.
 - Architecture gate: `51` tests, `0` failures.
 - Derived `recall_eval` validation: green with `49` tests and `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
 - Derived `operational_signals/suggestions` validation: green with `97` tests and `0` failures in `experiments/operational_signals/suggestions/tests`.
 - Runtime continuity state: no local `.cerebro/state.json` present in this workspace.
-- Current posture: deliberate freeze for speculative canonical-runtime growth remains active; the latest user-directed session closed the narrow P4 workspace-path resolution slice after the earlier bounded tests-only corrective tranche, and the validation-decomposition campaign is now complete at `14/14` with both formal resume triggers consumed.
+- Current posture: deliberate freeze for speculative canonical-runtime growth remains active; the validation-decomposition campaign is the latest canonical versioned implementation result and remains complete at `14/14` with both validation triggers consumed. The later transition-journal, state-digest, replay-snapshot, event-reducer, and material-scope foundation files are quarantined working-tree proposals, not canonical runtime authority.
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now expose explicit current snapshots that classify their remaining content as historical evidence by default, reducing ambiguity during live triage.
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
 - `docs/operations/observation_center.toml` now exists as the machine-readable queue for still-resolvable work; unresolved slices, checkpoints, and blockers should be recorded there first, and the markdown snapshots should be treated as human projections of that center rather than as the queue engine itself.
-- Current queue mode: the validation-decomposition campaign is complete; the slice-14 exception was consumed cleanly and no `core/validation.py` continuation remains open.
+- Current queue mode: the validation-decomposition campaign is complete; the transition-journal, state-digest, replay-snapshot, event-reducer, and material-scope slice-1 artifacts are quarantined proposals pending human acceptance or rejection. No live reducer integration, broader event coverage, snapshot persistence, journal integration, commit recovery, material-scope runtime instrumentation, live state integration, or new autonomous implementation continuation is open.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `none in the validation-decomposition lane; await a new authorized item or proof-of-stop decision`
-- Observation-center head item: `none open in the validation-decomposition lane; latest resolved item is validation-slice-14-action-relations`
+- Current next item: `human review required for quarantined foundation proposal package; no autonomous implementation slice is open`
+- Observation-center head item: `foundation-proposals-human-review`
 - Observation-center structural note:
   - `queue_authority = machine-primary`
   - authority order is now explicit: `AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests`
@@ -37,6 +38,36 @@
   - `cli/`: closed
 - Active formal resume triggers:
   - `none`
+- Quarantined foundation proposal package:
+  - working-tree-only files: `core/transition_journal.py`, `core/state_digest.py`, `core/replay_model.py`, `core/event_reducer.py`, `core/material_scope.py`
+  - working-tree-only tests: `tests/test_transition_journal.py`, `tests/test_state_digest.py`, `tests/test_replay_model.py`, `tests/test_event_reducer.py`, `tests/test_material_scope.py`
+  - working-tree-only triggers: `FORMAL_RESUME_TRIGGER_TRANSITION_JOURNAL_SLICE_1.md`, `FORMAL_RESUME_TRIGGER_STATE_DIGEST_SLICE_1.md`, `FORMAL_RESUME_TRIGGER_REPLAY_SNAPSHOT_SLICE_1.md`, `FORMAL_RESUME_TRIGGER_EVENT_REDUCER_SLICE_1.md`, `FORMAL_RESUME_TRIGGER_MATERIAL_SCOPE_SLICE_1.md`
+  - these files may be technically useful, but they are not canonical until human review accepts them and a commit records that decision
+- Material-scope proposal note:
+  - `core/material_scope.py` currently provides an isolated file preimage and declared-effect scope verification primitive in the working tree only
+  - `tests/test_material_scope.py` pins existing-file hashes, missing-file sentinels, empty-vs-missing distinction, unchanged acceptance, create/delete/content drift rejection, absolute/traversal/duplicate/directory path rejection, declared-effect scope checks, manifest duplicate rejection, noncanonical preimage rejection, and strict sha256 digest shape validation
+  - adversarial review found and closed a slice-local weakness before closeout: manifest validation now requires exact `sha256:` plus `64` hex characters instead of accepting any prefixed string
+  - this proposal does not connect material scope to live filesystem instrumentation, commit protocol, action runtime, rollback, recovery, state store, CLI, migration, or unreported-effect detection
+- Event-reducer proposal note:
+  - `core/event_reducer.py` currently provides an isolated in-memory reducer for `checkpoint.replaced` version `1` in the working tree only
+  - `tests/test_event_reducer.py` pins supported event application, multi-event replay, exact deterministic and observational contracts, unsupported type/version rejection, post-digest mismatch, invalid reduced-state rejection, caller-state immutability, uncommitted event rejection, event-id tampering, revision-sequence mismatch, and observational timestamp digest neutrality
+  - adversarial review found and closed a slice-local weakness before closeout: direct `apply_event()` now rejects uncommitted or revision-misaligned events instead of relying on caller discipline
+  - this proposal does not connect reducers to live state persistence, transition journal storage paths, snapshot files, apply, rollback, verify, schema, validation, migration, or commit recovery paths
+  - this proposal supports only `checkpoint.replaced` version `1`; broader event coverage remains closed until human acceptance and a new trigger open it
+- Replay-snapshot proposal note:
+  - `core/replay_model.py` currently provides isolated digest-chain replay verification and snapshot acceptance primitives in the working tree only
+  - `tests/test_replay_model.py` pins contiguous sequence replay, previous-event linkage, event-id recomputation, schema-version equality, pre-state digest continuity, deterministic event payload validation, accepted snapshot behavior, stale snapshot discard, ahead-of-replay rejection, digest mismatch rejection, and malformed metadata rejection
+  - adversarial review found and closed a slice-local weakness before closeout: replay now rejects invalid sha256 digests and non-finite or non-JSON event payload values instead of trusting arbitrary strings
+  - this proposal does not connect replay to live state persistence, transition journal storage paths, snapshot files, apply, rollback, verify, schema, validation, migration, or reducer-based state reconstruction
+- State-digest proposal note:
+  - `core/state_digest.py` currently provides the isolated canonical state digest primitive in the working tree only
+  - `tests/test_state_digest.py` pins deterministic mapping serialization, schema-version participation, decision-field drift, path-specific observational exclusions, list ordering, absent-vs-null distinction, and fail-closed unsupported values
+  - adversarial review found and closed a slice-local weakness before closeout: generic field-name exclusions were replaced with explicit canonical path exclusions so future decision fields with names like `host` are not silently hidden
+  - this proposal does not connect the digest to live state persistence, transition journal replay, snapshot acceptance, apply, rollback, verify, schema, or validation paths
+- Transition-journal proposal note:
+  - `core/transition_journal.py` currently provides the isolated strong-ordering journal primitive in the working tree only
+  - `tests/test_transition_journal.py` pins destructive behavior for sequence gaps, corrupt event ids, broken previous-event chains, stale `HEAD`, abandoned temp files, invalid journal `.json` names, `HEAD` cache-write failure, caller-supplied ordering fields, and incomplete transition records
+  - this proposal does not connect the journal to live apply, rollback, verify, state, or schema paths
 - No broader runtime refactor is currently open beyond the validation-decomposition whitelist.
 - Validation-decomposition progress note:
   - `tests/test_validate_error_ordering.py` now pins exact `(code, message)` ordering for `14` sub-block payloads plus `1` mixed aggregate-order case and `6` reinforced `action_relations` edge-path cases (`21` tests total)
