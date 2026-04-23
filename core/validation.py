@@ -336,6 +336,128 @@ def _validate_batch_registry_block(
     return errors, batch_registry_used_ids
 
 
+def _validate_command_registry_block(
+    command_registry: object,
+    prefix: str = "agent_runtime",
+) -> tuple[list[dict], set[str], set[str]]:
+    errors: list[dict] = []
+    command_ids: set[str] = set()
+    allow_in_verify_command_ids: set[str] = set()
+
+    if not isinstance(command_registry, dict):
+        errors.append(error("invalid_command_registry", f"{prefix}.command_registry must be an object"))
+    else:
+        errors.extend(
+            _require_exact_keys(
+                command_registry,
+                COMMAND_REGISTRY_KEYS,
+                "invalid_command_registry_keys",
+                f"{prefix}.command_registry",
+            )
+        )
+        commands = command_registry.get("commands")
+        if not isinstance(commands, list):
+            errors.append(error("invalid_command_registry_commands", f"{prefix}.command_registry.commands must be an array"))
+        else:
+            if len(commands) > MAX_COMMAND_REGISTRY_COMMANDS:
+                errors.append(
+                    error(
+                        "invalid_command_registry_commands",
+                        f"{prefix}.command_registry.commands cannot contain more than {MAX_COMMAND_REGISTRY_COMMANDS} items",
+                    )
+                )
+            for index, command in enumerate(commands):
+                command_prefix = f"{prefix}.command_registry.commands[{index}]"
+                if not isinstance(command, dict):
+                    errors.append(error("invalid_command_registry_command_item", f"{command_prefix} must be an object"))
+                    continue
+                errors.extend(
+                    _require_exact_keys(
+                        command,
+                        COMMAND_RECORD_KEYS,
+                        "invalid_command_registry_command_keys",
+                        command_prefix,
+                    )
+                )
+                command_id = command.get("id")
+                if not isinstance(command_id, str) or not command_id:
+                    errors.append(error("invalid_command_registry_command_id", f"{command_prefix}.id must be a non-empty string"))
+                elif command_id in command_ids:
+                    errors.append(error("invalid_command_registry_commands", f"duplicate command id: {command_id}"))
+                else:
+                    command_ids.add(command_id)
+                if isinstance(command_id, str) and command.get("allow_in_verify") is True:
+                    allow_in_verify_command_ids.add(command_id)
+
+                argv = command.get("argv")
+                if not isinstance(argv, list) or not argv:
+                    errors.append(error("invalid_command_registry_command_argv", f"{command_prefix}.argv must be a non-empty array"))
+                else:
+                    for arg_index, item in enumerate(argv):
+                        if not isinstance(item, str) or not item:
+                            errors.append(
+                                error(
+                                    "invalid_command_registry_command_argv_item",
+                                    f"{command_prefix}.argv[{arg_index}] must be a non-empty string",
+                                )
+                            )
+                errors.extend(
+                    _validate_non_empty_string(
+                        command.get("cwd"),
+                        "invalid_command_registry_command_cwd",
+                        f"{command_prefix}.cwd",
+                    )
+                )
+                timeout_ms = command.get("timeout_ms")
+                if not _is_int(timeout_ms) or timeout_ms <= 0:
+                    errors.append(
+                        error(
+                            "invalid_command_registry_command_timeout_ms",
+                            f"{command_prefix}.timeout_ms must be a positive integer",
+                        )
+                    )
+                determinism = command.get("determinism")
+                if not isinstance(determinism, str) or determinism not in VALID_COMMAND_DETERMINISM:
+                    errors.append(
+                        error(
+                            "invalid_command_registry_command_determinism",
+                            f"{command_prefix}.determinism must be one of: {', '.join(sorted(VALID_COMMAND_DETERMINISM))}",
+                        )
+                    )
+                side_effect = command.get("side_effect")
+                if not isinstance(side_effect, str) or side_effect not in VALID_COMMAND_SIDE_EFFECTS:
+                    errors.append(
+                        error(
+                            "invalid_command_registry_command_side_effect",
+                            f"{command_prefix}.side_effect must be one of: {', '.join(sorted(VALID_COMMAND_SIDE_EFFECTS))}",
+                        )
+                    )
+                risk = command.get("risk")
+                if not isinstance(risk, str) or risk not in VALID_COMMAND_RISKS:
+                    errors.append(
+                        error(
+                            "invalid_command_registry_command_risk",
+                            f"{command_prefix}.risk must be one of: {', '.join(sorted(VALID_COMMAND_RISKS))}",
+                        )
+                    )
+                if not isinstance(command.get("allow_in_verify"), bool):
+                    errors.append(
+                        error(
+                            "invalid_command_registry_command_allow_in_verify",
+                            f"{command_prefix}.allow_in_verify must be a boolean",
+                        )
+                    )
+                elif command.get("allow_in_verify") is True and side_effect != "read_only":
+                    errors.append(
+                        error(
+                            "invalid_command_registry_command_verify_side_effect",
+                            f"{command_prefix}.allow_in_verify requires {command_prefix}.side_effect to be read_only",
+                        )
+                    )
+
+    return errors, command_ids, allow_in_verify_command_ids
+
+
 def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_runtime") -> list[dict]:
     errors: list[dict] = []
 
@@ -481,116 +603,11 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
     errors.extend(execution_policy_errors)
 
     command_registry = agent_runtime.get("command_registry")
-    if not isinstance(command_registry, dict):
-        errors.append(error("invalid_command_registry", f"{prefix}.command_registry must be an object"))
-    else:
-        errors.extend(
-            _require_exact_keys(
-                command_registry,
-                COMMAND_REGISTRY_KEYS,
-                "invalid_command_registry_keys",
-                f"{prefix}.command_registry",
-            )
-        )
-        commands = command_registry.get("commands")
-        if not isinstance(commands, list):
-            errors.append(error("invalid_command_registry_commands", f"{prefix}.command_registry.commands must be an array"))
-        else:
-            if len(commands) > MAX_COMMAND_REGISTRY_COMMANDS:
-                errors.append(
-                    error(
-                        "invalid_command_registry_commands",
-                        f"{prefix}.command_registry.commands cannot contain more than {MAX_COMMAND_REGISTRY_COMMANDS} items",
-                    )
-                )
-            for index, command in enumerate(commands):
-                command_prefix = f"{prefix}.command_registry.commands[{index}]"
-                if not isinstance(command, dict):
-                    errors.append(error("invalid_command_registry_command_item", f"{command_prefix} must be an object"))
-                    continue
-                errors.extend(
-                    _require_exact_keys(
-                        command,
-                        COMMAND_RECORD_KEYS,
-                        "invalid_command_registry_command_keys",
-                        command_prefix,
-                    )
-                )
-                command_id = command.get("id")
-                if not isinstance(command_id, str) or not command_id:
-                    errors.append(error("invalid_command_registry_command_id", f"{command_prefix}.id must be a non-empty string"))
-                elif command_id in command_ids:
-                    errors.append(error("invalid_command_registry_commands", f"duplicate command id: {command_id}"))
-                else:
-                    command_ids.add(command_id)
-                if isinstance(command_id, str) and command.get("allow_in_verify") is True:
-                    allow_in_verify_command_ids.add(command_id)
-
-                argv = command.get("argv")
-                if not isinstance(argv, list) or not argv:
-                    errors.append(error("invalid_command_registry_command_argv", f"{command_prefix}.argv must be a non-empty array"))
-                else:
-                    for arg_index, item in enumerate(argv):
-                        if not isinstance(item, str) or not item:
-                            errors.append(
-                                error(
-                                    "invalid_command_registry_command_argv_item",
-                                    f"{command_prefix}.argv[{arg_index}] must be a non-empty string",
-                                )
-                            )
-                errors.extend(
-                    _validate_non_empty_string(
-                        command.get("cwd"),
-                        "invalid_command_registry_command_cwd",
-                        f"{command_prefix}.cwd",
-                    )
-                )
-                timeout_ms = command.get("timeout_ms")
-                if not _is_int(timeout_ms) or timeout_ms <= 0:
-                    errors.append(
-                        error(
-                            "invalid_command_registry_command_timeout_ms",
-                            f"{command_prefix}.timeout_ms must be a positive integer",
-                        )
-                    )
-                determinism = command.get("determinism")
-                if not isinstance(determinism, str) or determinism not in VALID_COMMAND_DETERMINISM:
-                    errors.append(
-                        error(
-                            "invalid_command_registry_command_determinism",
-                            f"{command_prefix}.determinism must be one of: {', '.join(sorted(VALID_COMMAND_DETERMINISM))}",
-                        )
-                    )
-                side_effect = command.get("side_effect")
-                if not isinstance(side_effect, str) or side_effect not in VALID_COMMAND_SIDE_EFFECTS:
-                    errors.append(
-                        error(
-                            "invalid_command_registry_command_side_effect",
-                            f"{command_prefix}.side_effect must be one of: {', '.join(sorted(VALID_COMMAND_SIDE_EFFECTS))}",
-                        )
-                    )
-                risk = command.get("risk")
-                if not isinstance(risk, str) or risk not in VALID_COMMAND_RISKS:
-                    errors.append(
-                        error(
-                            "invalid_command_registry_command_risk",
-                            f"{command_prefix}.risk must be one of: {', '.join(sorted(VALID_COMMAND_RISKS))}",
-                        )
-                    )
-                if not isinstance(command.get("allow_in_verify"), bool):
-                    errors.append(
-                        error(
-                            "invalid_command_registry_command_allow_in_verify",
-                            f"{command_prefix}.allow_in_verify must be a boolean",
-                        )
-                    )
-                elif command.get("allow_in_verify") is True and side_effect != "read_only":
-                    errors.append(
-                        error(
-                            "invalid_command_registry_command_verify_side_effect",
-                            f"{command_prefix}.allow_in_verify requires {command_prefix}.side_effect to be read_only",
-                        )
-                    )
+    command_registry_errors, command_ids, allow_in_verify_command_ids = _validate_command_registry_block(
+        command_registry,
+        prefix,
+    )
+    errors.extend(command_registry_errors)
 
     approvals = agent_runtime.get("approvals")
     if not isinstance(approvals, dict):

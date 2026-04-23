@@ -1,6 +1,6 @@
 [center]
 version = 1
-updated_at = "2026-04-23T12:45:00-04:00"
+updated_at = "2026-04-23T13:20:00-04:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
@@ -33,7 +33,7 @@ trigger_docs = "Keep any active trigger aligned with the current open slice and 
 [[observations]]
 id = "validation-slice-4-command-registry"
 title = "Validation decomposition slice 4"
-status = "open"
+status = "resolved"
 kind = "slice"
 priority = "high"
 boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
@@ -43,8 +43,25 @@ source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
 auto_continuation = true
 dependencies = []
 dependencies_satisfied = true
-next_action = "Extract _validate_command_registry_block in core/validation.py, validate with the ordering oracle and the full gate, then reconcile docs to slice 4 complete."
-done_when = "Slice 4 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 3/14 to 4/14."
+next_action = "Resolved on 2026-04-23 after extracting _validate_command_registry_block in core/validation.py and clearing the ordering oracle plus all required gates."
+done_when = "Slice 4 landed cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advanced from 3/14 to 4/14."
+halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
+
+[[observations]]
+id = "validation-slice-5-audit"
+title = "Validation decomposition slice 5"
+status = "open"
+kind = "slice"
+priority = "high"
+boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
+trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
+source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["validation-slice-4-command-registry"]
+dependencies_satisfied = true
+next_action = "Extract _validate_audit_block in core/validation.py, validate with the ordering oracle and the full gate, then reconcile docs to slice 5 complete."
+done_when = "Slice 5 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 4/14 to 5/14."
 halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
 
 [[observations]]

@@ -14,10 +14,10 @@
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
 - `docs/operations/observation_center.toml` now exists as the machine-readable queue for still-resolvable work; unresolved slices, checkpoints, and blockers should be recorded there first, and the markdown snapshots should be treated as human projections of that center rather than as the queue engine itself.
-- Current queue mode: autonomous corrective validation-decomposition slice loop; slice 3 is complete, slices 4-11 are pre-approved without per-slice human review while the whitelist and gates stay green, and the campaign must pause again before slice 12.
+- Current queue mode: autonomous corrective validation-decomposition slice loop; slice 4 is complete, slices 5-11 are pre-approved without per-slice human review while the whitelist and gates stay green, and the campaign must pause again before slice 12.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `execute slice 4 (_validate_command_registry_block) under the active validation-decomposition whitelist`
-- Observation-center head item: `validation-slice-4-command-registry`
+- Current next item: `execute slice 5 (_validate_audit_block) under the active validation-decomposition whitelist`
+- Observation-center head item: `validation-slice-5-audit`
 - Observation-center structural note:
   - `queue_authority = machine-primary`
   - authority order is now explicit: `AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests`
@@ -42,6 +42,7 @@
   - `_validate_memory_block` is now extracted in `core/validation.py` as slice `1/14`, with no detected ordering or message drift
   - `_validate_execution_policy_block` is now extracted in `core/validation.py` as slice `2/14`, with no detected ordering or message drift
   - `_validate_batch_registry_block` is now extracted in `core/validation.py` as slice `3/14`, with no detected ordering or message drift
+  - `_validate_command_registry_block` is now extracted in `core/validation.py` as slice `4/14`, with no detected ordering or message drift
   - no additional human review checkpoint is required before slices `4-11`; the next mandatory pause remains before slice `12/14`
   - the preparatory characterization gates are green: targeted `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent full suite
 - Verification scout closeout:

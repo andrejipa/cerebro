@@ -21,10 +21,11 @@
   - `slice 1 is now complete: _validate_memory_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 2 is now complete: _validate_execution_policy_block was extracted in core/validation.py with the ordering oracle still green`
   - `slice 3 is now complete: _validate_batch_registry_block was extracted in core/validation.py with the ordering oracle still green`
+  - `slice 4 is now complete: _validate_command_registry_block was extracted in core/validation.py with the ordering oracle still green`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
-- Current queue mode: autonomous corrective validation-decomposition slice loop; slice 3 is complete, slices `4-11` should continue automatically one per round while gates stay green, and the campaign must pause again before slice `12`.
+- Current queue mode: autonomous corrective validation-decomposition slice loop; slice 4 is complete, slices `5-11` should continue automatically one per round while gates stay green, and the campaign must pause again before slice `12`.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `execute slice 4 (_validate_command_registry_block) under the active validation-decomposition whitelist`
+- Current next item: `execute slice 5 (_validate_audit_block) under the active validation-decomposition whitelist`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -37,10 +38,10 @@
 
 ```text
 NEXT_ACTION
-- next_required_step: execute_validation_slice_4_command_registry_block
-- observation_center_head: validation-slice-4-command-registry
+- next_required_step: execute_validation_slice_5_audit_block
+- observation_center_head: validation-slice-5-audit
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: slices `1-3` stayed green without ordering drift, so the automation should continue with `_validate_command_registry_block` and then advance one slice per round through slice `11/14` unless a halt condition appears; no extra human checkpoint is expected before slice `12/14`
+- highest_priority_hypothesis: slices `1-4` stayed green without ordering drift, so the automation should continue with `_validate_audit_block` and then advance one slice per round through slice `11/14` unless a halt condition appears; no extra human checkpoint is expected before slice `12/14`
 ```
 
 ## Historical Derived Chronology
