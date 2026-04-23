@@ -9,13 +9,13 @@
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
 - Derived `operational_signals/suggestions` validation: green with `97` tests and `0` failures in `experiments/operational_signals/suggestions/tests`.
 - Runtime continuity state: no local `.cerebro/state.json` present in this workspace.
-- Current posture: deliberate freeze for speculative canonical-runtime growth remains active; the latest user-directed session closed the narrow P4 workspace-path resolution slice after the earlier bounded tests-only corrective tranche and then returned the runtime boundary to docs-only.
+- Current posture: deliberate freeze for speculative canonical-runtime growth remains active; the latest user-directed session closed the narrow P4 workspace-path resolution slice after the earlier bounded tests-only corrective tranche, and a new formal resume trigger is now open for the validation-decomposition campaign only.
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now expose explicit current snapshots that classify their remaining content as historical evidence by default, reducing ambiguity during live triage.
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
-- Current queue mode: docs-only follow-up; no active canonical mutation is open.
+- Current queue mode: controlled corrective validation-decomposition slice; only `core/validation.py` and `tests/test_validate_error_ordering.py` are open under the active trigger.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `none — the P4 workspace-path resolution slice is closed; return to docs-only proof-of-stop or await an explicit new trigger`
+- Current next item: `begin Phase B with the characterization-oracle commit for _validate_agent_runtime_block under the active validation-decomposition trigger`
 - Active derived boundaries: `experiments/recall_eval` and `experiments/operational_signals` remain active but non-authoritative; `experiments/operational_signals/suggestions` stays marginal/advisory-only and should not expand without new evidence.
 - The canonical `SCOUT_CONTROL_STATE` block is now materialized below; `OPPORTUNITY_MAP.md` carries only a minimal next-action projection so scout-control state remains single-sourced.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -23,11 +23,11 @@
 - Formal resume trigger consumed: `FORMAL_RESUME_TRIGGER_CORE_PATH_RESOLUTION.md` completed with one shared helper in `core/workspace_paths.py`, wrapper-level adjustments in `core/action_runtime.py` and `core/discipline_runtime.py`, and proportional regression added in `tests/test_action_runtime.py` and `tests/test_discipline_runtime.py`.
 - Current boundary:
   - `docs/`: authorized
-  - `tests/`: closed
-  - `core/`: closed
+  - `tests/`: authorized for `tests/test_validate_error_ordering.py` only
+  - `core/`: authorized for `core/validation.py` only
   - `cli/`: closed
-- No formal resume trigger is currently active.
-- No broader runtime refactor is currently open.
+- Active formal resume trigger: `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`
+- No broader runtime refactor is currently open beyond the validation-decomposition whitelist.
 - Verification scout closeout:
   - the prior P5 coverage gaps identified in `decision_runtime`, `action_identity`, `discipline_runtime`, `state_runtime_lock_service`, `state_session_artifacts_service`, and `state_retention_service` are now covered by direct regression tests
   - the prior P4 structural duplication/drift between `core/action_runtime.py` and `core/discipline_runtime.py` around workspace-path resolution is now closed through one shared leaf helper plus module-local wrappers, with no contract drift detected by regression

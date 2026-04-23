@@ -7,31 +7,32 @@
 - Derived `recall_eval` validation remains green after the latest slice: `49` tests, `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation is green after the latest overlapping-writer lock hardening: `31` tests, `0` failures in `experiments/operational_signals/tests`.
 - Derived `operational_signals/suggestions` validation is green after the latest temp-root hardening: `97` tests, `0` failures in `experiments/operational_signals/suggestions/tests`.
-- Current posture: deliberate freeze remains active for speculative canonical-runtime growth; the latest user-directed session closed the narrow P4 workspace-path resolution slice and no active canonical-runtime mutation remains open.
+- Current posture: deliberate freeze remains active for speculative canonical-runtime growth; the latest user-directed session closed the narrow P4 workspace-path resolution slice, and one new formal resume trigger is now active for the validation-decomposition campaign only.
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now open with explicit current snapshots that mark their remaining body as historical evidence by default, reducing residual-intake ambiguity during heartbeat triage.
 - Planning-only `StateStore` decomposition prep is now recorded in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it stays explicitly non-authoritative and does not reopen the freeze.
 - Current executable queue:
   - `the tests-only coverage tranche completed without touching core/ or cli/`
   - `direct P5 coverage now exists for decision_runtime, action_identity, discipline_runtime, state_runtime_lock_service, state_session_artifacts_service, and state_retention_service`
   - `the structural P4 workspace-path resolution drift between action_runtime and discipline_runtime is now resolved through core/workspace_paths.py plus module-local wrappers and proportional regression`
-  - `no active core/ or tests/ slice is open; the boundary returned to docs-only after closeout`
+  - `the validation-decomposition trigger is now active with a strict whitelist: core/validation.py plus tests/test_validate_error_ordering.py only`
   - `experiments/operational_signals/suggestions remains marginal/audit-only by default; do not expand it without new operational evidence`
-- Current queue mode: docs-only follow-up; no active core-only slice is open.
+- Current queue mode: controlled corrective validation-decomposition slice; no other core-only slice is open.
 - Active heartbeat protocol hardening now uses formal stage-1 scout-renewal controls: exact and structural quiet-signature repetition are banned, weak or paper-only renewal no longer resets exhaustion, and self-stop now requires the full renewal ladder plus a confirmation wakeup.
-- Current next item: `none — the P4 workspace-path resolution slice is closed`
+- Current next item: `Phase B commit 1 — add characterization ordering tests for _validate_agent_runtime_block`
 - The canonical `SCOUT_CONTROL_STATE` now lives only in `SYSTEM_STATE.md`; this map carries only the minimal next-action projection for heartbeat routing.
 - Active heartbeat protocol: `docs/operations/codex_prompts/cerebro_heartbeat_loop.md` now explicitly keeps two safe non-growth lanes under freeze, but reclassifies them as secondary fillers; the loop must refresh code-first scout coverage in `experiments/recall_eval`, `experiments/operational_signals`, and cross-cutting artifact parity before treating docs/planning work as a dominant quiet wakeup again.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same workspace-local equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
-- Formal resume trigger consumed: `FORMAL_RESUME_TRIGGER_CORE_PATH_RESOLUTION.md`; `tests/`, `core/`, and `cli/` are now closed again, and the slice ended green with `825` tests, `0` failures, `6` skips plus a green `tests.test_architecture` gate.
+- Formal resume trigger consumed: `FORMAL_RESUME_TRIGGER_CORE_PATH_RESOLUTION.md`; that slice ended green with `825` tests, `0` failures, `6` skips plus a green `tests.test_architecture` gate.
+- Formal resume trigger active: `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`; authorized scope is limited to `core/validation.py`, `tests/test_validate_error_ordering.py`, and closeout updates in `docs/operations/`.
 - Historical ledger note: the detailed derived-fix chronology and prior queue states remain preserved below under an explicit historical heading; the snapshot above is the only live operational reference.
 
 ## NEXT_ACTION
 
 ```text
 NEXT_ACTION
-- next_required_step: docs_only_proof_of_stop_refresh_or_explicit_new_trigger
+- next_required_step: validation_decomposition_characterization_commit
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: no confirmed open runtime slice remains from the latest scout; stay docs-only until a fresh proof-of-stop pass or an explicit new trigger records a new bounded need
+- highest_priority_hypothesis: reduce the cognitive density of _validate_agent_runtime_block through same-file helper extraction while preserving exact error ordering, starting with the characterization-oracle commit under the active trigger
 ```
 
 ## Historical Derived Chronology

@@ -4,11 +4,11 @@
 
 - phase: `A`
 - mode: `docs-only`
-- trigger status: `drafted, not approved`
+- trigger status: `approved / active`
 - current boundary:
   - `docs/`: authorized
-  - `tests/`: closed
-  - `core/`: closed
+  - `tests/`: authorized for `tests/test_validate_error_ordering.py` only
+  - `core/`: authorized for `core/validation.py` only
   - `cli/`: closed
 - current live gate:
   - AGENTS-equivalent suite: `825` tests, `0` failures, `6` skips
@@ -138,6 +138,8 @@ Required properties of the characterization tests:
 - pin exact list order, not just set membership
 - pin exact messages, not just error codes
 - isolate each block as much as possible without inventing new behavior
+- for `plan_dependency_relations`, pin the exact DFS/traversal-driven append
+  order, not only the presence of the cycle/error messages
 - include at least one mixed payload where earlier block errors coexist with one
   relational-tail error, so slice commits cannot reorder aggregate output
 

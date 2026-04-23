@@ -2,12 +2,12 @@
 
 ## Status
 
-- state: `draft only / not approved`
+- state: `approved / active on 2026-04-23`
 - drafted on: `2026-04-23`
-- boundary at draft time:
+- active boundary:
   - `docs/`: authorized
-  - `tests/`: closed
-  - `core/`: closed
+  - `tests/`: authorized for `tests/test_validate_error_ordering.py` only
+  - `core/`: authorized for `core/validation.py` only
   - `cli/`: closed
 
 ## Classification
@@ -34,7 +34,7 @@
 - This need cannot be satisfied by docs alone because the structural density is
   located inside `core/validation.py`.
 
-## Allowed Scope If Approved
+## Allowed Scope
 
 - modify only `core/validation.py`
 - create only `tests/test_validate_error_ordering.py`
@@ -89,7 +89,7 @@ Required sub-block coverage before slice 1:
 - `action_relations`
 - `verification_relations`
 
-## Planned Slice Order If Approved
+## Planned Slice Order
 
 1. `_validate_memory_block`
 2. `_validate_execution_policy_block`
@@ -106,7 +106,7 @@ Required sub-block coverage before slice 1:
 13. `_validate_verification_relations_block`
 14. `_validate_action_relations_block`
 
-## Commit Discipline If Approved
+## Commit Discipline
 
 - commit 1:
   - `tests(validate): pin aggregate error ordering for _validate_agent_runtime_block`
@@ -138,7 +138,7 @@ If a stop condition is hit:
 - leave the trigger in a non-consumed state
 - return to the operator for a new decision before any further mutation
 
-## Verification If Approved
+## Verification
 
 Every approved slice must clear all of:
 
@@ -147,8 +147,10 @@ Every approved slice must clear all of:
 - `python -m unittest tests.test_validate -v`
 - `python -m unittest tests.test_validate_error_ordering -v`
 
-## Draft Outcome
+## Active Outcome
 
 - continuation requires trigger approval: `yes`
 - candidate first slice: `_validate_memory_block`
-- approved state today: `no`
+- approved state today: `yes`
+- next required step:
+  - `Phase B commit 1: tests(validate): pin aggregate error ordering for _validate_agent_runtime_block`
