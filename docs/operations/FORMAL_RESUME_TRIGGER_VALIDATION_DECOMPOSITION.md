@@ -72,6 +72,12 @@ No extraction may begin until one preparatory commit adds
 `tests/test_validate_error_ordering.py` and pins exact `(code, message)` output
 ordering for one malformed payload per planned sub-block.
 
+Current status:
+
+- satisfied on `2026-04-23`
+- current oracle file: `tests/test_validate_error_ordering.py`
+- current oracle coverage: `15` tests (`14` per-block cases + `1` mixed-order case)
+
 Required sub-block coverage before slice 1:
 
 - `plan_core`
@@ -152,5 +158,6 @@ Every approved slice must clear all of:
 - continuation requires trigger approval: `yes`
 - candidate first slice: `_validate_memory_block`
 - approved state today: `yes`
+- characterization precondition status: `satisfied`
 - next required step:
-  - `Phase B commit 1: tests(validate): pin aggregate error ordering for _validate_agent_runtime_block`
+  - `operator review of the characterization-oracle commit before slice 1 (_validate_memory_block)`

@@ -2,16 +2,19 @@
 
 ## Status
 
-- phase: `A`
-- mode: `docs-only`
+- phase: `B`
+- mode: `characterization-tests`
 - trigger status: `approved / active`
 - current boundary:
   - `docs/`: authorized
   - `tests/`: authorized for `tests/test_validate_error_ordering.py` only
   - `core/`: authorized for `core/validation.py` only
   - `cli/`: closed
+- characterization status:
+  - `tests/test_validate_error_ordering.py` added with `15` tests
+  - coverage split: `14` per-block malformed payloads + `1` mixed aggregate-order case
 - current live gate:
-  - AGENTS-equivalent suite: `825` tests, `0` failures, `6` skips
+  - AGENTS-equivalent suite: `840` tests, `0` failures, `6` skips
   - architecture gate: `51` tests, `0` failures
 
 ## Scope Statement
@@ -195,3 +198,15 @@ Halt the future campaign immediately if any of the following becomes true:
 - identified sub-blocks: `14`
 - candidate first slice: `_validate_memory_block`
 - trigger need for continuation: `yes`
+
+## Phase B Progress
+
+- characterization-oracle commit content is now present in:
+  - `tests/test_validate_error_ordering.py`
+- characterization gate result:
+  - `python -m unittest tests.test_validate_error_ordering -v` → `15` tests, `0` failures
+  - `python -m unittest tests.test_validate -v` → `76` tests, `0` failures, `3` skips
+  - `python -m unittest tests.test_architecture -v` → `51` tests, `0` failures
+  - AGENTS-equivalent suite → `840` tests, `0` failures, `6` skips
+- current mandatory stop:
+  - pause for operator review before slice 1 (`_validate_memory_block`)

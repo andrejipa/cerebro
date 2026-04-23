@@ -3,7 +3,7 @@
 ## Current Snapshot — 2026-04-23
 
 - Suite status: green.
-- Last suite result: `825` tests, `0` failures, `6` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
+- Last suite result: `840` tests, `0` failures, `6` skips via the exact AGENTS-equivalent runner with workspace-local temp and authority overrides.
 - Architecture gate: `51` tests, `0` failures.
 - Derived `recall_eval` validation: green with `49` tests and `0` failures in `experiments/recall_eval/tests`.
 - Derived `operational_signals` base validation: green with `31` tests and `0` failures in `experiments/operational_signals/tests`.
@@ -13,9 +13,9 @@
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now expose explicit current snapshots that classify their remaining content as historical evidence by default, reducing ambiguity during live triage.
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
-- Current queue mode: controlled corrective validation-decomposition slice; only `core/validation.py` and `tests/test_validate_error_ordering.py` are open under the active trigger.
+- Current queue mode: controlled corrective validation-decomposition slice; the characterization-oracle commit is complete and the campaign is paused for operator review before slice 1.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `begin Phase B with the characterization-oracle commit for _validate_agent_runtime_block under the active validation-decomposition trigger`
+- Current next item: `review the characterization-oracle commit for _validate_agent_runtime_block, then decide whether to start slice 1 (_validate_memory_block)`
 - Active derived boundaries: `experiments/recall_eval` and `experiments/operational_signals` remain active but non-authoritative; `experiments/operational_signals/suggestions` stays marginal/advisory-only and should not expand without new evidence.
 - The canonical `SCOUT_CONTROL_STATE` block is now materialized below; `OPPORTUNITY_MAP.md` carries only a minimal next-action projection so scout-control state remains single-sourced.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -28,6 +28,9 @@
   - `cli/`: closed
 - Active formal resume trigger: `FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md`
 - No broader runtime refactor is currently open beyond the validation-decomposition whitelist.
+- Validation-decomposition progress note:
+  - `tests/test_validate_error_ordering.py` now pins exact `(code, message)` ordering for `14` sub-block payloads plus `1` mixed aggregate-order case
+  - the preparatory characterization gates are green: targeted `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent full suite
 - Verification scout closeout:
   - the prior P5 coverage gaps identified in `decision_runtime`, `action_identity`, `discipline_runtime`, `state_runtime_lock_service`, `state_session_artifacts_service`, and `state_retention_service` are now covered by direct regression tests
   - the prior P4 structural duplication/drift between `core/action_runtime.py` and `core/discipline_runtime.py` around workspace-path resolution is now closed through one shared leaf helper plus module-local wrappers, with no contract drift detected by regression
