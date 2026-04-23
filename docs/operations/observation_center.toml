@@ -1,6 +1,6 @@
 [center]
 version = 1
-updated_at = "2026-04-23T13:57:00-04:00"
+updated_at = "2026-04-23T14:13:30-04:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
