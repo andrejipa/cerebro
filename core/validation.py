@@ -297,6 +297,45 @@ def _validate_execution_policy_block(
     return errors, approval_required_kinds
 
 
+def _validate_batch_registry_block(
+    batch_registry: object,
+    prefix: str = "agent_runtime",
+) -> tuple[list[dict], set[str]]:
+    errors: list[dict] = []
+    batch_registry_used_ids: set[str] = set()
+
+    if not isinstance(batch_registry, dict):
+        errors.append(error("invalid_agent_batch_registry", f"{prefix}.batch_registry must be an object"))
+    else:
+        errors.extend(_require_exact_keys(batch_registry, BATCH_REGISTRY_KEYS, "invalid_agent_batch_registry_keys", f"{prefix}.batch_registry"))
+        used_ids = batch_registry.get("used_ids")
+        if not isinstance(used_ids, list):
+            errors.append(error("invalid_agent_batch_registry_used_ids", f"{prefix}.batch_registry.used_ids must be an array"))
+        else:
+            if len(used_ids) > MAX_USED_BATCH_IDS:
+                errors.append(
+                    error(
+                        "invalid_agent_batch_registry_used_ids",
+                        f"{prefix}.batch_registry.used_ids cannot contain more than {MAX_USED_BATCH_IDS} items",
+                    )
+                )
+            for index, batch_id in enumerate(used_ids):
+                errors.extend(
+                    _validate_non_empty_string(
+                        batch_id,
+                        "invalid_agent_batch_registry_used_ids",
+                        f"{prefix}.batch_registry.used_ids[{index}]",
+                    )
+                )
+                if isinstance(batch_id, str) and batch_id:
+                    if batch_id in batch_registry_used_ids:
+                        errors.append(error("invalid_agent_batch_registry_used_ids", f"duplicate batch_id in registry: {batch_id}"))
+                    else:
+                        batch_registry_used_ids.add(batch_id)
+
+    return errors, batch_registry_used_ids
+
+
 def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_runtime") -> list[dict]:
     errors: list[dict] = []
 
@@ -681,35 +720,8 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
             )
 
     batch_registry = agent_runtime.get("batch_registry")
-    batch_registry_used_ids: set[str] = set()
-    if not isinstance(batch_registry, dict):
-        errors.append(error("invalid_agent_batch_registry", f"{prefix}.batch_registry must be an object"))
-    else:
-        errors.extend(_require_exact_keys(batch_registry, BATCH_REGISTRY_KEYS, "invalid_agent_batch_registry_keys", f"{prefix}.batch_registry"))
-        used_ids = batch_registry.get("used_ids")
-        if not isinstance(used_ids, list):
-            errors.append(error("invalid_agent_batch_registry_used_ids", f"{prefix}.batch_registry.used_ids must be an array"))
-        else:
-            if len(used_ids) > MAX_USED_BATCH_IDS:
-                errors.append(
-                    error(
-                        "invalid_agent_batch_registry_used_ids",
-                        f"{prefix}.batch_registry.used_ids cannot contain more than {MAX_USED_BATCH_IDS} items",
-                    )
-                )
-            for index, batch_id in enumerate(used_ids):
-                errors.extend(
-                    _validate_non_empty_string(
-                        batch_id,
-                        "invalid_agent_batch_registry_used_ids",
-                        f"{prefix}.batch_registry.used_ids[{index}]",
-                    )
-                )
-                if isinstance(batch_id, str) and batch_id:
-                    if batch_id in batch_registry_used_ids:
-                        errors.append(error("invalid_agent_batch_registry_used_ids", f"duplicate batch_id in registry: {batch_id}"))
-                    else:
-                        batch_registry_used_ids.add(batch_id)
+    batch_registry_errors, batch_registry_used_ids = _validate_batch_registry_block(batch_registry, prefix)
+    errors.extend(batch_registry_errors)
 
     verification = agent_runtime.get("verification")
     if not isinstance(verification, dict):
