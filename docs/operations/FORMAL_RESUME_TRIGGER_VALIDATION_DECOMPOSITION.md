@@ -168,6 +168,6 @@ Every approved slice must clear all of:
 - characterization precondition status: `satisfied`
 - completed slice count: `11/14`
 - observation-center routing:
-  - `validation-slice-12-manual-checkpoint` is the current queue head in `docs/operations/observation_center.toml`
+  - `validation-slice-12-plan-dependency-relations` is the current open queue head in `docs/operations/observation_center.toml`
 - next required step:
-  - `pause for explicit operator review before slice 12 (_validate_plan_dependency_relations_block); the autonomous continuation window through slice 11 is now consumed`
+  - `execute slice 12 (_validate_plan_dependency_relations_block); the manual checkpoint before slice 12 was explicitly cleared on 2026-04-23, and continuation beyond slice 12 is not pre-approved`

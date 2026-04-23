@@ -229,8 +229,13 @@ Halt the future campaign immediately if any of the following becomes true:
   - that window is now consumed cleanly at `11/14`
 - current next autonomous slice:
   - `none; manual checkpoint is now active before slice 12`
+- current checkpoint status:
+  - the mandatory operator checkpoint before slice `12/14` was explicitly
+    consumed on `2026-04-23`
+- current next approved slice:
+  - `_validate_plan_dependency_relations_block` (`slice 12/14`)
 - next mandatory operator checkpoint:
-  - before `_validate_plan_dependency_relations_block` (`slice 12/14`)
+  - reassess before any continuation beyond `_validate_plan_dependency_relations_block` (`slice 12/14`)
 - completed slice commits:
   - `refactor(validate): extract _validate_memory_block (slice 1/14)`
   - `refactor(validate): extract _validate_execution_policy_block (slice 2/14)`
