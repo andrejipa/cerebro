@@ -159,6 +159,6 @@ Every approved slice must clear all of:
 - candidate first slice: `_validate_memory_block`
 - approved state today: `yes`
 - characterization precondition status: `satisfied`
-- completed slice count: `1/14`
+- completed slice count: `2/14`
 - next required step:
-  - `operator review of slice 1 (_validate_memory_block) before slice 2 (_validate_execution_policy_block)`
+  - `operator review of slice 2 (_validate_execution_policy_block) before slice 3 (_validate_batch_registry_block)`

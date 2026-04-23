@@ -236,6 +236,67 @@ def _validate_memory_block(memory: object, prefix: str = "agent_runtime") -> lis
     return errors
 
 
+def _validate_execution_policy_block(
+    execution_policy: object,
+    prefix: str = "agent_runtime",
+) -> tuple[list[dict], list[str]]:
+    errors: list[dict] = []
+    approval_required_kinds: list[str] = []
+
+    if not isinstance(execution_policy, dict):
+        errors.append(error("invalid_execution_policy", f"{prefix}.execution_policy must be an object"))
+    else:
+        errors.extend(
+            _require_exact_keys(
+                execution_policy,
+                EXECUTION_POLICY_KEYS,
+                "invalid_execution_policy_keys",
+                f"{prefix}.execution_policy",
+            )
+        )
+        autonomy_level = execution_policy.get("autonomy_level")
+        if not isinstance(autonomy_level, str) or autonomy_level not in VALID_AUTONOMY_LEVELS:
+            errors.append(
+                error(
+                    "invalid_execution_policy_autonomy_level",
+                    f"{prefix}.execution_policy.autonomy_level must be one of: {', '.join(sorted(VALID_AUTONOMY_LEVELS))}",
+                )
+            )
+        errors.extend(
+            _validate_string_list(
+                execution_policy.get("protected_paths"),
+                code="invalid_execution_policy_protected_paths",
+                label=f"{prefix}.execution_policy.protected_paths",
+                max_items=MAX_PROTECTED_PATHS,
+            )
+        )
+        errors.extend(
+            _validate_string_list(
+                execution_policy.get("blocked_command_prefixes"),
+                code="invalid_execution_policy_blocked_command_prefixes",
+                label=f"{prefix}.execution_policy.blocked_command_prefixes",
+                max_items=MAX_BLOCKED_COMMAND_PREFIXES,
+            )
+        )
+        errors.extend(
+            _validate_string_list(
+                execution_policy.get("approval_required_kinds"),
+                code="invalid_execution_policy_approval_required_kinds",
+                label=f"{prefix}.execution_policy.approval_required_kinds",
+                max_items=MAX_APPROVAL_REQUIRED_KINDS,
+            )
+        )
+        raw_approval_required_kinds = execution_policy.get("approval_required_kinds")
+        if isinstance(raw_approval_required_kinds, list):
+            approval_required_kinds = [
+                item
+                for item in raw_approval_required_kinds
+                if isinstance(item, str) and item
+            ]
+
+    return errors, approval_required_kinds
+
+
 def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_runtime") -> list[dict]:
     errors: list[dict] = []
 
@@ -377,57 +438,8 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
                 errors.append(error("invalid_agent_plan_status", f"{prefix}.plan.status must be completed when all tasks are done"))
 
     execution_policy = agent_runtime.get("execution_policy")
-    approval_required_kinds: list[str] = []
-    if not isinstance(execution_policy, dict):
-        errors.append(error("invalid_execution_policy", f"{prefix}.execution_policy must be an object"))
-    else:
-        errors.extend(
-            _require_exact_keys(
-                execution_policy,
-                EXECUTION_POLICY_KEYS,
-                "invalid_execution_policy_keys",
-                f"{prefix}.execution_policy",
-            )
-        )
-        autonomy_level = execution_policy.get("autonomy_level")
-        if not isinstance(autonomy_level, str) or autonomy_level not in VALID_AUTONOMY_LEVELS:
-            errors.append(
-                error(
-                    "invalid_execution_policy_autonomy_level",
-                    f"{prefix}.execution_policy.autonomy_level must be one of: {', '.join(sorted(VALID_AUTONOMY_LEVELS))}",
-                )
-            )
-        errors.extend(
-            _validate_string_list(
-                execution_policy.get("protected_paths"),
-                code="invalid_execution_policy_protected_paths",
-                label=f"{prefix}.execution_policy.protected_paths",
-                max_items=MAX_PROTECTED_PATHS,
-            )
-        )
-        errors.extend(
-            _validate_string_list(
-                execution_policy.get("blocked_command_prefixes"),
-                code="invalid_execution_policy_blocked_command_prefixes",
-                label=f"{prefix}.execution_policy.blocked_command_prefixes",
-                max_items=MAX_BLOCKED_COMMAND_PREFIXES,
-            )
-        )
-        errors.extend(
-            _validate_string_list(
-                execution_policy.get("approval_required_kinds"),
-                code="invalid_execution_policy_approval_required_kinds",
-                label=f"{prefix}.execution_policy.approval_required_kinds",
-                max_items=MAX_APPROVAL_REQUIRED_KINDS,
-            )
-        )
-        raw_approval_required_kinds = execution_policy.get("approval_required_kinds")
-        if isinstance(raw_approval_required_kinds, list):
-            approval_required_kinds = [
-                item
-                for item in raw_approval_required_kinds
-                if isinstance(item, str) and item
-            ]
+    execution_policy_errors, approval_required_kinds = _validate_execution_policy_block(execution_policy, prefix)
+    errors.extend(execution_policy_errors)
 
     command_registry = agent_runtime.get("command_registry")
     if not isinstance(command_registry, dict):

@@ -13,9 +13,9 @@
 - `BUG_REPORT.md` and `PHASE_CLOSURE.md` now expose explicit current snapshots that classify their remaining content as historical evidence by default, reducing ambiguity during live triage.
 - Allowed work now includes two explicit non-growth lanes under freeze: compacting the live snapshot when it is oversized or duplicated, and preparing a decomposition plan for `StateStore` in docs only.
 - The planning-only `StateStore` decomposition artifact now exists in `docs/operations/STATESTORE_DECOMPOSITION_PLAN.md`; it maps seams, slice order, and resume-trigger preconditions without mutating runtime authority.
-- Current queue mode: controlled corrective validation-decomposition slice; slice 1 is complete and the campaign is paused for operator review before slice 2.
+- Current queue mode: controlled corrective validation-decomposition slice; slice 2 is complete and the campaign is paused for operator review before slice 3.
 - The pinned heartbeat contract now defines formal scout-renewal control since the last real slice: exact and structural quiet-signature repetition are forbidden, renewal strength is explicit (`none/weak/strong`), debate becomes mandatory at `quiet_streak >= 4`, and self-stop requires a confirmation wakeup after formal exhaustion.
-- Current next item: `review slice 1 (_validate_memory_block), then decide whether to start slice 2 (_validate_execution_policy_block)`
+- Current next item: `review slice 2 (_validate_execution_policy_block), then decide whether to start slice 3 (_validate_batch_registry_block)`
 - Active derived boundaries: `experiments/recall_eval` and `experiments/operational_signals` remain active but non-authoritative; `experiments/operational_signals/suggestions` stays marginal/advisory-only and should not expand without new evidence.
 - The canonical `SCOUT_CONTROL_STATE` block is now materialized below; `OPPORTUNITY_MAP.md` carries only a minimal next-action projection so scout-control state remains single-sourced.
 - Gate authority: `AGENTS.md` and the pinned heartbeat contract are aligned on the same equivalent runner; the raw `python -m unittest discover -s tests -v` command is not authoritative in this shell because of the Windows `tempfile.mkdtemp(..., 0o700)` behavior.
@@ -31,6 +31,7 @@
 - Validation-decomposition progress note:
   - `tests/test_validate_error_ordering.py` now pins exact `(code, message)` ordering for `14` sub-block payloads plus `1` mixed aggregate-order case
   - `_validate_memory_block` is now extracted in `core/validation.py` as slice `1/14`, with no detected ordering or message drift
+  - `_validate_execution_policy_block` is now extracted in `core/validation.py` as slice `2/14`, with no detected ordering or message drift
   - the preparatory characterization gates are green: targeted `tests.test_validate_error_ordering`, `tests.test_validate`, `tests.test_architecture`, and the AGENTS-equivalent full suite
 - Verification scout closeout:
   - the prior P5 coverage gaps identified in `decision_runtime`, `action_identity`, `discipline_runtime`, `state_runtime_lock_service`, `state_session_artifacts_service`, and `state_retention_service` are now covered by direct regression tests
