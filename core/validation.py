@@ -829,6 +829,21 @@ def _validate_audit_block(audit: object, prefix: str = "agent_runtime") -> list[
     return errors
 
 
+def _validate_audit_last_action_ref_block(
+    audit: object,
+    action_ids_seen: set[str],
+    prefix: str = "agent_runtime",
+) -> list[dict]:
+    errors: list[dict] = []
+
+    if isinstance(audit, dict):
+        last_action_id = audit.get("last_action_id", "")
+        if isinstance(last_action_id, str) and last_action_id and last_action_id not in action_ids_seen:
+            errors.append(error("invalid_agent_audit_field", f"{prefix}.audit.last_action_id must reference an existing action id"))
+
+    return errors
+
+
 def _validate_verification_block(
     verification: object,
     prefix: str = "agent_runtime",
@@ -1061,10 +1076,7 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
         if status in {"ready", "running"}
     }
 
-    if isinstance(audit, dict):
-        last_action_id = audit.get("last_action_id", "")
-        if isinstance(last_action_id, str) and last_action_id and last_action_id not in action_ids_seen:
-            errors.append(error("invalid_agent_audit_field", f"{prefix}.audit.last_action_id must reference an existing action id"))
+    errors.extend(_validate_audit_last_action_ref_block(audit, action_ids_seen, prefix))
 
     for task_id, task_action_ids in action_ids_by_task.items():
         for action_id in task_action_ids:
