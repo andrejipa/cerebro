@@ -638,6 +638,47 @@ class ValidateCommandTests(unittest.TestCase):
             self.assertTrue((store.artifacts_dir / "actions" / "act-old-000" / "preimage.txt").exists())
             self.assertFalse((store.trash_dir / "retention").exists())
 
+    def test_inspect_retention_rejects_stale_expected_revision_without_side_effects(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store = seed_retention_fixture(root)
+            current_revision = store.validate_state()["revision"]
+            before_events = store.events_path.read_bytes()
+
+            with self.assertRaisesRegex(StateStoreError, "state revision changed during operation"):
+                store.inspect_retention(expected_revision=current_revision + 1)
+
+            self.assertEqual(store.events_path.read_bytes(), before_events)
+            self.assertFalse((store.trash_dir / "retention").exists())
+
+    def test_inspect_retention_blocks_unknown_artifact_surfaces(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store = seed_retention_fixture(root)
+            unknown_artifact = store.artifacts_dir / "misc" / "odd.txt"
+            unknown_artifact.parent.mkdir(parents=True, exist_ok=True)
+            unknown_artifact.write_text("unknown", encoding="utf-8")
+
+            report = store.inspect_retention(expected_revision=store.validate_state()["revision"])
+
+            self.assertEqual(report["artifacts"]["blocked_unknown_group_count"], 1)
+            self.assertEqual(report["artifacts"]["blocked_unknown_examples"], ("misc/odd.txt",))
+
+    def test_apply_retention_rejects_stale_expected_revision_without_side_effects(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store = seed_retention_fixture(root)
+            current_revision = store.validate_state()["revision"]
+            before_events = store.events_path.read_bytes()
+            live_artifact = store.artifacts_dir / "verification" / "verify-old-00" / "cmd-001.stdout.txt"
+
+            with self.assertRaisesRegex(StateStoreError, "state revision changed during operation"):
+                store.apply_retention(expected_revision=current_revision + 1)
+
+            self.assertEqual(store.events_path.read_bytes(), before_events)
+            self.assertFalse((store.trash_dir / "retention").exists())
+            self.assertTrue(live_artifact.exists())
+
     def test_validate_retention_apply_archives_eligible_surfaces_and_preserves_live_refs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)

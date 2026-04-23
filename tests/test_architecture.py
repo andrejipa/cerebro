@@ -1124,6 +1124,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
         allowed_json_helpers = {
             REPO_ROOT / "core" / "state_store.py",
+            REPO_ROOT / "core" / "state_retention_service.py",
             REPO_ROOT / "core" / "state_session_artifacts_service.py",
         }
         offenders: list[str] = []

@@ -69,6 +69,33 @@
   extraindo apenas a camada de artefatos/autoridade para evitar cruzar cedo com
   o seam de validation/retention
 
+### Slice 4 — Validation/Retention Seam (Retenção extraída; concluída 2026-04-22)
+
+- `core/state_retention_service.py` criado para encapsular o cluster de
+  retenção que já era coeso e subordinate à facade:
+  - policy description
+  - retention report/event-log planning
+  - artifact-group planning and unknown-surface blocking
+  - pending retention journal loading/finalization
+  - retention manifest/result builders
+- `core/state_store.py` preserva a surface pública existente e agora delega os
+  helpers de retenção para o serviço, mantendo no facade:
+  - `validate_state()` / `validate_state_locked()`
+  - `runtime_lock()`
+  - `load_state()` / `save_state()`
+  - pending session refresh recovery
+  - trace ordering and revision authority
+- `tests/test_state_retention_service.py`: 2 testes diretos do serviço
+- `tests/test_validate.py`: 3 guards novos para stale `expected_revision` e
+  unknown artifact surfaces
+- `tests/test_architecture.py`: allowlist ajustada para permitir serialização
+  JSON nesse helper específico sem reabrir autoridade sobre `state.json`
+- Gate pós-slice: 775 testes, 0 falhas, 6 skips; 51 testes arquiteturais, 0 falhas
+- Debate de boundary: a posição vencedora extraiu apenas a metade de retenção do
+  seam. `validate_state*` permanece em `StateStore` até existir um motor
+  estateless que compute erros sem carregar junto recovery de sessão e
+  persistência de `last_validation`
+
 ## Why This Exists
 
 `StateStore` is still the clearest architectural hotspot outside the now-clean
