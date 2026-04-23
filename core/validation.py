@@ -1044,6 +1044,64 @@ def _validate_verification_block(
     return errors, state_check
 
 
+def _validate_verification_relations_block(
+    verification: object,
+    command_ids: set[str],
+    allow_in_verify_command_ids: set[str],
+    action_ids_seen: set[str],
+    action_statuses: dict[str, str],
+    state_check: object,
+    prefix: str = "agent_runtime",
+) -> list[dict]:
+    errors: list[dict] = []
+
+    if isinstance(verification, dict):
+        required_command_ids = verification.get("required_command_ids", [])
+        if isinstance(required_command_ids, list):
+            for command_id in required_command_ids:
+                if command_id not in command_ids:
+                    errors.append(error("invalid_agent_verification_required_command_ids", f"unknown verification command id: {command_id}"))
+                elif command_id not in allow_in_verify_command_ids:
+                    errors.append(error("invalid_agent_verification_required_command_ids", f"command id is not allowed in verify: {command_id}"))
+
+        pending_action_ids = verification.get("pending_action_ids", [])
+        if isinstance(pending_action_ids, list):
+            for action_id in pending_action_ids:
+                if action_id not in action_ids_seen:
+                    errors.append(error("invalid_agent_verification_pending_action_ids", f"unknown pending action id: {action_id}"))
+                elif action_statuses.get(action_id) == "rolled_back":
+                    errors.append(error("invalid_agent_verification_pending_action_ids", f"rolled back action cannot remain pending verification: {action_id}"))
+
+        checks = verification.get("checks", [])
+        has_failed_check = False
+        if isinstance(checks, list):
+            for check in checks:
+                if not isinstance(check, dict):
+                    continue
+                gate = check.get("gate")
+                command_id = check.get("command_id")
+                if command_id not in command_ids:
+                    errors.append(error("invalid_agent_verification_check_field", f"verification command_id must exist in command_registry: {command_id}"))
+                covered_action_ids = check.get("covered_action_ids", [])
+                if isinstance(covered_action_ids, list):
+                    for action_id in covered_action_ids:
+                        if action_id not in action_ids_seen:
+                            errors.append(error("invalid_agent_verification_check_covered_action_ids", f"verification check references unknown action id: {action_id}"))
+                if check.get("status") == "failed":
+                    has_failed_check = True
+
+        verification_status = verification.get("status")
+        state_check_failed = isinstance(state_check, dict) and state_check.get("status") == "failed"
+        if verification_status == "passed" and has_failed_check:
+            errors.append(error("invalid_agent_verification_status", f"{prefix}.verification.status cannot be passed when checks failed"))
+        if verification_status == "passed" and isinstance(pending_action_ids, list) and pending_action_ids:
+            errors.append(error("invalid_agent_verification_status", f"{prefix}.verification.status cannot be passed while actions are pending verification"))
+        if verification_status == "failed" and not has_failed_check and not state_check_failed and isinstance(pending_action_ids, list) and not pending_action_ids:
+            errors.append(error("invalid_agent_verification_status", f"{prefix}.verification.status cannot be failed without a failing check or pending action"))
+
+    return errors
+
+
 def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_runtime") -> list[dict]:
     errors: list[dict] = []
 
@@ -1165,49 +1223,17 @@ def _validate_agent_runtime_block(agent_runtime: object, prefix: str = "agent_ru
         if current_plan_action and isinstance(batch_id, str) and batch_id and batch_id not in batch_registry_used_ids:
             errors.append(error("invalid_agent_action_field", f"action {action_id} references unknown batch_id registry entry: {batch_id}"))
 
-    if isinstance(verification, dict):
-        required_command_ids = verification.get("required_command_ids", [])
-        if isinstance(required_command_ids, list):
-            for command_id in required_command_ids:
-                if command_id not in command_ids:
-                    errors.append(error("invalid_agent_verification_required_command_ids", f"unknown verification command id: {command_id}"))
-                elif command_id not in allow_in_verify_command_ids:
-                    errors.append(error("invalid_agent_verification_required_command_ids", f"command id is not allowed in verify: {command_id}"))
-
-        pending_action_ids = verification.get("pending_action_ids", [])
-        if isinstance(pending_action_ids, list):
-            for action_id in pending_action_ids:
-                if action_id not in action_ids_seen:
-                    errors.append(error("invalid_agent_verification_pending_action_ids", f"unknown pending action id: {action_id}"))
-                elif action_statuses.get(action_id) == "rolled_back":
-                    errors.append(error("invalid_agent_verification_pending_action_ids", f"rolled back action cannot remain pending verification: {action_id}"))
-
-        checks = verification.get("checks", [])
-        has_failed_check = False
-        if isinstance(checks, list):
-            for check in checks:
-                if not isinstance(check, dict):
-                    continue
-                gate = check.get("gate")
-                command_id = check.get("command_id")
-                if command_id not in command_ids:
-                    errors.append(error("invalid_agent_verification_check_field", f"verification command_id must exist in command_registry: {command_id}"))
-                covered_action_ids = check.get("covered_action_ids", [])
-                if isinstance(covered_action_ids, list):
-                    for action_id in covered_action_ids:
-                        if action_id not in action_ids_seen:
-                            errors.append(error("invalid_agent_verification_check_covered_action_ids", f"verification check references unknown action id: {action_id}"))
-                if check.get("status") == "failed":
-                    has_failed_check = True
-
-        verification_status = verification.get("status")
-        state_check_failed = isinstance(state_check, dict) and state_check.get("status") == "failed"
-        if verification_status == "passed" and has_failed_check:
-            errors.append(error("invalid_agent_verification_status", f"{prefix}.verification.status cannot be passed when checks failed"))
-        if verification_status == "passed" and isinstance(pending_action_ids, list) and pending_action_ids:
-            errors.append(error("invalid_agent_verification_status", f"{prefix}.verification.status cannot be passed while actions are pending verification"))
-        if verification_status == "failed" and not has_failed_check and not state_check_failed and isinstance(pending_action_ids, list) and not pending_action_ids:
-            errors.append(error("invalid_agent_verification_status", f"{prefix}.verification.status cannot be failed without a failing check or pending action"))
+    errors.extend(
+        _validate_verification_relations_block(
+            verification,
+            command_ids,
+            allow_in_verify_command_ids,
+            action_ids_seen,
+            action_statuses,
+            state_check,
+            prefix,
+        )
+    )
 
     return errors
 

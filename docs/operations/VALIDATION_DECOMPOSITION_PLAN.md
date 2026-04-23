@@ -14,8 +14,8 @@
   - `tests/test_validate_error_ordering.py` added with `15` tests
   - coverage split: `14` per-block malformed payloads + `1` mixed aggregate-order case
 - slice progress:
-  - completed: `11/14`
-  - latest slice: `_validate_task_action_ref_relations_block`
+  - completed: `13/14`
+  - latest slice: `_validate_verification_relations_block`
 - current live gate:
   - AGENTS-equivalent suite: `840` tests, `0` failures, `6` skips
   - architecture gate: `51` tests, `0` failures
@@ -237,11 +237,13 @@ Halt the future campaign immediately if any of the following becomes true:
     green
   - the mandatory operator checkpoint before slice `13/14` was explicitly
     consumed on `2026-04-23`
+  - `_validate_verification_relations_block` (`slice 13/14`) then landed
+    cleanly under that approval with the characterization oracle and all gates
+    green
 - current next approved slice:
-  - `_validate_verification_relations_block` (`slice 13/14`)
+  - `none; reassessment is now required before any slice 14 work`
 - next mandatory operator checkpoint:
-  - reassess before any continuation beyond
-    `_validate_verification_relations_block` (`slice 13/14`)
+  - before `_validate_action_relations_block` (`slice 14/14`)
 - completed slice commits:
   - `refactor(validate): extract _validate_memory_block (slice 1/14)`
   - `refactor(validate): extract _validate_execution_policy_block (slice 2/14)`
@@ -255,3 +257,4 @@ Halt the future campaign immediately if any of the following becomes true:
   - `refactor(validate): extract _validate_audit_last_action_ref_block (slice 10/14)`
   - `refactor(validate): extract _validate_task_action_ref_relations_block (slice 11/14)`
   - `refactor(validate): extract _validate_plan_dependency_relations_block (slice 12/14)`
+  - `refactor(validate): extract _validate_verification_relations_block (slice 13/14)`
