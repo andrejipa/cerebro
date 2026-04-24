@@ -39,6 +39,7 @@ from core.read_models import (
     ValidationRecord,
 )
 from core.state_read_model_service import StateReadModelService
+from core.state_digest import canonical_state_digest, StateDigestError
 from core.state_retention_service import (
     RETENTION_ACTION_GROUP_LIMIT,
     RETENTION_NON_CONSOLIDATION_EVENT_LIMIT,
@@ -206,7 +207,22 @@ class StateStore:
         errors = validate_state_data(data)
         if errors:
             raise StateValidationError(errors)
+        try:
+            _digest = canonical_state_digest(data, schema_version=1)
+            # Digest calculado — disponível via get_state_digest(). Sem persistência.
+        except (StateDigestError, Exception):
+            pass  # Observacional apenas — falha não afeta load_state()
         return data
+
+    def get_state_digest(self, state: dict | None = None, *, schema_version: int = 1) -> str:
+        """
+        Retorna o digest canônico do estado atual.
+        Read-only. Não muta estado. Não persiste nada.
+        Se state não for fornecido, carrega via load_state().
+        """
+        if state is None:
+            state = self.load_state()
+        return canonical_state_digest(state, schema_version=schema_version)
 
     def read_snapshot(self) -> StateSnapshot:
         """Return a stable read-only snapshot of the current state."""
