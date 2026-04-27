@@ -61,3 +61,4 @@ docs/operations/THIRD_PARTY_SOURCE_TRIAGE_*
 docs/operations/THIRD_PARTY_TRIGGER_REVIEW_*
 docs/operations/CONTEXT_VECTORS_ORACLE_EVAL_RPG_CAMINHADA*
 cleanup_rpg_files.ps1
+_rpg_trash/
