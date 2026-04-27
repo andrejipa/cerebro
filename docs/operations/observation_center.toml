@@ -1,6 +1,6 @@
 [center]
 version = 1
-updated_at = "2026-04-27T00:00:00-04:00"
+updated_at = "2026-04-27T12:00:00-04:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
@@ -71,20 +71,3 @@ dependencies_satisfied = false
 next_action = "If the hardened TOML center proves insufficient, open a new docs-only decision/trigger for a local SQLite ledger with observations, observation_dependencies, round_runs, round_events, leases, and projections."
 done_when = "A later trigger authorizes and closes a local-first ledger migration."
 halt_if = "The current docs-only/TOML center remains sufficient, or a higher-priority open observation still dominates."
-
-[[observations]]
-id = "slice-invariants-field"
-title = "Add optional invariants field to action type schema"
-status = "blocked"
-kind = "slice"
-priority = "medium"
-boundary = "docs/operations/FORMAL_RESUME_TRIGGER_SLICE_INVARIANTS.md — schema-additive only, no runtime enforcement"
-trigger = "FORMAL_RESUME_TRIGGER_SLICE_INVARIANTS.md"
-source_plan = "FORMAL_RESUME_TRIGGER_SLICE_INVARIANTS.md"
-source_snapshot = "gap identified 2026-04-27 vs current state of art in agentic verification"
-auto_continuation = false
-dependencies = []
-dependencies_satisfied = true
-next_action = "Human approves trigger, then: add invariants optional field to core/schema.py, add vocabulary check to core/validation.py, add proportional tests."
-done_when = "invariants field accepted in schema, validation rejects unknown names, vocabulary covers 5+ canonical invariants, full gate passes."
-halt_if = "Trigger not yet human-approved; or change touches runtime enforcement, state.json, cli/, or extensions/ beyond the declared scope."

@@ -10,7 +10,7 @@
 non_authoritative = true
 source = "observation_center.toml"
 rotated_at = "2026-04-27"
-rotated_items = 120
+rotated_items = 121
 
 [[observations]]
 id = "verification-artifact-root-shape-hardening"
@@ -2087,3 +2087,12 @@ kind = "slice"
 priority = "low"
 resolved_at = "2026-04-27"
 evidence = "experiments/drift_detection/ created with hasher, scanner, baseline, detector, report, cli modules. Detects structural AST changes, ignores whitespace/comments. Committed in 6e8bf8eb."
+
+[[observations]]
+id = "slice-invariants-field"
+title = "Add optional invariants field to action type schema"
+status = "resolved"
+kind = "slice"
+priority = "medium"
+resolved_at = "2026-04-27"
+evidence = "7bc1fa9d — VALID_INVARIANT_NAMES in schema.py, ACTION_RECORD_OPTIONAL_KEYS in agent_runtime.py, vocabulary check in validation.py, 6 new tests in ActionInvariantsFieldTests. Gate: 84 tests, 0 new failures."
