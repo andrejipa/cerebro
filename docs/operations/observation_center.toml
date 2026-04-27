@@ -50,9 +50,10 @@ candidate_targets = [
   'D:\projetos_cli\pessoais\rpg_caminhada',
   'D:\projetos_cli\escritorio',
 ]
-next_action = "Ask for explicit human go/no-go on the rpg_caminhada intake gate, including archive/replace handling for the legacy schema-v1 .cerebro/state.json and the exact expanded source set before running any mutating command."
-done_when = "One selected target has a human-approved intake gate, legacy-state decision, and sources registered through canonical CLI; validate/analyze pass in that target; context_discovery is reviewed as advisory-only; and the Cerebro repo AGENTS-equivalent gate remains green."
-halt_if = "The human has not approved the recommended target, the intake gate, the legacy .cerebro/state.json decision, and the exact expanded source set; the intake oracle still points to creating schema/formulas instead of Edge Functions/Supabase validation; sensitive material is likely in initial sources; import-context diff surprises the operator; validate/analyze fails; or any Cerebro repo gate turns red."
+boundary_decision = "human-approved 2026-04-27: go with correct boundary — all rpg_caminhada triggers and docs live in rpg_caminhada/.cerebro/, never in Cerebro repo"
+next_action = "Open formal intake session in rpg_caminhada/.cerebro/ with boundary enforced. Legacy .cerebro/state.json decision and exact source set still required before any mutating command."
+done_when = "rpg_caminhada has its own .cerebro/ with human-approved intake gate, legacy-state decision, and sources registered through canonical CLI; validate/analyze pass; context_discovery advisory-only; Cerebro repo gate green."
+halt_if = "Any rpg_caminhada trigger or doc is written to Cerebro repo instead of rpg_caminhada/.cerebro/; legacy .cerebro/state.json decision not yet made; sensitive material in initial sources; validate/analyze fails; Cerebro gate turns red."
 
 [[observations]]
 id = "observation-center-sqlite-ledger"
