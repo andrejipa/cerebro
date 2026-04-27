@@ -466,5 +466,80 @@ This board tracks current execution state.
         self.assertEqual([], find_doc_structure_issues(text, surface_kind="handoff"))
 
 
+
+class ObservationCenterRotationTests(unittest.TestCase):
+    """Guard that the active observation center stays lean — resolved items must live in the archive."""
+
+    def test_observation_center_has_rotation_policy(self) -> None:
+        center = tomllib.loads((OPERATIONS_DOCS / "observation_center.toml").read_bytes())
+        self.assertIn(
+            "rotation_policy",
+            center["center"],
+            "observation_center.toml [center] must declare a rotation_policy",
+        )
+
+    def test_observation_center_active_file_has_no_resolved_items(self) -> None:
+        center = tomllib.loads((OPERATIONS_DOCS / "observation_center.toml").read_bytes())
+        resolved = [o["id"] for o in center.get("observations", []) if o.get("status") == "resolved"]
+        self.assertEqual(
+            [],
+            resolved,
+            f"observation_center.toml must not contain resolved items — rotate them to "
+            f"observation_center_archive.toml. Found: {resolved}",
+        )
+
+    def test_observation_center_archive_is_non_authoritative(self) -> None:
+        archive_path = OPERATIONS_DOCS / "observation_center_archive.toml"
+        if not archive_path.exists():
+            return
+        archive = tomllib.loads(archive_path.read_bytes())
+        self.assertTrue(
+            archive.get("archive", {}).get("non_authoritative", False),
+            "observation_center_archive.toml must declare archive.non_authoritative = true",
+        )
+
+
+class OperationalDocSizeLimitTests(unittest.TestCase):
+    """Guard against context rot — operational docs must stay within readable limits.
+
+    These limits exist because LLM attention degrades as context grows (context rot).
+    Exceeding a limit means a docs-only reconciliation round is overdue.
+
+    To fix a failure: rotate historical content to the corresponding _HISTORY.md file
+    and move resolved observations to observation_center_archive.toml.
+    """
+
+    def _check_limit(self, filename: str, max_lines: int, rationale: str) -> None:
+        path = OPERATIONS_DOCS / filename
+        if not path.exists():
+            return
+        lines = len(path.read_text(encoding="utf-8").splitlines())
+        self.assertLessEqual(
+            lines,
+            max_lines,
+            f"{filename} has {lines} lines (limit: {max_lines}).\n"
+            f"Reason: {rationale}\n"
+            f"Fix: run a docs-only reconciliation round to rotate historical content.",
+        )
+
+    def test_observation_center_size(self) -> None:
+        self._check_limit(
+            "observation_center.toml", 150,
+            "active queue only — resolved items belong in observation_center_archive.toml",
+        )
+
+    def test_system_state_size(self) -> None:
+        self._check_limit(
+            "SYSTEM_STATE.md", 200,
+            "current snapshot only — historical sections belong in SYSTEM_STATE_HISTORY.md",
+        )
+
+    def test_opportunity_map_size(self) -> None:
+        self._check_limit(
+            "OPPORTUNITY_MAP.md", 400,
+            "current snapshot + pinned governance sections — chronology belongs in OPPORTUNITY_MAP_HISTORY.md",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

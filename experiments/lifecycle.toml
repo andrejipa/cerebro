@@ -36,3 +36,75 @@ status = "archived"
 started = "2026-04-20"
 archived_on = "2026-04-20"
 outcome_so_far = "semantic retrieval benchmarked against four real-project corpora across four variants (A-D); lexical baseline matched or beat embeddings in most variants; not promoted into the approved product surface; kept as historical evidence that semantic retrieval did not clear the lexical bar on this corpus"
+
+[[experiment]]
+name = "context_discovery"
+status = "active"
+started = "2026-04-23"
+last_reviewed = "2026-04-23"
+next_review_due = "2026-07-22"
+outcome_so_far = "derived content-discovery track added after the bootstrap-scan enrichment trigger was withdrawn for architecture-invariant collision; produces a read-only report comparing registered sources in .cerebro/state.json against the target project filesystem (candidates_not_registered, drift_on_registered_sources, missing_registered_sources); non-authoritative, advisory-only, never mutates .cerebro/ or cli/"
+
+[[experiment]]
+name = "context_vectors"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "deterministic local vector-search experiment for project context; indexes bounded textual heads, returns ranked query hits with trace metadata, includes an oracle evaluation helper, uses no network/model downloads, and remains derived/read-only/non-authoritative; four real oracles now pass at top-3 across rpg_caminhada, Cerebro self, Portal Humaita, and Escritorio IRPF/Caixa Rural (20 total cases, aggregate recall_at_1=0.750, aggregate recall_at_3=1.000); synthesis concludes the layer is mature enough to feed an LLM-facing advisory report but not for runtime authority or automatic source registration"
+
+[[experiment]]
+name = "context_advisor"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "LLM-facing advisory report layer that combines context_discovery candidate/drift/missing-source evidence with context_vectors deterministic ranking evidence; emits structured Markdown for downstream agents with explicit may_suggest/must_not_apply boundaries; local-only, read-only, non-authoritative, and preserves state_change none"
+
+[[experiment]]
+name = "claim_evaluation"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "bounded advisory evaluator over ClaimCandidate inputs; emits EvaluationFinding and EvaluationReport artifacts for authority, confidence, sufficiency, conflict, supersession, staleness-by-conflict, and operational readiness; explicitly preserves registered-is-not-true, retrieved-is-not-relevant, remembered-is-not-trusted, and silence-is-not-negative-evidence boundaries; no claim graph, no runtime gate, no canonical mutation"
+
+[[experiment]]
+name = "claim_extraction"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "deterministic local claim-candidate extraction experiment opened from the epistemic runtime planning lane; emits ClaimCandidate units only, keeps authority_hint and criticality_hint non-final, passes the 12 documented fixtures with forbidden-candidate guards including Fixture 9, and remains derived/read-only/non-authoritative with no claim graph or runtime integration"
+
+[[experiment]]
+name = "epistemic_readiness"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "bounded advisory report generator for epistemic-readiness reports; accepts explicit source manifests, reads bounded heads only, runs claim_extraction plus claim_evaluation, emits stable Markdown with state_change none and baseline comparison hooks, rejects .cerebro/root-escape manifest paths, and remains derived/read-only/non-authoritative with no claim graph or runtime gate"
+
+[[experiment]]
+name = "epistemic_guard"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "deterministic advisory decision-envelope oracle over concrete action questions; evaluates stale or missing evidence, conflicts, approval expiry, read/write drift, existing-state ambiguity, and missing runtime triggers while preserving state_change none; slice 2 adds bounded TOML manifest loading so explicit action evidence packs can be re-executed into JSON/Markdown reports; slice 3 adds concrete pre-action guard reports over a required proposed_action manifest table; slice 4 adds a pre-action stress matrix proving degraded operator-facing cases stay blocked; slice 5 adds a compact pre-action decision packet that combines report and stress evidence into one operator-facing posture without permission semantics; slice 6 adds packet-level stress/repro evidence proving clean, blocked, human-review, failed-stress, reproducible, stale, malformed, missing, root-escaping, and .cerebro-target packet artifact cases stay advisory and blocked where appropriate; slice 7 adds a final packet review closeout declaring the current pre-action packet lane closed_until_new_evidence with no_action and zero blockers; no runtime gate, no canonical claim graph, no source registration, no memory writing, no automatic execution, and no authority promotion"
+
+[[experiment]]
+name = "third_party_trigger_review"
+status = "active"
+started = "2026-04-25"
+last_reviewed = "2026-04-25"
+next_review_due = "2026-07-24"
+outcome_so_far = "deterministic advisory checker for proposed third-party project triggers; reviews caller-supplied trigger text for target_path, slice_kind, dogfood_value, proof_cost, source roles, target .cerebro handling, rollback, cleanup, stop conditions, forbidden paths, consecutive target-slice consolidation risk, and runtime boundary drift; slice 2 calibrated legacy trigger wording such as Allowed target files under and Explicit Prohibitions, added multi-trigger retrospective summaries, and produced the rpg_caminhada retrospective showing 25/25 historical triggers predate the stricter structured management fields and 14/25 would now force consolidation; emits state_change none and can only report ready_for_human_review, never execution permission"
+
+[[experiment]]
+name = "drift_detection"
+status = "active"
+started = "2026-04-27"
+last_reviewed = "2026-04-27"
+next_review_due = "2026-07-26"
+outcome_so_far = "AST-based structural drift detection for core/, cli/, and extensions/ modules; computes SHA-256 of normalized AST (whitespace/comment-independent) per file, captures baseline snapshot, detects added/modified/removed files between sessions; emits non-authoritative markdown+JSON report; never writes to .cerebro/, never registers sources, never calls import-context, never modifies canonical state"

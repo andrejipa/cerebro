@@ -1,6 +1,6 @@
 [center]
 version = 1
-updated_at = "2026-04-23T20:30:00-04:00"
+updated_at = "2026-04-25T02:57:00-04:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
@@ -11,7 +11,8 @@ single_flight = true
 overlap_policy = "If a prior round is still in flight, wait instead of starting overlapping work."
 idempotency_contract = "Each round may move at most one observation materially forward; repeated wakeups must reconcile the same head item instead of duplicating progress."
 notify_once_blocked = true
-history_policy = "Resolved, blocked, and waiting observations remain recorded here until a later docs-only reconciliation retires or supersedes them."
+history_policy = "Resolved observations are rotated to observation_center_archive.toml at each docs-only reconciliation round. Blocked and waiting items remain here until resolved or superseded."
+rotation_policy = "At each docs-only reconciliation round: move all status=resolved items from this file to observation_center_archive.toml; rotate SYSTEM_STATE.md and OPPORTUNITY_MAP.md to retain only the most recent Current Snapshot inline, moving prior snapshots to the corresponding _HISTORY.md file."
 checkpoint_policy = "Continue autonomously one slice per round through explicitly pre-approved windows; reintroduce a mandatory human checkpoint only where the live trigger or plan says to pause."
 
 # Status vocabulary:
@@ -31,242 +32,27 @@ opportunity_map = "Mirror the live next action and minimal human-facing rational
 trigger_docs = "Keep any active trigger aligned with the current open slice and mandatory stop conditions."
 
 [[observations]]
-id = "validation-slice-4-command-registry"
-title = "Validation decomposition slice 4"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = true
-dependencies = []
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_command_registry_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 4 landed cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advanced from 3/14 to 4/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
-
-[[observations]]
-id = "validation-slice-5-audit"
-title = "Validation decomposition slice 5"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = true
-dependencies = ["validation-slice-4-command-registry"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_audit_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 5 landed cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advanced from 4/14 to 5/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
-
-[[observations]]
-id = "validation-slice-6-actions"
-title = "Validation decomposition slice 6"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = true
-dependencies = ["validation-slice-5-audit"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_actions_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 6 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 5/14 to 6/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
-
-[[observations]]
-id = "validation-slice-7-approvals"
-title = "Validation decomposition slice 7"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = true
-dependencies = ["validation-slice-6-actions"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_approvals_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 7 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 6/14 to 7/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
-
-[[observations]]
-id = "validation-slice-8-verification"
-title = "Validation decomposition slice 8"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = true
-dependencies = ["validation-slice-7-approvals"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_verification_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 8 landed cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advanced from 7/14 to 8/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
-
-[[observations]]
-id = "validation-slice-9-plan"
-title = "Validation decomposition slice 9"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = true
-dependencies = ["validation-slice-8-verification"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_plan_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 9 landed cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advanced from 8/14 to 9/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
-
-[[observations]]
-id = "validation-slice-10-audit-last-action-ref"
-title = "Validation decomposition slice 10"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = true
-dependencies = ["validation-slice-9-plan"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_audit_last_action_ref_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 10 landed cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advanced from 9/14 to 10/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
-
-[[observations]]
-id = "validation-slice-11-task-action-ref-relations"
-title = "Validation decomposition slice 11"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = true
-dependencies = ["validation-slice-10-audit-last-action-ref"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_task_action_ref_relations_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 11 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 10/14 to 11/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, or a gate turns red."
-
-[[observations]]
-id = "validation-slice-12-manual-checkpoint"
-title = "Validation decomposition high-coupling checkpoint"
-status = "resolved"
+id = "third-party-pilot-cycle-1"
+title = "Third-party project pilot cycle 1"
+status = "waiting"
 kind = "checkpoint"
 priority = "high"
-boundary = "docs/operations/ only until slices 4-11 finish"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
+boundary = "docs/operations/FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md + docs/operations/RUNBOOK_THIRD_PARTY_PILOT.md + selected third-party .cerebro/ only after human go"
+trigger = "FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md"
+source_plan = "RUNBOOK_THIRD_PARTY_PILOT.md"
 source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
 auto_continuation = false
-dependencies = ["validation-slice-11-task-action-ref-relations"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after explicit operator approval to continue into _validate_plan_dependency_relations_block (slice 12/14)."
-done_when = "A later live snapshot explicitly re-authorizes continuation beyond slice 11."
-halt_if = "Slice 11 is not complete, the whitelist changes, or any required gate is no longer green."
-
-[[observations]]
-id = "validation-slice-12-plan-dependency-relations"
-title = "Validation decomposition slice 12"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["validation-slice-12-manual-checkpoint"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_plan_dependency_relations_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 12 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 11/14 to 12/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, a gate turns red, or the DFS/traversal ordering cannot be preserved with confidence."
-
-[[observations]]
-id = "validation-slice-13-manual-checkpoint"
-title = "Validation decomposition post-slice-12 checkpoint"
-status = "resolved"
-kind = "checkpoint"
-priority = "high"
-boundary = "docs/operations/ only until explicit continuation beyond slice 12 is approved"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["validation-slice-12-plan-dependency-relations"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after explicit operator approval to continue into _validate_verification_relations_block (slice 13/14)."
-done_when = "A later live snapshot explicitly re-authorizes continuation into slice 13 or records a halt/closeout decision for the remaining high-coupling slices."
-halt_if = "Slice 12 is not complete, the whitelist changes, or any required gate is no longer green."
-
-[[observations]]
-id = "validation-slice-13-verification-relations"
-title = "Validation decomposition slice 13"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["validation-slice-13-manual-checkpoint"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_verification_relations_block in core/validation.py and clearing the ordering oracle plus all required gates."
-done_when = "Slice 13 lands cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advance from 12/14 to 13/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md fires, the whitelist changes, a gate turns red, or validation shape/order confidence cannot be preserved with confidence."
-
-[[observations]]
-id = "validation-slice-14-manual-checkpoint"
-title = "Validation decomposition post-slice-13 checkpoint"
-status = "resolved"
-kind = "checkpoint"
-priority = "high"
-boundary = "docs/operations/ only until explicit continuation beyond slice 13 is approved"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_DECOMPOSITION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["validation-slice-13-verification-relations"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after explicit operator reassessment authorized continuation into _validate_action_relations_block (slice 14/14)."
-done_when = "A later live snapshot explicitly re-authorizes continuation into slice 14 or records a halt/closeout decision for the final high-coupling slice."
-halt_if = "Slice 13 is not complete, the whitelist changes, or any required gate is no longer green."
-
-[[observations]]
-id = "validation-slice-14-action-relations"
-title = "Validation decomposition slice 14"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/validation.py + tests/test_validate_error_ordering.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md"
-source_plan = "VALIDATION_DECOMPOSITION_PLAN.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["validation-slice-14-manual-checkpoint"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after extracting _validate_action_relations_block in core/validation.py under the narrow slice-14 exception trigger and clearing the ordering oracle plus all required gates."
-done_when = "Slice 14 landed cleanly with ordering-oracle, validate, architecture, and AGENTS-equivalent gates green, and the live docs advanced from 13/14 to 14/14."
-halt_if = "Any stop condition from FORMAL_RESUME_TRIGGER_VALIDATION_SLICE_14_EXCEPTION.md fires, the whitelist changes, a gate turns red, or validation shape/order confidence cannot be preserved with confidence."
+dependencies = ["claude-third-party-recon", "human-target-selection"]
+dependencies_satisfied = false
+recommended_target = 'D:\projetos_cli\pessoais\rpg_caminhada'
+candidate_targets = [
+  'D:\projetos_cli\Portal\Resolução Humaita Codex',
+  'D:\projetos_cli\pessoais\rpg_caminhada',
+  'D:\projetos_cli\escritorio',
+]
+next_action = "Ask for explicit human go/no-go on the rpg_caminhada intake gate, including archive/replace handling for the legacy schema-v1 .cerebro/state.json and the exact expanded source set before running any mutating command."
+done_when = "One selected target has a human-approved intake gate, legacy-state decision, and sources registered through canonical CLI; validate/analyze pass in that target; context_discovery is reviewed as advisory-only; and the Cerebro repo AGENTS-equivalent gate remains green."
+halt_if = "The human has not approved the recommended target, the intake gate, the legacy .cerebro/state.json decision, and the exact expanded source set; the intake oracle still points to creating schema/formulas instead of Edge Functions/Supabase validation; sensitive material is likely in initial sources; import-context diff surprises the operator; validate/analyze fails; or any Cerebro repo gate turns red."
 
 [[observations]]
 id = "observation-center-sqlite-ledger"
@@ -286,120 +72,35 @@ done_when = "A later trigger authorizes and closes a local-first ledger migratio
 halt_if = "The current docs-only/TOML center remains sufficient, or a higher-priority open observation still dominates."
 
 [[observations]]
-id = "transition-journal-slice-1-ordering"
-title = "Transition journal slice 1 - strong event ordering foundation"
-status = "resolved"
+id = "slice-invariants-field"
+title = "Add optional invariants field to action type schema"
+status = "blocked"
 kind = "slice"
-priority = "high"
-boundary = "core/transition_journal.py + tests/test_transition_journal.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_TRANSITION_JOURNAL_SLICE_1.md"
-source_plan = "operator executable-specification request"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+priority = "medium"
+boundary = "docs/operations/FORMAL_RESUME_TRIGGER_SLICE_INVARIANTS.md — schema-additive only, no runtime enforcement"
+trigger = "FORMAL_RESUME_TRIGGER_SLICE_INVARIANTS.md"
+source_plan = "FORMAL_RESUME_TRIGGER_SLICE_INVARIANTS.md"
+source_snapshot = "gap identified 2026-04-27 vs current state of art in agentic verification"
 auto_continuation = false
 dependencies = []
 dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after human acceptance promoted the reviewed transition-journal slice into the canonical foundation package."
-done_when = "Committed with exclusive sequence-file creation, sha256 pre/post digest validation, destructive ordering tests, and no live apply/state integration."
-halt_if = "Any follow-on slice integrates this journal into live runtime paths without a new formal trigger."
+next_action = "Human approves trigger, then: add invariants optional field to core/schema.py, add vocabulary check to core/validation.py, add proportional tests."
+done_when = "invariants field accepted in schema, validation rejects unknown names, vocabulary covers 5+ canonical invariants, full gate passes."
+halt_if = "Trigger not yet human-approved; or change touches runtime enforcement, state.json, cli/, or extensions/ beyond the declared scope."
 
 [[observations]]
-id = "state-digest-slice-1-canonical"
-title = "State digest slice 1 - canonical deterministic state digest"
-status = "resolved"
+id = "drift-detection-experiment"
+title = "AST-based drift detection script in experiments/"
+status = "open"
 kind = "slice"
-priority = "high"
-boundary = "core/state_digest.py + tests/test_state_digest.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_STATE_DIGEST_SLICE_1.md"
-source_plan = "operator executable-specification request"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+priority = "low"
+boundary = "experiments/drift_detection/ only — non-authoritative, no core/cli/extensions changes, no .cerebro/ writes"
+trigger = "none required — stays in experiments/ under existing carve-out"
+source_plan = "gap identified 2026-04-27 vs current state of art in agentic drift detection"
+source_snapshot = "experiments/ carve-out already approved for non-authoritative analysis"
 auto_continuation = false
-dependencies = ["transition-journal-slice-1-ordering"]
+dependencies = []
 dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after human acceptance promoted the reviewed state-digest slice into the canonical foundation package."
-done_when = "Committed with canonical digest tests and no live state-persistence integration."
-halt_if = "Any follow-on slice integrates this digest into live runtime paths without a new formal trigger."
-
-[[observations]]
-id = "replay-snapshot-slice-1-digest-chain"
-title = "Replay snapshot slice 1 - digest-chain verification and snapshot acceptance"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/replay_model.py + tests/test_replay_model.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_REPLAY_SNAPSHOT_SLICE_1.md"
-source_plan = "operator executable-specification request"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["transition-journal-slice-1-ordering", "state-digest-slice-1-canonical"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after human acceptance promoted the reviewed replay-snapshot slice into the canonical foundation package."
-done_when = "Committed with digest-chain and snapshot acceptance tests and no live snapshot persistence integration."
-halt_if = "Any follow-on slice integrates replay or snapshots into live runtime paths without a new formal trigger."
-
-[[observations]]
-id = "event-reducer-slice-1-checkpoint-replaced"
-title = "Event reducer slice 1 - checkpoint.replaced v1 in-memory reducer"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/event_reducer.py + tests/test_event_reducer.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_EVENT_REDUCER_SLICE_1.md"
-source_plan = "operator executable-specification request"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["transition-journal-slice-1-ordering", "state-digest-slice-1-canonical", "replay-snapshot-slice-1-digest-chain"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after human acceptance promoted the reviewed event-reducer slice into the canonical foundation package."
-done_when = "Committed with checkpoint.replaced v1 reducer tests and no live state/apply integration."
-halt_if = "Any follow-on slice expands event coverage or integrates reducers into live runtime paths without a new formal trigger."
-
-[[observations]]
-id = "material-scope-preimage-slice-1"
-title = "Material scope slice 1 - file preimage and scope verification foundation"
-status = "resolved"
-kind = "slice"
-priority = "high"
-boundary = "core/material_scope.py + tests/test_material_scope.py + docs/operations/"
-trigger = "FORMAL_RESUME_TRIGGER_MATERIAL_SCOPE_SLICE_1.md"
-source_plan = "operator executable-specification request"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["transition-journal-slice-1-ordering", "state-digest-slice-1-canonical", "replay-snapshot-slice-1-digest-chain", "event-reducer-slice-1-checkpoint-replaced"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after human acceptance promoted the reviewed material-scope slice into the canonical foundation package."
-done_when = "Committed with material preimage and declared-effect scope tests and no live filesystem instrumentation integration."
-halt_if = "Any follow-on slice claims unreported-effect detection or integrates material scope into live runtime paths without a new formal trigger."
-
-[[observations]]
-id = "foundation-proposals-human-review"
-title = "Human review completed for foundation proposal package"
-status = "resolved"
-kind = "governance"
-priority = "high"
-boundary = "human acceptance consumed; package promoted by commit after green gates"
-trigger = "not open"
-source_plan = "authority reconciliation after working-tree/docs/gate divergence"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["transition-journal-slice-1-ordering", "state-digest-slice-1-canonical", "replay-snapshot-slice-1-digest-chain", "event-reducer-slice-1-checkpoint-replaced", "material-scope-preimage-slice-1"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after explicit operator direction accepted promotion of the reviewed foundation package."
-done_when = "Foundation package is committed with 72 focused tests, 51 architecture tests, and 918 AGENTS-equivalent full-suite tests green."
-halt_if = "Any follow-on implementation starts without its own formal trigger and whitelist."
-
-[[observations]]
-id = "foundation-proposals-technical-review-2026-04-23"
-title = "Technical review remediation for foundation package"
-status = "resolved"
-kind = "review"
-priority = "high"
-boundary = "pre-promotion review remediation; no live runtime integration"
-trigger = "not open"
-source_plan = "foundation-proposals-human-review"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["transition-journal-slice-1-ordering", "state-digest-slice-1-canonical", "replay-snapshot-slice-1-digest-chain", "event-reducer-slice-1-checkpoint-replaced", "material-scope-preimage-slice-1"]
-dependencies_satisfied = true
-next_action = "Resolved on 2026-04-23 after correcting transition-journal same-sequence overwrite risk and malformed digest acceptance before foundation package promotion."
-done_when = "Foundation-focused tests pass with 72 tests and the AGENTS-equivalent full-suite gate passes with 918 tests before commit."
-halt_if = "Any follow-on work treats this foundation package as live runtime integration rather than isolated primitives."
+next_action = "Create experiments/drift_detection/ with baseline script, hash snapshot, and drift report following operational_signals pattern."
+done_when = "Script produces AST hash baseline for core/, compares on re-run, emits structured drift report. Non-authoritative — never writes to .cerebro/ or canonical state."
+halt_if = "Script attempts to write canonical state, call import-context, register sources, or modify core/cli/extensions/tests."
