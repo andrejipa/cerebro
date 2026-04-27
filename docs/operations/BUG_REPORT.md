@@ -1,8 +1,9 @@
-## Current Snapshot — 2026-04-22
+## Current Snapshot — 2026-04-23
 
-- Live executable bug queue: none.
-- Current posture: this file is preserved as historical evidence of closed canonical-runtime rounds; nothing below is live unless it is explicitly reopened in a current snapshot.
-- Residual handling: accepted residuals and freeze-blocked items do not become an executable queue here by default.
+- Live executable bug queue: none. The machine-primary queue for still-resolvable work lives in `docs/operations/observation_center.toml`; this file is a historical ledger of closed canonical-runtime rounds and is not consulted for live scheduling.
+- Posture: every entry below is preserved as historical evidence of a bug that was closed in a prior round. Language such as "Problemas confirmados" and the Round-by-Round progression applies only within that history; none of those items are currently open unless explicitly reopened in this Current Snapshot.
+- Accepted residuals and freeze-blocked items recorded below are not an executable queue. They exist as audit trail and as anchors for future formal resume triggers if an operator chooses to reopen them.
+- Disambiguation for future readers: if a line below reads like live state (for example a suite-count update or a "Problemas confirmados" heading), treat it as historical unless the Current Snapshot above explicitly promotes it back.
 
 ## Historical Canonical Bug Ledger
 

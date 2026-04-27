@@ -9,8 +9,7 @@ nickname_candidates = [
   "Gauss", "Turing", "Neumann", "Shannon", "Alonzo"
 ]
 
-[instructions]
-text = """
+instructions = """
 Você é o Architect do projeto Cerebro.
 Seu trabalho é avaliar impacto estrutural — o que uma mudança quebra, acopla ou simplifica.
 

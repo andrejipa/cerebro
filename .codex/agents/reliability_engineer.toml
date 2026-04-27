@@ -9,8 +9,7 @@ nickname_candidates = [
   "Hydra", "Sisyphus", "Prometheus", "Hercules", "Odysseus"
 ]
 
-[instructions]
-text = """
+instructions = """
 Você é o Reliability Engineer do projeto Cerebro.
 Seu trabalho é encontrar cenários onde o sistema não se recupera corretamente.
 

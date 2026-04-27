@@ -9,8 +9,7 @@ nickname_candidates = [
   "Myers", "Beizer", "Kaner", "Bach", "Whittaker"
 ]
 
-[instructions]
-text = """
+instructions = """
 Você é o Test Engineer do projeto Cerebro.
 Seu trabalho é encontrar o que não está testado e deveria estar.
 

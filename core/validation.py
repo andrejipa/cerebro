@@ -54,6 +54,7 @@ from core.agent_runtime import (
     canonicalize_state_data,
 )
 from core.execution_policy import required_action_approval_error
+from core.runtime_ids import is_runtime_path_segment_id
 from core.schema import (
     CHECKPOINT_KEYS,
     DETAIL_KEYS,
@@ -514,6 +515,13 @@ def _validate_command_registry_block(
                 command_id = command.get("id")
                 if not isinstance(command_id, str) or not command_id:
                     errors.append(error("invalid_command_registry_command_id", f"{command_prefix}.id must be a non-empty string"))
+                elif not is_runtime_path_segment_id(command_id):
+                    errors.append(
+                        error(
+                            "invalid_command_registry_command_id",
+                            f"{command_prefix}.id must be safe as a runtime path segment",
+                        )
+                    )
                 elif command_id in command_ids:
                     errors.append(error("invalid_command_registry_commands", f"duplicate command id: {command_id}"))
                 else:
@@ -703,6 +711,13 @@ def _validate_actions_block(
             action_id = action.get("id")
             if not isinstance(action_id, str) or not action_id:
                 errors.append(error("invalid_agent_action_id", f"{action_prefix}.id must be a non-empty string"))
+            elif not is_runtime_path_segment_id(action_id):
+                errors.append(
+                    error(
+                        "invalid_agent_action_id",
+                        f"{action_prefix}.id must be safe as a runtime path segment",
+                    )
+                )
             elif action_id in action_ids_seen:
                 errors.append(error("invalid_agent_actions", f"duplicate action id: {action_id}"))
             else:

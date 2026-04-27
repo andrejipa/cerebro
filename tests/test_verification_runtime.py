@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import io
+import os
+import signal
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -9,15 +11,73 @@ from unittest.mock import patch
 
 from cli.commands.init import run_init
 from cli.commands.verify import run_verify
+from core.digests import sha256_text
 from core.state_store import StateStore, StateStoreError
 from core.verification_runtime import (
+    MAX_VERIFY_ARTIFACT_TEXT_BYTES,
+    VERIFY_ARTIFACT_TRUNCATION_MARKER,
     VerificationRuntimeError,
+    build_verification_artifact_retention_report,
     execute_verification_cycle,
     run_verification_commands,
+    _run_verify_subprocess,
+    _terminate_verify_process_boundary,
 )
 
 
 class VerificationRuntimeTests(unittest.TestCase):
+    def _store_with_verify_command(
+        self,
+        root: Path,
+        argv: list[str],
+        *,
+        command_id: str = "cmd-001",
+        timeout_ms: int = 120000,
+    ) -> StateStore:
+        tracked = root / "tracked.txt"
+        tracked.write_text("hello", encoding="utf-8")
+        run_init(root, None)
+        store = StateStore(root)
+        store.register_sources(["tracked.txt"])
+        validation = store.validate_state()
+        store.update_agent_plan(
+            {
+                "goal": "Run verification command",
+                "summary": "Run one verification command.",
+                "tasks": [
+                    {
+                        "id": "task-001",
+                        "title": "Run verify",
+                        "status": "ready",
+                        "details": "Run verify",
+                        "depends_on": [],
+                        "working_set": ["tracked.txt"],
+                        "acceptance_criteria": ["verify records command evidence"],
+                        "action_ids": [],
+                    }
+                ],
+                "command_registry": [
+                    {
+                        "id": command_id,
+                        "argv": argv,
+                        "cwd": ".",
+                        "timeout_ms": timeout_ms,
+                        "determinism": "high",
+                        "side_effect": "read_only",
+                        "risk": "low",
+                        "allow_in_verify": True,
+                    }
+                ],
+                "required_command_ids": [command_id],
+                "autonomy_level": "A2",
+                "protected_paths": [".cerebro/**", ".git/**"],
+                "blocked_command_prefixes": ["rm"],
+                "approval_required_kinds": ["fs.write_patch"],
+            },
+            validated_revision=validation["revision"],
+        )
+        return store
+
     def test_run_verify_rejects_command_cwd_that_resolves_outside_root(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -380,6 +440,297 @@ class VerificationRuntimeTests(unittest.TestCase):
             matching = [event for event in recent_events if event.get("event") == "verify_failed" and event.get("command_id") == "cmd-001"]
             self.assertEqual(len(matching), 1)
             self.assertEqual(matching[0]["reason_code"], "command_artifact_persistence_exception")
+
+    def test_verify_artifacts_are_bounded_for_large_stdout_and_stderr(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store = self._store_with_verify_command(
+                root,
+                [
+                    "python",
+                    "-c",
+                    "import sys; sys.stdout.write('x' * 70000); sys.stderr.write('y' * 70000)",
+                ],
+            )
+
+            verification = run_verification_commands(root, store, store.read_agent_runtime())
+
+            self.assertEqual(verification["status"], "passed")
+            check = verification["checks"][0]
+            stdout_text = (store.cerebro_dir / check["artifact_ref"]).read_text(encoding="utf-8")
+            stderr_text = (store.cerebro_dir / check["artifact_ref"].replace(".stdout.txt", ".stderr.txt")).read_text(
+                encoding="utf-8"
+            )
+            self.assertLessEqual(len(stdout_text.encode("utf-8")), MAX_VERIFY_ARTIFACT_TEXT_BYTES)
+            self.assertLessEqual(len(stderr_text.encode("utf-8")), MAX_VERIFY_ARTIFACT_TEXT_BYTES)
+            self.assertTrue(stdout_text.endswith(VERIFY_ARTIFACT_TRUNCATION_MARKER))
+            self.assertTrue(stderr_text.endswith(VERIFY_ARTIFACT_TRUNCATION_MARKER))
+            self.assertEqual(check["artifact_sha256"], sha256_text(stdout_text))
+
+    def test_verify_artifacts_preserve_small_stdout_and_stderr(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store = self._store_with_verify_command(
+                root,
+                ["python", "-c", "import sys; print('stdout ok'); sys.stderr.write('stderr ok\\n')"],
+            )
+
+            verification = run_verification_commands(root, store, store.read_agent_runtime())
+
+            self.assertEqual(verification["status"], "passed")
+            check = verification["checks"][0]
+            stdout_text = (store.cerebro_dir / check["artifact_ref"]).read_text(encoding="utf-8")
+            stderr_text = (store.cerebro_dir / check["artifact_ref"].replace(".stdout.txt", ".stderr.txt")).read_text(
+                encoding="utf-8"
+            )
+            self.assertEqual(stdout_text, "stdout ok\n")
+            self.assertEqual(stderr_text, "stderr ok\n")
+            self.assertNotIn(VERIFY_ARTIFACT_TRUNCATION_MARKER, stdout_text)
+            self.assertNotIn(VERIFY_ARTIFACT_TRUNCATION_MARKER, stderr_text)
+            self.assertEqual(check["artifact_sha256"], sha256_text(stdout_text))
+
+    def test_verify_failed_command_with_large_output_remains_failed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store = self._store_with_verify_command(
+                root,
+                [
+                    "python",
+                    "-c",
+                    "import sys; sys.stdout.write('x' * 70000); sys.stderr.write('y' * 70000); raise SystemExit(7)",
+                ],
+            )
+
+            verification = run_verification_commands(root, store, store.read_agent_runtime())
+
+            self.assertEqual(verification["status"], "failed")
+            check = verification["checks"][0]
+            self.assertEqual(check["status"], "failed")
+            self.assertEqual(check["exit_code"], 7)
+            self.assertIn("command exited with non-zero status", check["message"])
+            stdout_text = (store.cerebro_dir / check["artifact_ref"]).read_text(encoding="utf-8")
+            stderr_text = (store.cerebro_dir / check["artifact_ref"].replace(".stdout.txt", ".stderr.txt")).read_text(
+                encoding="utf-8"
+            )
+            self.assertLessEqual(len(stdout_text.encode("utf-8")), MAX_VERIFY_ARTIFACT_TEXT_BYTES)
+            self.assertLessEqual(len(stderr_text.encode("utf-8")), MAX_VERIFY_ARTIFACT_TEXT_BYTES)
+            self.assertTrue(stdout_text.endswith(VERIFY_ARTIFACT_TRUNCATION_MARKER))
+            self.assertTrue(stderr_text.endswith(VERIFY_ARTIFACT_TRUNCATION_MARKER))
+
+    def test_verify_timeout_records_failed_check_with_bounded_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            store = self._store_with_verify_command(
+                root,
+                [
+                    "python",
+                    "-c",
+                    "import sys, time; print('before timeout'); sys.stdout.flush(); time.sleep(2)",
+                ],
+                timeout_ms=100,
+            )
+
+            verification = run_verification_commands(root, store, store.read_agent_runtime())
+
+            self.assertEqual(verification["status"], "failed")
+            check = verification["checks"][0]
+            self.assertEqual(check["status"], "failed")
+            self.assertIn("command timed out", check["message"])
+            stdout_text = (store.cerebro_dir / check["artifact_ref"]).read_text(encoding="utf-8")
+            stderr_text = (store.cerebro_dir / check["artifact_ref"].replace(".stdout.txt", ".stderr.txt")).read_text(
+                encoding="utf-8"
+            )
+            self.assertLessEqual(len(stdout_text.encode("utf-8")), MAX_VERIFY_ARTIFACT_TEXT_BYTES)
+            self.assertLessEqual(len(stderr_text.encode("utf-8")), MAX_VERIFY_ARTIFACT_TEXT_BYTES)
+
+    def test_run_verify_subprocess_preserves_success_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            result = _run_verify_subprocess(
+                ["python", "-c", "import sys; print('ok'); sys.stderr.write('warn\\n')"],
+                cwd=Path(tmp_dir),
+                timeout_seconds=5,
+                env={},
+            )
+
+            self.assertFalse(result.timed_out)
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, "ok\n")
+            self.assertEqual(result.stderr, "warn\n")
+
+    def test_windows_timeout_uses_taskkill_boundary(self) -> None:
+        class FakeProcess:
+            pid = 1234
+
+            def __init__(self) -> None:
+                self.killed = False
+
+            def poll(self):
+                return None
+
+            def kill(self) -> None:
+                self.killed = True
+
+        process = FakeProcess()
+
+        with patch("core.verification_runtime.os.name", "nt"):
+            with patch("core.verification_runtime.subprocess.run") as run_mock:
+                messages = _terminate_verify_process_boundary(process)  # type: ignore[arg-type]
+
+        self.assertEqual(messages, ())
+        run_mock.assert_called_once()
+        self.assertEqual(run_mock.call_args.args[0], ["taskkill", "/T", "/F", "/PID", "1234"])
+        self.assertTrue(process.killed)
+
+    def test_posix_timeout_uses_process_group_boundary(self) -> None:
+        class FakeProcess:
+            pid = 1234
+
+            def poll(self):
+                return None
+
+        with patch("core.verification_runtime.os.name", "posix"):
+            with patch("core.verification_runtime.os.killpg", create=True) as killpg_mock:
+                messages = _terminate_verify_process_boundary(FakeProcess())  # type: ignore[arg-type]
+
+        self.assertEqual(messages, ())
+        killpg_mock.assert_called_once_with(1234, getattr(signal, "SIGKILL", signal.SIGTERM))
+
+    def test_process_boundary_termination_failure_is_visible(self) -> None:
+        class FakeProcess:
+            pid = 1234
+
+            def poll(self):
+                return None
+
+            def kill(self) -> None:
+                raise OSError("still alive")
+
+        with patch("core.verification_runtime.os.name", "posix"):
+            with patch("core.verification_runtime.os.killpg", side_effect=OSError("denied"), create=True):
+                messages = _terminate_verify_process_boundary(FakeProcess())  # type: ignore[arg-type]
+
+        rendered = "; ".join(messages)
+        self.assertIn("process group termination failed", rendered)
+        self.assertIn("process termination failed", rendered)
+
+    def test_verification_artifact_retention_report_classifies_without_mutating(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            verification_root = store.artifacts_dir / "verification"
+            verification_root.mkdir(parents=True, exist_ok=True)
+            timestamps = {
+                "verify-live": 1_700_000_003,
+                "verify-recent": 1_700_000_002,
+                "verify-old": 1_700_000_001,
+            }
+            for run_id in ("verify-live", "verify-recent", "verify-old"):
+                run_dir = verification_root / run_id
+                run_dir.mkdir()
+                artifact = run_dir / "cmd-001.stdout.txt"
+                artifact.write_text(f"run {run_id}", encoding="utf-8")
+                (run_dir / "cmd-001.stderr.txt").write_text("", encoding="utf-8")
+                timestamp = timestamps[run_id]
+                os.utime(run_dir, (timestamp, timestamp))
+            ambiguous = verification_root / "loose.txt"
+            ambiguous.write_text("not a run dir", encoding="utf-8")
+            before = {path.relative_to(verification_root).as_posix(): path.read_bytes() for path in verification_root.rglob("*") if path.is_file()}
+
+            report = build_verification_artifact_retention_report(
+                verification_root,
+                {
+                    "verification": {
+                        "checks": [
+                            {
+                                "artifact_ref": "artifacts/verification/verify-live/cmd-001.stdout.txt",
+                                "artifact_sha256": "abc",
+                            }
+                        ]
+                    }
+                },
+                retained_recent_limit=1,
+            )
+
+            classifications = {entry.run_id: entry.classification for entry in report.entries}
+            self.assertEqual(report.status, "ok")
+            self.assertEqual(classifications["verify-live"], "live_referenced")
+            self.assertEqual(classifications["verify-recent"], "recent_unreferenced")
+            self.assertEqual(classifications["verify-old"], "cleanup_eligible")
+            self.assertEqual(classifications["loose.txt"], "ambiguous_do_not_touch")
+            self.assertEqual(report.live_referenced_count, 1)
+            self.assertEqual(report.recent_unreferenced_count, 1)
+            self.assertEqual(report.cleanup_eligible_count, 1)
+            self.assertEqual(report.ambiguous_count, 1)
+            self.assertGreater(report.cleanup_eligible_bytes, 0)
+            self.assertEqual(report.state_change, "none")
+            after = {path.relative_to(verification_root).as_posix(): path.read_bytes() for path in verification_root.rglob("*") if path.is_file()}
+            self.assertEqual(after, before)
+
+    def test_verification_artifact_retention_report_missing_root_is_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            verification_root = Path(tmp_dir) / "missing-verification-root"
+
+            report = build_verification_artifact_retention_report(verification_root, {"verification": {}})
+
+            self.assertEqual(report.status, "missing_artifact_root")
+            self.assertEqual(report.total_entries, 0)
+            self.assertEqual(report.cleanup_eligible_count, 0)
+            self.assertEqual(report.cleanup_eligible_bytes, 0)
+
+    def test_verification_artifact_retention_report_invalid_root_is_ambiguous(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            verification_root = Path(tmp_dir) / "verification"
+            verification_root.write_text("not a directory", encoding="utf-8")
+            before = verification_root.read_text(encoding="utf-8")
+
+            report = build_verification_artifact_retention_report(verification_root, {"verification": {}})
+
+            self.assertEqual(report.status, "invalid_artifact_root")
+            self.assertEqual(report.total_entries, 1)
+            self.assertEqual(report.cleanup_eligible_count, 0)
+            self.assertEqual(report.cleanup_eligible_bytes, 0)
+            self.assertEqual(report.ambiguous_count, 1)
+            self.assertEqual(report.entries[0].classification, "ambiguous_do_not_touch")
+            self.assertIn("not a readable directory", report.entries[0].reason)
+            self.assertEqual(verification_root.read_text(encoding="utf-8"), before)
+
+    def test_verification_artifact_retention_report_rejects_negative_recent_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            with self.assertRaises(VerificationRuntimeError):
+                build_verification_artifact_retention_report(Path(tmp_dir), {}, retained_recent_limit=-1)
+
+    def test_verification_artifact_retention_report_marks_racy_entries_ambiguous(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            verification_root = Path(tmp_dir) / "verification"
+            verification_root.mkdir()
+            stable = verification_root / "verify-stable"
+            stable.mkdir()
+            (stable / "cmd-001.stdout.txt").write_text("ok", encoding="utf-8")
+            vanished = verification_root / "verify-vanished"
+            vanished.mkdir()
+            (vanished / "cmd-001.stdout.txt").write_text("gone", encoding="utf-8")
+            original_stat = Path.stat
+
+            def racy_stat(path: Path, *args, **kwargs):
+                if path.name == "verify-vanished":
+                    raise FileNotFoundError(path)
+                return original_stat(path, *args, **kwargs)
+
+            with patch.object(Path, "stat", racy_stat):
+                report = build_verification_artifact_retention_report(
+                    verification_root,
+                    {"verification": {}},
+                    retained_recent_limit=0,
+                )
+
+            classifications = {entry.run_id: entry.classification for entry in report.entries}
+            reasons = {entry.run_id: entry.reason for entry in report.entries}
+            self.assertEqual(report.status, "ok")
+            self.assertEqual(classifications["verify-stable"], "cleanup_eligible")
+            self.assertEqual(classifications["verify-vanished"], "ambiguous_do_not_touch")
+            self.assertIn("metadata could not be read", reasons["verify-vanished"])
+            self.assertEqual(report.ambiguous_count, 1)
 
     def test_execute_verification_cycle_returns_without_commands_when_validation_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

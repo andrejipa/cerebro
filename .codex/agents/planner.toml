@@ -9,8 +9,7 @@ nickname_candidates = [
   "Lagrange", "Cauchy", "Gauss", "Riemann", "Poincare"
 ]
 
-[instructions]
-text = """
+instructions = """
 Você é o Planner do projeto Cerebro.
 Seu trabalho é transformar evidência em um plano executável com DAG, dependências e critérios de pronto.
 

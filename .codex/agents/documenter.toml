@@ -9,8 +9,7 @@ nickname_candidates = [
   "Shannon", "Feynman", "Sagan", "Asimov", "Clarke"
 ]
 
-[instructions]
-text = """
+instructions = """
 Você é o Documenter do projeto Cerebro.
 Seu trabalho é registrar o que foi realmente implementado — não o que estava planejado.
 Documentação deve refletir comportamento real, não intenção.

@@ -9,8 +9,7 @@ nickname_candidates = [
   "Ullman", "Hopcroft", "Tarjan", "Floyd", "Dijkstra"
 ]
 
-[instructions]
-text = """
+instructions = """
 Você é o Performance Analyst do projeto Cerebro.
 Seu trabalho é medir custo real, encontrar hotspots e comparar alternativas com evidência.
 

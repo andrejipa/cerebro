@@ -1,7 +1,15 @@
 # Project OS Backlog
 
-Backlog de evolucao a partir de um runtime operacional, observavel e estavel.
-O foco atual e qualidade de decisao: escolher melhor, justificar melhor e reduzir trabalho inutil sem mexer nos invariantes ja existentes de score por task, retry block por acao, rollback, approval, DAG, verify, `status-export` e audit trail.
+## Current Snapshot — 2026-04-23
+
+- Live executable queue: none here. The machine-primary queue for still-resolvable work lives in `docs/operations/observation_center.toml`; this file is a historical backlog ledger and an evolution-projection surface, not a scheduler and not a list of commitments.
+- Canonical posture: deliberate freeze for speculative canonical-runtime growth remains active. No backlog item below is authorized to execute without a new formal resume trigger and explicit human acceptance; see `docs/operations/SYSTEM_STATE.md` and `docs/operations/OPPORTUNITY_MAP.md` for the live operating reference.
+- Disambiguation for future readers: checklist items marked `- [ ]` below are **not an open queue**. They are historical evolution notes describing options that were considered at the time each group was written. A `- [x]` item records that the described behavior was already delivered; a `- [ ]` item records that the described behavior was never promised and is not currently authorized. The footer section `## Leitura Do Backlog` restates this rule for completeness.
+- Audit preservation: the evolution narrative, the Grupo 1–7 checklists, and the `## Grupo 7 - Hardening Recente E Benchmarks` chronology are preserved below verbatim as historical evidence. Nothing in that history is promoted back into the live queue by this snapshot.
+
+## Historical Backlog
+
+Everything from this point forward is historical backlog. The section title `## Estado Atual Do Runtime` below names the operational invariants that existed when this backlog was originally written; those invariants are still present in `core/` but their authoritative description lives in `AGENTS.md` and in the current-state fields of `SYSTEM_STATE.md`, not in this file.
 
 ## Estado Atual Do Runtime
 

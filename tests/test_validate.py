@@ -451,6 +451,28 @@ class ValidationFunctionTests(unittest.TestCase):
 
         self.assertIn("invalid_command_registry_command_cwd", {item["code"] for item in errors})
 
+    def test_validate_state_rejects_command_registry_id_path_segment_escape(self) -> None:
+        state = self._valid_state()
+        state["agent_runtime"]["command_registry"]["commands"] = [
+            self._valid_command("../escape", allow_in_verify=True)
+        ]
+
+        errors = validate_state_data(state)
+
+        self.assertIn("invalid_command_registry_command_id", {item["code"] for item in errors})
+        self.assertTrue(any("safe as a runtime path segment" in item["message"] for item in errors))
+
+    def test_validate_state_accepts_safe_command_registry_path_segment_ids(self) -> None:
+        state = self._valid_state()
+        state["agent_runtime"]["command_registry"]["commands"] = [
+            self._valid_command("cmd.fast_01", allow_in_verify=True)
+        ]
+        state["agent_runtime"]["verification"]["required_command_ids"] = ["cmd.fast_01"]
+
+        errors = validate_state_data(state)
+
+        self.assertNotIn("invalid_command_registry_command_id", {item["code"] for item in errors})
+
     def test_validate_state_accepts_command_registry_cwd_boundary_that_runtime_rejects_later(self) -> None:
         state = self._valid_state()
         command = self._valid_command("cmd-001", allow_in_verify=True)

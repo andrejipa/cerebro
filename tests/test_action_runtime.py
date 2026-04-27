@@ -431,6 +431,35 @@ class ActionRuntimePolicyBoundaryTests(unittest.TestCase):
 
             self.assertIn("command prefix is blocked by execution policy: powershell", str(ctx.exception))
 
+    def test_apply_action_rejects_action_id_path_segment_escape_before_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            runtime = build_initial_agent_runtime()
+            runtime["execution_policy"]["autonomy_level"] = "A2"
+
+            with self.assertRaises(ActionRuntimeError) as ctx:
+                apply_action(
+                    root,
+                    store,
+                    runtime,
+                    {
+                        "id": "../escape",
+                        "kind": "fs.create_file",
+                        "summary": "attempt artifact escape",
+                        "path": "draft.txt",
+                        "content": "owned\n",
+                    },
+                    {},
+                    set(),
+                )
+
+            self.assertIn("id must contain only letters", str(ctx.exception))
+            self.assertFalse((root / "draft.txt").exists())
+            self.assertFalse((store.artifacts_dir / "actions").exists())
+            self.assertFalse((store.trash_dir / "escape").exists())
+
 
 class ActionRuntimeWorkspacePathTests(unittest.TestCase):
     def test_resolve_workspace_path_rejects_absolute_paths(self) -> None:

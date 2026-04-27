@@ -25,6 +25,7 @@ from core.execution_policy import (
     ensure_mutation_path_allowed,
     required_action_approval_error,
 )
+from core.runtime_ids import require_runtime_path_segment_id
 from core.store_protocols import ActionStoreSurface, ApplyCycleStoreSurface
 from core.workspace_paths import resolve_workspace_relative_path
 
@@ -415,6 +416,10 @@ def normalize_action_payload(payload: dict) -> dict:
     """Validate and normalize one action payload."""
     kind = _require_non_empty_string(payload.get("kind"), "kind")
     action_id = _require_non_empty_string(payload.get("id", kind.replace(".", "-")), "id")
+    try:
+        action_id = require_runtime_path_segment_id(action_id, "id")
+    except ValueError as exc:
+        raise ActionRuntimeError(str(exc)) from exc
     summary = _require_non_empty_string(payload.get("summary", kind), "summary")
 
     normalized = {

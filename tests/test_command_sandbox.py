@@ -33,6 +33,26 @@ class CommandSandboxTests(unittest.TestCase):
 
             self.assertFalse(sandbox_root.exists())
 
+    def test_prepare_project_sandbox_omits_local_generated_roots_but_keeps_cerebro(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            (root / "tracked.txt").write_text("hello\n", encoding="utf-8")
+            (root / ".cerebro").mkdir()
+            (root / ".cerebro" / "state.json").write_text("{}", encoding="utf-8")
+            for dirname in ("_local", ".git", ".tmp_live_proofs", "venv", ".pytest_cache"):
+                directory = root / dirname
+                directory.mkdir()
+                (directory / "noise.txt").write_text("noise\n", encoding="utf-8")
+
+            sandbox_dir, sandbox_root = prepare_project_sandbox(root)
+            try:
+                self.assertEqual((sandbox_root / "tracked.txt").read_text(encoding="utf-8"), "hello\n")
+                self.assertTrue((sandbox_root / ".cerebro" / "state.json").exists())
+                for dirname in ("_local", ".git", ".tmp_live_proofs", "venv", ".pytest_cache"):
+                    self.assertFalse((sandbox_root / dirname).exists(), dirname)
+            finally:
+                sandbox_dir.cleanup()
+
     def test_capture_tree_manifest_diff_ignores_directory_mtime_churn_but_reports_file_drift(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -53,6 +73,26 @@ class CommandSandboxTests(unittest.TestCase):
             summary = summarize_manifest_diff(before, after_file_change)
 
             self.assertIn("changed notes/draft.txt", summary)
+
+    def test_capture_tree_manifest_omits_local_generated_roots_but_keeps_cerebro(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            (root / "tracked.txt").write_text("hello\n", encoding="utf-8")
+            (root / ".cerebro").mkdir()
+            (root / ".cerebro" / "state.json").write_text("{}", encoding="utf-8")
+            for dirname in ("_local", ".git", ".tmp_workspace", "venv", "__pycache__"):
+                directory = root / dirname
+                directory.mkdir()
+                (directory / "noise.txt").write_text("noise\n", encoding="utf-8")
+
+            manifest = capture_tree_manifest(root)
+
+            self.assertIn("tracked.txt", manifest)
+            self.assertIn(".cerebro", manifest)
+            self.assertIn(".cerebro/state.json", manifest)
+            for dirname in ("_local", ".git", ".tmp_workspace", "venv", "__pycache__"):
+                self.assertNotIn(dirname, manifest)
+                self.assertNotIn(f"{dirname}/noise.txt", manifest)
 
 
 if __name__ == "__main__":

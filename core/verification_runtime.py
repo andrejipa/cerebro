@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import os
+import signal
 import shutil
+import stat as stat_module
 import subprocess
 from copy import deepcopy
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -26,6 +29,40 @@ class VerificationRuntimeError(Exception):
     """Raised when registered verification commands cannot be executed safely."""
 
 
+@dataclass(frozen=True)
+class VerifySubprocessResult:
+    returncode: int
+    stdout: str
+    stderr: str
+    timed_out: bool
+    containment_messages: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class VerificationArtifactRetentionEntry:
+    run_id: str
+    relative_path: str
+    classification: str
+    file_count: int
+    total_bytes: int
+    reason: str
+
+
+@dataclass(frozen=True)
+class VerificationArtifactRetentionReport:
+    status: str
+    retained_recent_limit: int
+    total_entries: int
+    live_referenced_count: int
+    recent_unreferenced_count: int
+    cleanup_eligible_count: int
+    ambiguous_count: int
+    total_bytes: int
+    cleanup_eligible_bytes: int
+    entries: tuple[VerificationArtifactRetentionEntry, ...]
+    state_change: str = "none"
+
+
 SESSION_TOKEN_ENV_VAR = "CEREBRO_SESSION_TOKEN"
 VERIFY_HOST_ENV_ALLOWLIST = (
     "COMSPEC",
@@ -41,6 +78,8 @@ VERIFY_ARTIFACT_REDACTION_ENV_KEYS = (
     "SYSTEMROOT",
     "WINDIR",
 )
+MAX_VERIFY_ARTIFACT_TEXT_BYTES = 64 * 1024
+VERIFY_ARTIFACT_TRUNCATION_MARKER = "\n... [truncated after 65536 bytes]\n"
 
 
 def _timestamp_now() -> str:
@@ -49,6 +88,191 @@ def _timestamp_now() -> str:
 
 def _artifact_relpath(*parts: str) -> str:
     return Path("artifacts").joinpath(*parts).as_posix()
+
+
+def _verification_artifact_run_relpath(run_id: str) -> str:
+    return _artifact_relpath("verification", run_id)
+
+
+def _verification_artifact_entry_size(path: Path) -> tuple[int, int]:
+    try:
+        if path.is_file():
+            return 1, path.stat().st_size
+    except OSError:
+        return 0, 0
+    try:
+        is_directory = path.is_dir()
+    except OSError:
+        return 0, 0
+    if not is_directory:
+        return 0, 0
+    file_count = 0
+    total_bytes = 0
+    try:
+        children = path.rglob("*")
+        for child in children:
+            try:
+                if not child.is_file():
+                    continue
+            except OSError:
+                continue
+            file_count += 1
+            try:
+                total_bytes += child.stat().st_size
+            except OSError:
+                continue
+    except OSError:
+        return file_count, total_bytes
+    return file_count, total_bytes
+
+
+def _verification_artifact_entry_metadata(path: Path) -> tuple[str, float]:
+    try:
+        metadata = path.stat()
+    except OSError:
+        return "unreadable", 0
+    if stat_module.S_ISDIR(metadata.st_mode):
+        return "directory", metadata.st_mtime
+    if stat_module.S_ISREG(metadata.st_mode):
+        return "file", metadata.st_mtime
+    return "other", metadata.st_mtime
+
+
+def _live_verification_artifact_run_ids(agent_runtime: dict) -> set[str]:
+    verification = agent_runtime.get("verification", {})
+    if not isinstance(verification, dict):
+        return set()
+    checks = verification.get("checks", [])
+    if not isinstance(checks, list):
+        return set()
+    run_ids: set[str] = set()
+    for check in checks:
+        if not isinstance(check, dict):
+            continue
+        artifact_ref = check.get("artifact_ref")
+        if not isinstance(artifact_ref, str) or not artifact_ref:
+            continue
+        parts = Path(artifact_ref).parts
+        if len(parts) >= 3 and parts[0] == "artifacts" and parts[1] == "verification":
+            run_ids.add(parts[2])
+    return run_ids
+
+
+def build_verification_artifact_retention_report(
+    verification_root: Path,
+    agent_runtime: dict,
+    *,
+    retained_recent_limit: int = 5,
+) -> VerificationArtifactRetentionReport:
+    """Return a dry-run retention-pressure report for verification artifacts."""
+    if retained_recent_limit < 0:
+        raise VerificationRuntimeError("retained_recent_limit must be non-negative")
+
+    if not verification_root.exists():
+        return VerificationArtifactRetentionReport(
+            status="missing_artifact_root",
+            retained_recent_limit=retained_recent_limit,
+            total_entries=0,
+            live_referenced_count=0,
+            recent_unreferenced_count=0,
+            cleanup_eligible_count=0,
+            ambiguous_count=0,
+            total_bytes=0,
+            cleanup_eligible_bytes=0,
+            entries=(),
+        )
+    root_kind, _root_mtime = _verification_artifact_entry_metadata(verification_root)
+    if root_kind != "directory":
+        file_count, total_bytes = _verification_artifact_entry_size(verification_root)
+        return VerificationArtifactRetentionReport(
+            status="invalid_artifact_root",
+            retained_recent_limit=retained_recent_limit,
+            total_entries=1,
+            live_referenced_count=0,
+            recent_unreferenced_count=0,
+            cleanup_eligible_count=0,
+            ambiguous_count=1,
+            total_bytes=total_bytes,
+            cleanup_eligible_bytes=0,
+            entries=(
+                VerificationArtifactRetentionEntry(
+                    run_id=verification_root.name,
+                    relative_path=_verification_artifact_run_relpath(verification_root.name),
+                    classification="ambiguous_do_not_touch",
+                    file_count=file_count,
+                    total_bytes=total_bytes,
+                    reason="verification artifact root exists but is not a readable directory",
+                ),
+            ),
+        )
+
+    live_run_ids = _live_verification_artifact_run_ids(agent_runtime)
+    try:
+        raw_entries = list(verification_root.iterdir())
+    except OSError:
+        raw_entries = []
+    entry_metadata = {
+        path: _verification_artifact_entry_metadata(path)
+        for path in raw_entries
+    }
+    raw_entries = sorted(
+        raw_entries,
+        key=lambda path: (entry_metadata[path][1], path.name),
+        reverse=True,
+    )
+    unreferenced_dirs = [
+        path
+        for path in raw_entries
+        if entry_metadata[path][0] == "directory" and path.name not in live_run_ids
+    ]
+    recent_unreferenced_names = {
+        path.name for path in unreferenced_dirs[:retained_recent_limit]
+    }
+
+    entries: list[VerificationArtifactRetentionEntry] = []
+    for path in raw_entries:
+        file_count, total_bytes = _verification_artifact_entry_size(path)
+        kind, _mtime = entry_metadata[path]
+        if kind == "unreadable":
+            classification = "ambiguous_do_not_touch"
+            reason = "verification artifact entry metadata could not be read during dry-run"
+        elif kind != "directory":
+            classification = "ambiguous_do_not_touch"
+            reason = "verification artifact entry is not a run directory"
+        elif path.name in live_run_ids:
+            classification = "live_referenced"
+            reason = "referenced by current agent_runtime.verification.checks artifact_ref"
+        elif path.name in recent_unreferenced_names:
+            classification = "recent_unreferenced"
+            reason = "unreferenced but retained by recent-run dry-run limit"
+        else:
+            classification = "cleanup_eligible"
+            reason = "unreferenced and outside the recent-run dry-run limit"
+        entries.append(
+            VerificationArtifactRetentionEntry(
+                run_id=path.name,
+                relative_path=_verification_artifact_run_relpath(path.name),
+                classification=classification,
+                file_count=file_count,
+                total_bytes=total_bytes,
+                reason=reason,
+            )
+        )
+
+    return VerificationArtifactRetentionReport(
+        status="ok",
+        retained_recent_limit=retained_recent_limit,
+        total_entries=len(entries),
+        live_referenced_count=sum(1 for entry in entries if entry.classification == "live_referenced"),
+        recent_unreferenced_count=sum(1 for entry in entries if entry.classification == "recent_unreferenced"),
+        cleanup_eligible_count=sum(1 for entry in entries if entry.classification == "cleanup_eligible"),
+        ambiguous_count=sum(1 for entry in entries if entry.classification == "ambiguous_do_not_touch"),
+        total_bytes=sum(entry.total_bytes for entry in entries),
+        cleanup_eligible_bytes=sum(
+            entry.total_bytes for entry in entries if entry.classification == "cleanup_eligible"
+        ),
+        entries=tuple(entries),
+    )
 
 
 def _guarded_runtime_relative_paths(root: Path, snapshots: list[dict]) -> set[str]:
@@ -217,6 +441,17 @@ def _redact_verify_artifact_text(text: str, redactions: tuple[str, ...]) -> str:
     return redacted
 
 
+def _limit_verify_artifact_text(text: str) -> str:
+    """Bound persisted verify artifact text without changing command results."""
+    encoded = text.encode("utf-8")
+    marker = VERIFY_ARTIFACT_TRUNCATION_MARKER.encode("utf-8")
+    if len(encoded) <= MAX_VERIFY_ARTIFACT_TEXT_BYTES:
+        return text
+    budget = MAX_VERIFY_ARTIFACT_TEXT_BYTES - len(marker)
+    truncated = encoded[:budget]
+    return truncated.decode("utf-8", errors="ignore") + VERIFY_ARTIFACT_TRUNCATION_MARKER
+
+
 def _build_verify_command_env(
     base_env: dict[str, str],
     sandbox_root: Path,
@@ -273,6 +508,98 @@ def _build_verify_command_env(
     env[SESSION_LIVE_PROOFS_DIR_ENV_VAR] = str(sandbox_session_live_proofs)
     env.pop(SESSION_TOKEN_ENV_VAR, None)
     return env
+
+
+def _terminate_verify_process_boundary(process: subprocess.Popen[str]) -> tuple[str, ...]:
+    """Best-effort process-boundary termination for timed-out verify commands."""
+    messages: list[str] = []
+    if process.poll() is not None:
+        return ()
+
+    if os.name == "nt":
+        try:
+            subprocess.run(
+                ["taskkill", "/T", "/F", "/PID", str(process.pid)],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            messages.append(f"process tree termination failed: {exc.__class__.__name__}: {exc}")
+        if process.poll() is None:
+            try:
+                process.kill()
+            except OSError as exc:
+                messages.append(f"process termination failed: {exc.__class__.__name__}: {exc}")
+        return tuple(messages)
+
+    termination_signal = getattr(signal, "SIGKILL", signal.SIGTERM)
+    try:
+        os.killpg(process.pid, termination_signal)
+    except ProcessLookupError:
+        return tuple(messages)
+    except OSError as exc:
+        messages.append(f"process group termination failed: {exc.__class__.__name__}: {exc}")
+        if process.poll() is None:
+            try:
+                process.kill()
+            except OSError as kill_exc:
+                messages.append(f"process termination failed: {kill_exc.__class__.__name__}: {kill_exc}")
+    return tuple(messages)
+
+
+def _run_verify_subprocess(
+    argv: list[str],
+    *,
+    cwd: Path,
+    timeout_seconds: float,
+    env: dict[str, str],
+) -> VerifySubprocessResult:
+    """Run one verify command in a bounded process boundary."""
+    popen_kwargs: dict[str, object] = {}
+    if os.name == "nt":
+        popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        popen_kwargs["start_new_session"] = True
+
+    process = subprocess.Popen(
+        argv,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        env=env,
+        **popen_kwargs,
+    )
+    try:
+        stdout, stderr = process.communicate(timeout=timeout_seconds)
+        return VerifySubprocessResult(
+            returncode=process.returncode,
+            stdout=stdout or "",
+            stderr=stderr or "",
+            timed_out=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        containment_messages = _terminate_verify_process_boundary(process)
+        try:
+            stdout, stderr = process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            try:
+                process.kill()
+            except OSError as kill_exc:
+                containment_messages = (
+                    *containment_messages,
+                    f"process termination failed: {kill_exc.__class__.__name__}: {kill_exc}",
+                )
+            stdout, stderr = process.communicate()
+        return VerifySubprocessResult(
+            returncode=process.returncode if process.returncode is not None else 1,
+            stdout=stdout if isinstance(stdout, str) else (exc.stdout or ""),
+            stderr=stderr if isinstance(stderr, str) else (exc.stderr or ""),
+            timed_out=True,
+            containment_messages=containment_messages,
+        )
 
 
 def _record_command_exception_event(
@@ -525,13 +852,10 @@ def run_verification_commands(
                 resolved_argv=resolved_argv,
             )
             try:
-                result = subprocess.run(
+                result = _run_verify_subprocess(
                     resolved_argv,
                     cwd=sandbox_cwd,
-                    capture_output=True,
-                    text=True,
-                    timeout=command["timeout_ms"] / 1000,
-                    check=False,
+                    timeout_seconds=command["timeout_ms"] / 1000,
                     env=command_env,
                 )
             except (OSError, subprocess.SubprocessError) as exc:
@@ -571,8 +895,12 @@ def run_verification_commands(
                 else []
             )
             authority_mutation_summary = store.restore_verify_authority_guard_if_changed(guarded_runtime_files)
-            stdout_text = _redact_verify_artifact_text(result.stdout, artifact_redactions)
-            stderr_text = _redact_verify_artifact_text(result.stderr, artifact_redactions)
+            stdout_text = _limit_verify_artifact_text(
+                _redact_verify_artifact_text(result.stdout, artifact_redactions)
+            )
+            stderr_text = _limit_verify_artifact_text(
+                _redact_verify_artifact_text(result.stderr, artifact_redactions)
+            )
             stdout_path = run_dir / f"{command['id']}.stdout.txt"
             stderr_path = run_dir / f"{command['id']}.stderr.txt"
             try:
@@ -619,6 +947,9 @@ def run_verification_commands(
                 break
             artifact_ref = _artifact_relpath("verification", run_id, f"{command['id']}.stdout.txt")
             failure_reasons: list[str] = []
+            if result.timed_out:
+                failure_reasons.append("command timed out")
+                failure_reasons.extend(result.containment_messages)
             if result.returncode != 0:
                 failure_reasons.append("command exited with non-zero status")
             if mutation_summary:

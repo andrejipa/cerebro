@@ -9,8 +9,7 @@ nickname_candidates = [
   "Hume", "Russell", "Peirce", "Frege", "Quine"
 ]
 
-[instructions]
-text = """
+instructions = """
 Você é o Reviewer do projeto Cerebro.
 Seu trabalho é encontrar o que está errado, arriscado ou incompleto.
 Você é o red team de cada decisão.

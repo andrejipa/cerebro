@@ -1,6 +1,6 @@
 [center]
 version = 1
-updated_at = "2026-04-25T02:57:00-04:00"
+updated_at = "2026-04-27T00:00:00-04:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
@@ -87,20 +87,3 @@ dependencies_satisfied = true
 next_action = "Human approves trigger, then: add invariants optional field to core/schema.py, add vocabulary check to core/validation.py, add proportional tests."
 done_when = "invariants field accepted in schema, validation rejects unknown names, vocabulary covers 5+ canonical invariants, full gate passes."
 halt_if = "Trigger not yet human-approved; or change touches runtime enforcement, state.json, cli/, or extensions/ beyond the declared scope."
-
-[[observations]]
-id = "drift-detection-experiment"
-title = "AST-based drift detection script in experiments/"
-status = "open"
-kind = "slice"
-priority = "low"
-boundary = "experiments/drift_detection/ only — non-authoritative, no core/cli/extensions changes, no .cerebro/ writes"
-trigger = "none required — stays in experiments/ under existing carve-out"
-source_plan = "gap identified 2026-04-27 vs current state of art in agentic drift detection"
-source_snapshot = "experiments/ carve-out already approved for non-authoritative analysis"
-auto_continuation = false
-dependencies = []
-dependencies_satisfied = true
-next_action = "Create experiments/drift_detection/ with baseline script, hash snapshot, and drift report following operational_signals pattern."
-done_when = "Script produces AST hash baseline for core/, compares on re-run, emits structured drift report. Non-authoritative — never writes to .cerebro/ or canonical state."
-halt_if = "Script attempts to write canonical state, call import-context, register sources, or modify core/cli/extensions/tests."

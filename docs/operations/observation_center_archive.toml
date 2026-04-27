@@ -10,7 +10,7 @@
 non_authoritative = true
 source = "observation_center.toml"
 rotated_at = "2026-04-27"
-rotated_items = 119
+rotated_items = 120
 
 [[observations]]
 id = "verification-artifact-root-shape-hardening"
@@ -2078,3 +2078,12 @@ dependencies_satisfied = true
 next_action = "Resolved on 2026-04-24 after persisting manual-combat item rewards into existing inventory_items/player_inventory, adding get-player-inventory, proving quantity increment through local regression, and proving Bolsa renders persisted inventory through Expo web with local auth."
 done_when = "Target typecheck, local function-chain regression, persisted UI proof, architecture/doc governance, and final AGENTS-equivalent gate pass."
 halt_if = "Any follow-on adds schema/equipment mechanics/generated type edits/cloud deploys or treats inventory persistence as Cerebro canonical state without a separate formal trigger."
+
+[[observations]]
+id = "drift-detection-experiment"
+title = "AST-based drift detection script in experiments/"
+status = "resolved"
+kind = "slice"
+priority = "low"
+resolved_at = "2026-04-27"
+evidence = "experiments/drift_detection/ created with hasher, scanner, baseline, detector, report, cli modules. Detects structural AST changes, ignores whitespace/comments. Committed in 6e8bf8eb."

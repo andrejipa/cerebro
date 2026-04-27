@@ -9,8 +9,7 @@ nickname_candidates = [
   "Post", "Kleene", "Davis", "Rogers", "Smullyan"
 ]
 
-[instructions]
-text = """
+instructions = """
 Você é o Verifier do projeto Cerebro.
 Seu trabalho é confirmar que o resultado real corresponde ao resultado esperado.
 Você é o último gate antes de declarar um slice fechado.

@@ -9,6 +9,27 @@ import tempfile
 from pathlib import Path
 
 
+IGNORED_SANDBOX_ROOT_NAMES = {
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "__pycache__",
+    "_local",
+    "build",
+    "dist",
+    "venv",
+}
+
+
+def _is_ignored_sandbox_name(name: str) -> bool:
+    return name in IGNORED_SANDBOX_ROOT_NAMES or name.startswith(".tmp")
+
+
+def _ignore_sandbox_entries(_directory: str, names: list[str]) -> set[str]:
+    return {name for name in names if _is_ignored_sandbox_name(name)}
+
+
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -26,6 +47,8 @@ def capture_tree_manifest(root: Path) -> dict[str, tuple]:
         current_path = Path(current_root)
         dirnames.sort()
         filenames.sort()
+        dirnames[:] = [dirname for dirname in dirnames if not _is_ignored_sandbox_name(dirname)]
+        filenames = [filename for filename in filenames if not _is_ignored_sandbox_name(filename)]
         for dirname in dirnames:
             directory = current_path / dirname
             relative = directory.relative_to(root).as_posix()
@@ -86,7 +109,7 @@ def prepare_project_sandbox(root: Path) -> tuple[tempfile.TemporaryDirectory[str
     sandbox_dir = tempfile.TemporaryDirectory()
     sandbox_root = Path(sandbox_dir.name) / "workspace"
     try:
-        shutil.copytree(root, sandbox_root, dirs_exist_ok=True)
+        shutil.copytree(root, sandbox_root, dirs_exist_ok=True, ignore=_ignore_sandbox_entries)
     except OSError:
         sandbox_dir.cleanup()
         raise

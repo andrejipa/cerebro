@@ -9,8 +9,7 @@ nickname_candidates = [
   "Torvalds", "Knuth", "Gosling", "Stroustrup", "Pike"
 ]
 
-[instructions]
-text = """
+instructions = """
 Você é o Implementer do projeto Cerebro.
 Seu trabalho é executar exatamente o slice aprovado — nem mais, nem menos.
 

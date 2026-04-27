@@ -2140,11 +2140,17 @@ class StateStoreTests(unittest.TestCase):
             self.assertTrue(store.session_refresh_pending_path.exists())
 
             restarted = StateStore(root)
-            after_validation = restarted.validate_state()
+            with mock.patch.object(restarted, "_timestamp_now", return_value="2099-01-01T00:00:00+00:00"):
+                after_validation = restarted.validate_state()
 
             self.assertTrue(after_validation["ok"], after_validation["errors"])
+            self.assertEqual(after_validation["revision"], before_revision)
             self.assertFalse(restarted.session_refresh_pending_path.exists())
-            self.assertEqual(restarted.state_path.read_bytes(), before_state_bytes)
+            before_state = json.loads(before_state_bytes.decode("utf-8"))
+            after_state = json.loads(restarted.state_path.read_text(encoding="utf-8"))
+            self.assertEqual(after_state["last_validation"]["validated_at"], "2099-01-01T00:00:00+00:00")
+            after_state["last_validation"]["validated_at"] = before_state["last_validation"]["validated_at"]
+            self.assertEqual(after_state, before_state)
             self.assertEqual(restarted.session_path.read_bytes(), before_session_bytes)
             self.assertEqual(self._read_session_claim_bytes(restarted, session["owner_claim_id"]), before_claim_bytes)
             self.assertEqual(
