@@ -52,3 +52,12 @@ build/
 .obsidian/
 .wrangler/
 venv/
+
+# third-party project artifacts — never belong in Cerebro repo
+docs/operations/*RPG_CAMINHADA*
+docs/operations/THIRD_PARTY_INTAKE_GATE_*
+docs/operations/THIRD_PARTY_INTAKE_RECOMMENDATION_*
+docs/operations/THIRD_PARTY_SOURCE_TRIAGE_*
+docs/operations/THIRD_PARTY_TRIGGER_REVIEW_*
+docs/operations/CONTEXT_VECTORS_ORACLE_EVAL_RPG_CAMINHADA*
+cleanup_rpg_files.ps1
