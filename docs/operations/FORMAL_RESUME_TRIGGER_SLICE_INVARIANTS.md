@@ -1,6 +1,6 @@
 # Formal Resume Trigger — Slice Invariants Field
 
-status: open
+status: consumed
 created_at: 2026-04-27
 consumed_at: —
 owner: pending human approval

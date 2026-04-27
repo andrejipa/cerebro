@@ -2486,5 +2486,80 @@ class ValidateCommandTests(unittest.TestCase):
             self.assertEqual(after["checkpoint"], before["checkpoint"])
 
 
+
+
+class ActionInvariantsFieldTests(unittest.TestCase):
+    """Tests for the optional invariants field on action records (schema-additive only)."""
+
+    def _make_state_with_action(self, extra_fields: dict) -> dict:
+        from core.schema import build_initial_state
+        state = build_initial_state()
+        action = {
+            "id": "act-inv-test",
+            "kind": "fs.create_file",
+            "status": "planned",
+            "summary": "Test invariants field",
+            "target": "",
+            "task_id": "",
+            "batch_id": "",
+            "approval_id": "",
+            "artifact_refs": [],
+            "rollback_ref": "",
+            "details": {},
+            "updated_at": "",
+        }
+        action.update(extra_fields)
+        state["agent_runtime"]["actions"] = [action]
+        return state
+
+    def _validate(self, state: dict) -> dict:
+        from core.validation import validate_state_data
+        errors = validate_state_data(state)
+        return {"ok": len(errors) == 0, "errors": errors}
+
+    def test_invariants_field_absent_is_accepted(self) -> None:
+        state = self._make_state_with_action({})
+        result = self._validate(state)
+        inv_errors = [e for e in result.get("errors", []) if "invariants" in e.get("message", "")]
+        self.assertEqual([], inv_errors)
+
+    def test_invariants_field_with_valid_names_is_accepted(self) -> None:
+        state = self._make_state_with_action({
+            "invariants": ["git_working_tree_clean", "test_count_nondecreasing"],
+        })
+        result = self._validate(state)
+        inv_errors = [e for e in result.get("errors", []) if "invariants" in e.get("message", "")]
+        self.assertEqual([], inv_errors)
+
+    def test_invariants_field_all_canonical_names_accepted(self) -> None:
+        from core.schema import VALID_INVARIANT_NAMES
+        state = self._make_state_with_action({
+            "invariants": sorted(VALID_INVARIANT_NAMES),
+        })
+        result = self._validate(state)
+        inv_errors = [e for e in result.get("errors", []) if "invariants" in e.get("message", "")]
+        self.assertEqual([], inv_errors)
+
+    def test_invariants_field_unknown_name_is_rejected(self) -> None:
+        state = self._make_state_with_action({
+            "invariants": ["git_working_tree_clean", "not_a_real_invariant"],
+        })
+        result = self._validate(state)
+        inv_errors = [e for e in result.get("errors", []) if "invalid_agent_action_invariants" in e.get("code", "")]
+        self.assertGreater(len(inv_errors), 0)
+        self.assertIn("not_a_real_invariant", inv_errors[0]["message"])
+
+    def test_invariants_field_non_list_is_rejected(self) -> None:
+        state = self._make_state_with_action({"invariants": "git_working_tree_clean"})
+        result = self._validate(state)
+        inv_errors = [e for e in result.get("errors", []) if "invalid_agent_action_invariants" in e.get("code", "")]
+        self.assertGreater(len(inv_errors), 0)
+
+    def test_invariants_field_non_string_item_is_rejected(self) -> None:
+        state = self._make_state_with_action({"invariants": ["git_working_tree_clean", 42]})
+        result = self._validate(state)
+        inv_errors = [e for e in result.get("errors", []) if "invalid_agent_action_invariants" in e.get("code", "")]
+        self.assertGreater(len(inv_errors), 0)
+
 if __name__ == "__main__":
     unittest.main()

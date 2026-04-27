@@ -85,6 +85,9 @@ ACTION_RECORD_KEYS = {
     "updated_at",
 }
 
+# Optional keys that may appear in an action record but are not required.
+ACTION_RECORD_OPTIONAL_KEYS: frozenset[str] = frozenset({"invariants"})
+
 VERIFICATION_KEYS = {
     "required_command_ids",
     "pending_action_ids",
@@ -431,8 +434,7 @@ def _canonicalize_actions(actions: object) -> list[object]:
         if not isinstance(action, dict):
             normalized.append(deepcopy(action))
             continue
-        normalized.append(
-            {
+        canonical_action: dict = {
                 "id": _value_or_default(action, "id", ""),
                 "kind": _value_or_default(action, "kind", ""),
                 "status": _value_or_default(action, "status", "planned"),
@@ -446,7 +448,9 @@ def _canonicalize_actions(actions: object) -> list[object]:
                 "details": _value_or_default(action, "details", {}),
                 "updated_at": _value_or_default(action, "updated_at", ""),
             }
-        )
+        if "invariants" in action:
+            canonical_action["invariants"] = deepcopy(action["invariants"])
+        normalized.append(canonical_action)
     return normalized
 
 

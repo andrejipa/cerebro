@@ -6,6 +6,7 @@ from pathlib import Path
 
 from core.agent_runtime import (
     ACTION_RECORD_KEYS,
+    ACTION_RECORD_OPTIONAL_KEYS,
     AGENT_RUNTIME_KEYS,
     APPROVAL_RECORD_KEYS,
     APPROVALS_KEYS,
@@ -69,6 +70,7 @@ from core.schema import (
     ROOT_KEYS,
     SESSION_KEYS,
     SOURCE_KEYS,
+    VALID_INVARIANT_NAMES,
     VALID_RESULTS,
     VALID_SOURCE_ROLES,
 )
@@ -707,7 +709,12 @@ def _validate_actions_block(
             if not isinstance(action, dict):
                 errors.append(error("invalid_agent_action_item", f"{action_prefix} must be an object"))
                 continue
-            errors.extend(_require_exact_keys(action, ACTION_RECORD_KEYS, "invalid_agent_action_keys", action_prefix))
+            _action_actual_keys = set(action.keys())
+            for _missing_key in sorted(ACTION_RECORD_KEYS - _action_actual_keys):
+                errors.append(error("invalid_agent_action_keys", f"{action_prefix} missing required key: {_missing_key}"))
+            _action_allowed_keys = ACTION_RECORD_KEYS | ACTION_RECORD_OPTIONAL_KEYS
+            for _extra_key in sorted(_action_actual_keys - _action_allowed_keys):
+                errors.append(error("invalid_agent_action_keys", f"{action_prefix} contains unexpected key: {_extra_key}"))
             action_id = action.get("id")
             if not isinstance(action_id, str) or not action_id:
                 errors.append(error("invalid_agent_action_id", f"{action_prefix}.id must be a non-empty string"))
@@ -750,6 +757,20 @@ def _validate_actions_block(
                     label=f"{action_prefix}.artifact_refs",
                 )
             )
+            invariants = action.get("invariants")
+            if invariants is not None:
+                if not isinstance(invariants, list):
+                    errors.append(error("invalid_agent_action_invariants", f"{action_prefix}.invariants must be an array"))
+                else:
+                    for inv_index, inv_name in enumerate(invariants):
+                        if not isinstance(inv_name, str):
+                            errors.append(error("invalid_agent_action_invariants", f"{action_prefix}.invariants[{inv_index}] must be a string"))
+                        elif inv_name not in VALID_INVARIANT_NAMES:
+                            errors.append(error(
+                                "invalid_agent_action_invariants",
+                                f"{action_prefix}.invariants[{inv_index}] unknown invariant name: {inv_name!r}; "
+                                f"valid names: {', '.join(sorted(VALID_INVARIANT_NAMES))}",
+                            ))
 
     return errors, action_ids_seen, action_statuses
 
