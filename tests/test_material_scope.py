@@ -21,7 +21,9 @@ from core.material_scope import (
 
 class MaterialScopeTests(unittest.TestCase):
     def setUp(self) -> None:
-        base = Path(os.environ.get("TEMP") or Path.cwd() / ".tmp_test").resolve()
+        import platform as _platform
+        _tmp_base = Path(os.environ.get("TEMP") or (".tmp_test" if _platform.system() == "Windows" else "/tmp/cerebro_material_scope_tests"))
+        base = _tmp_base.resolve()
         base.mkdir(parents=True, exist_ok=True)
         self.root = base / f"material_scope_{secrets.token_hex(8)}"
         self.root.mkdir()

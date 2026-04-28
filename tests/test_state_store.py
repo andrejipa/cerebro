@@ -98,7 +98,7 @@ class StateStoreTests(unittest.TestCase):
             with mock.patch("core.state_store.write_generic_credential", side_effect=fake_write), mock.patch(
                 "core.state_store.read_generic_credential",
                 side_effect=fake_read,
-            ):
+            ), mock.patch("core.state_store.delete_generic_credential", return_value=None):
                 store._write_session_claim_bytes("claim-1", payload, backend="wincred")
                 stored_payload = next(iter(captured.values()))
                 self.assertLess(len(stored_payload), len(payload))
@@ -135,7 +135,7 @@ class StateStoreTests(unittest.TestCase):
             with mock.patch("core.state_store.write_generic_credential", side_effect=fake_write), mock.patch(
                 "core.state_store.read_generic_credential",
                 side_effect=fake_read,
-            ):
+            ), mock.patch("core.state_store.delete_generic_credential", return_value=None):
                 store._write_session_live_proof_bytes("proof-1", payload, backend="wincred")
                 stored_payload = next(iter(captured.values()))
                 self.assertLess(len(stored_payload), len(payload))

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
+
+_WINDOWS_ABS_RE = re.compile(r"^[A-Za-z]:[/\\]")
 
 from core.agent_runtime import (
     ACTION_RECORD_KEYS,
@@ -1397,7 +1400,7 @@ def validate_state_data(state: object) -> list[dict]:
                 errors.append(error("invalid_source_path", f"{prefix}.path must be a non-empty string"))
             else:
                 candidate = Path(path)
-                if candidate.is_absolute():
+                if candidate.is_absolute() or _WINDOWS_ABS_RE.match(path):
                     errors.append(error("invalid_source_path", f"{prefix}.path must be relative"))
                 elif any(part == ".." for part in candidate.parts):
                     errors.append(error("invalid_source_path", f"{prefix}.path cannot contain '..'"))

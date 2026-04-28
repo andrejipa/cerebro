@@ -471,7 +471,7 @@ class ObservationCenterRotationTests(unittest.TestCase):
     """Guard that the active observation center stays lean — resolved items must live in the archive."""
 
     def test_observation_center_has_rotation_policy(self) -> None:
-        center = tomllib.loads((OPERATIONS_DOCS / "observation_center.toml").read_bytes())
+        center = tomllib.loads((OPERATIONS_DOCS / "observation_center.toml").read_text(encoding="utf-8"))
         self.assertIn(
             "rotation_policy",
             center["center"],
@@ -479,7 +479,7 @@ class ObservationCenterRotationTests(unittest.TestCase):
         )
 
     def test_observation_center_active_file_has_no_resolved_items(self) -> None:
-        center = tomllib.loads((OPERATIONS_DOCS / "observation_center.toml").read_bytes())
+        center = tomllib.loads((OPERATIONS_DOCS / "observation_center.toml").read_text(encoding="utf-8"))
         resolved = [o["id"] for o in center.get("observations", []) if o.get("status") == "resolved"]
         self.assertEqual(
             [],
@@ -492,7 +492,7 @@ class ObservationCenterRotationTests(unittest.TestCase):
         archive_path = OPERATIONS_DOCS / "observation_center_archive.toml"
         if not archive_path.exists():
             return
-        archive = tomllib.loads(archive_path.read_bytes())
+        archive = tomllib.loads(archive_path.read_text(encoding="utf-8"))
         self.assertTrue(
             archive.get("archive", {}).get("non_authoritative", False),
             "observation_center_archive.toml must declare archive.non_authoritative = true",

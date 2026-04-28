@@ -170,8 +170,8 @@ class StateRuntimeLockService:
             except OSError:
                 pass
 
-        self.unregister_process_runtime_lock()
         self.try_remove_runtime_lock_file()
+        self.unregister_process_runtime_lock()
 
     def _write_runtime_lock_owner_pid(self, fd: int) -> None:
         """Persist the current owner pid, failing if the write does not fully complete."""
@@ -184,13 +184,14 @@ class StateRuntimeLockService:
             written_total += written
 
     def _cleanup_failed_runtime_lock_acquisition(self, fd: int | None) -> None:
-        """Best-effort cleanup for a lock file that failed before ownership was registered."""
+        """Best-effort cleanup for a lock file that failed after registration may have occurred."""
         if fd is not None:
             try:
                 os.close(fd)
             except OSError:
                 pass
         self.try_remove_runtime_lock_file()
+        self.unregister_process_runtime_lock()  # pair with early register in runtime_lock()
 
     @contextmanager
     def runtime_lock(self):
@@ -209,10 +210,10 @@ class StateRuntimeLockService:
             fd: int | None = None
             try:
                 fd = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                self.register_process_runtime_lock()  # must precede PID write to close race window
                 self._write_runtime_lock_owner_pid(fd)
                 self._lock_fd = fd
                 self._lock_depth = 1
-                self.register_process_runtime_lock()
                 break
             except FileExistsError:
                 if self.try_recover_stale_runtime_lock():

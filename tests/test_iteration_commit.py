@@ -139,7 +139,7 @@ class IterationCommitCommandTests(unittest.TestCase):
 
             with self.assertRaises(iteration_commit_module.IterationCommitError) as ctx:
                 iteration_commit_module.build_iteration_commit(
-                    ["..\\outside.txt"],
+                    ["../outside.txt"],
                     repo_root=repo_root,
                     status_path=status_path,
                 )

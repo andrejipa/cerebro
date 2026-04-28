@@ -5679,5 +5679,150 @@ class AlphaRuntimeTests(unittest.TestCase):
             self.assertEqual(pre_command_load_state_calls, [1])
 
 
+
+class StateFileCorruptionAndLossTests(unittest.TestCase):
+    """Guard that CLI commands fail closed with stable error codes when state.json is absent or corrupted.
+
+    Closes the weakness-report item: "Adicionar teste direto para perda de
+    state.json após bootstrap/init."  These tests confirm that analyze, plan,
+    and verify never surface internal_error when the canonical state file
+    disappears or becomes invalid after a successful init.
+    """
+
+    # ------------------------------------------------------------------ helpers
+
+    def _init_with_source(self, root: Path) -> None:
+        tracked = root / "tracked.txt"
+        tracked.write_text("content", encoding="utf-8")
+        run_init(root, None)
+        StateStore(root).register_sources(["tracked.txt"])
+
+    def _capture(self, fn, *args):
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            exit_code = fn(*args)
+        return exit_code, stream.getvalue()
+
+    # ------------------------------------------------------------------ analyze
+
+    def test_analyze_reports_state_missing_when_state_file_deleted_after_init(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._init_with_source(root)
+            state_path = root / ".cerebro" / "state.json"
+            state_path.unlink()
+
+            exit_code, output = self._capture(
+                run_analyze,
+                root,
+                type("Args", (), {"actor": "alice", "emit_session_token": False}),
+            )
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("state_missing", output)
+            self.assertNotIn("internal_error", output)
+
+    def test_analyze_reports_state_invalid_json_when_state_file_corrupted_after_init(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._init_with_source(root)
+            state_path = root / ".cerebro" / "state.json"
+            state_path.write_text("{invalid json{{", encoding="utf-8")
+
+            exit_code, output = self._capture(
+                run_analyze,
+                root,
+                type("Args", (), {"actor": "alice", "emit_session_token": False}),
+            )
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("state_invalid_json", output)
+            self.assertNotIn("internal_error", output)
+
+    # ------------------------------------------------------------------ plan
+
+    def test_plan_reports_state_missing_when_state_file_deleted_after_init(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._init_with_source(root)
+            state_path = root / ".cerebro" / "state.json"
+            state_path.unlink()
+
+            plan_args = type(
+                "Args",
+                (),
+                {
+                    "goal": "Goal",
+                    "summary": "Summary",
+                    "task": ["task-1: Task title"],
+                    "verify": [],
+                    "ambiguity": None,
+                },
+            )
+            exit_code, output = self._capture(run_plan, root, plan_args)
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("state_missing", output)
+            self.assertNotIn("internal_error", output)
+
+    def test_plan_reports_state_invalid_json_when_state_file_corrupted_after_init(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._init_with_source(root)
+            state_path = root / ".cerebro" / "state.json"
+            state_path.write_text("not-json-at-all", encoding="utf-8")
+
+            plan_args = type(
+                "Args",
+                (),
+                {
+                    "goal": "Goal",
+                    "summary": "Summary",
+                    "task": ["task-1: Task title"],
+                    "verify": [],
+                    "ambiguity": None,
+                },
+            )
+            exit_code, output = self._capture(run_plan, root, plan_args)
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("state_invalid_json", output)
+            self.assertNotIn("internal_error", output)
+
+    # ------------------------------------------------------------------ verify
+
+    def test_verify_reports_state_missing_when_state_file_deleted_mid_session(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._init_with_source(root)
+            # open a session so there is a live token
+            _, analyze_output = self._capture(
+                run_analyze,
+                root,
+                type("Args", (), {"actor": "alice", "emit_session_token": True}),
+            )
+            self.assertIn("analysis_ready", analyze_output)
+            session_token = next(
+                line.split(": ", 1)[1]
+                for line in analyze_output.splitlines()
+                if line.startswith("session_token: ")
+            )
+
+            # delete state.json while session is live
+            state_path = root / ".cerebro" / "state.json"
+            state_path.unlink()
+
+            with patch.dict(os.environ, {SESSION_TOKEN_ENV_VAR: session_token}, clear=False):
+                exit_code, output = self._capture(
+                    run_verify,
+                    root,
+                    type("Args", (), {"command_id": []}),
+                )
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("state_missing", output)
+            self.assertNotIn("internal_error", output)
+
+
 if __name__ == "__main__":
     unittest.main()
