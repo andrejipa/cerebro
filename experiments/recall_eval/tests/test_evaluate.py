@@ -205,7 +205,11 @@ class EvaluateTests(unittest.TestCase):
                 temp_root_path = Path(temp_root).resolve()
                 ensure_outside_roots(temp_root_path, [project_dir])
                 self.assertTrue(temp_root_path.exists())
-                self.assertTrue(temp_root_path.is_relative_to(repo_root))
+                import platform as _platform
+                if _platform.system() == "Windows":
+                    self.assertTrue(temp_root_path.is_relative_to(repo_root))
+                else:
+                    self.assertTrue(temp_root_path.is_relative_to(Path("/tmp")))
             finally:
                 shutil.rmtree(temp_root, ignore_errors=True)
 
@@ -222,7 +226,11 @@ class EvaluateTests(unittest.TestCase):
             cache_root_path = Path(cache_root).resolve()
             ensure_outside_roots(cache_root_path, [project_dir])
             self.assertTrue(cache_root_path.exists())
-            self.assertTrue(cache_root_path.is_relative_to(repo_root))
+            import platform as _platform
+            if _platform.system() == "Windows":
+                self.assertTrue(cache_root_path.is_relative_to(repo_root))
+            else:
+                self.assertTrue(cache_root_path.is_relative_to(Path("/tmp")))
 
     def test_building_index_does_not_write_inside_project_root(self) -> None:
         with workspace_tempdir() as root, workspace_tempdir() as temp_dir:
@@ -325,6 +333,10 @@ class EvaluateTests(unittest.TestCase):
             nested_dir.mkdir(parents=True)
             build_project_index("demo", root, first_temp_dir, cache_root=cache_dir)
             (nested_dir / "fresh.md").write_text("novo arquivo indexavel", encoding="utf-8")
+            # Ensure directory mtime advances on filesystems with coarse clock resolution
+            import os as _os
+            _st = nested_dir.stat()
+            _os.utime(str(nested_dir), ns=(_st.st_atime_ns, _st.st_mtime_ns + 1_000_000_000))
 
             real_build = indexer_module._build_fresh_project_index
             with patch(

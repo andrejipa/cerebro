@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+import os
 import shutil
 import uuid
 from pathlib import Path
 
 
-LOCAL_TEMP_ROOT = Path(__file__).resolve().parents[4] / ".tmp_operational_signals_suggestions_tests"
+LOCAL_TEMP_ROOT = Path(os.environ.get("TEMP") or ".tmp_test").resolve() / "cerebro_operational_signals_tests"
 LOCAL_TEMP_ROOT.mkdir(parents=True, exist_ok=True)
 
 

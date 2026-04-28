@@ -348,19 +348,48 @@ def _normalize_markdown_target(target: str) -> str | None:
     return normalized or None
 
 
+_WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:[/\\]")
+
+
+def _is_windows_absolute(s: str) -> bool:
+    """Return True for Windows-style absolute paths (e.g. D:/foo or D:\\foo).
+
+    On Linux, pathlib does not recognise these as absolute, so we detect them
+    explicitly to preserve cross-platform path-resolution semantics.
+    """
+    return bool(_WINDOWS_DRIVE_RE.match(s))
+
+
 def _resolve_markdown_target(source_artifact: str, target: str) -> Path | None:
     normalized = _normalize_markdown_target(target)
     if normalized is None:
         return None
     target_path = Path(normalized)
-    if target_path.is_absolute():
+    if target_path.is_absolute() or _is_windows_absolute(normalized):
         return target_path
     return Path(source_artifact).parent / target_path
 
 
 def _target_exists(path: Path) -> bool:
+    path_str = str(path)
     if path.is_absolute():
         return path.exists()
+    if _is_windows_absolute(path_str):
+        # On Windows this resolves directly; on Linux we fall back to
+        # progressive suffix matching against REPO_ROOT so that paths like
+        # "D:/projetos_cli/cerebro/docs/operations/SYSTEM_STATE.md" are
+        # correctly identified as existing (via the "docs/operations/..." suffix)
+        # while truly missing targets (e.g. "D:/missing_dir/ghost.md") are not.
+        if path.exists():
+            return True
+        normalized_str = path_str.replace("\\", "/")
+        drive_stripped = _WINDOWS_DRIVE_RE.sub("", normalized_str)
+        parts = [p for p in drive_stripped.split("/") if p]
+        for i in range(len(parts)):
+            suffix = "/".join(parts[i:])
+            if suffix and (REPO_ROOT / suffix).exists():
+                return True
+        return False
     return (REPO_ROOT / path).exists()
 
 

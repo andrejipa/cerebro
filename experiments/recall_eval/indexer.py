@@ -43,7 +43,11 @@ SKIP_DIRS = {
 }
 
 INDEX_CACHE_FORMAT_VERSION = 3
-DERIVED_TEMP_BASE = Path(__file__).resolve().parents[2] / ".tmp_recall_eval"
+DERIVED_TEMP_BASE = (
+    Path(__file__).resolve().parents[2] / ".tmp_recall_eval"
+    if __import__("platform").system() == "Windows"
+    else Path("/tmp") / "cerebro_recall_eval"
+)
 
 
 @dataclass(frozen=True)

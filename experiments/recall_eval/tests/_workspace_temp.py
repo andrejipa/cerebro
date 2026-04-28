@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 
 
-LOCAL_TEMP_ROOT = Path(__file__).resolve().parents[3] / ".tmp_recall_eval_tests"
+LOCAL_TEMP_ROOT = Path("/tmp") / "cerebro_recall_eval_tests"
 LOCAL_TEMP_ROOT.mkdir(parents=True, exist_ok=True)
 
 
