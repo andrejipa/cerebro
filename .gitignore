@@ -62,3 +62,16 @@ docs/operations/THIRD_PARTY_TRIGGER_REVIEW_*
 docs/operations/CONTEXT_VECTORS_ORACLE_EVAL_RPG_CAMINHADA*
 cleanup_rpg_files.ps1
 _rpg_trash/
+pytest-cache-files-*/
+.env
+.env.*
+
+# local Cerebro runtime state
+/.cerebro/
+/.cerebro/**
+
+# python/cache artifacts
+/.pytest_cache/
+pytest-cache-files-*/
+__pycache__/
+*.pyc
