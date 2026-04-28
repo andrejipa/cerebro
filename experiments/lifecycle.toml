@@ -107,4 +107,12 @@ status = "active"
 started = "2026-04-27"
 last_reviewed = "2026-04-27"
 next_review_due = "2026-07-26"
-outcome_so_far = "AST-based structural drift detection for core/, cli/, and extensions/ modules; computes SHA-256 of normalized AST (whitespace/comment-independent) per file, captures baseline snapshot, detects added/modified/removed files between sessions; emits non-authoritative markdown+JSON report; never writes to .cerebro/, never registers sources, never calls import-context, never modifies canonical state"
+outcome_so_far = "AST-based structural drift detection for core/, cli/, and extensions/ modules; computes SHA-256 of normalized AST (whitespace/comment-independent) per file, captures baseline snapshot, detects added/modified/removed files between sessions; emits non-authoritative markdown+JSON report; includes deterministic staleness scoring (time+structural formula) via staleness_scorer.py; baseline snapshot now stores captured_at timestamp for time-decay scoring; 79 tests passing; never writes to .cerebro/, never registers sources, never calls import-context, never modifies canonical state"
+
+[[experiment]]
+name = "checkpoint_semantic_diff"
+status = "active"
+started = "2026-04-27"
+last_reviewed = "2026-04-27"
+next_review_due = "2026-07-26"
+outcome_so_far = "Deterministic token-overlap (Jaccard) scoring between checkpoint text (goal+summary+next_step) and registered source file content; classifies alignment as high/medium/low/unavailable; emits non-authoritative markdown+JSON report; reads .cerebro/state.json from target project but never writes to it; 41 tests passing (extractor, scorer, tokenizer, jaccard, classify_alignment, score_alignment, report, end-to-end pipeline, non-mutation boundary)"

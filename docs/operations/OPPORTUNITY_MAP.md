@@ -1,5 +1,11 @@
 # Opportunity Map
 
+## Current Snapshot — 2026-04-27
+
+- Drift detection staleness integration passed on 2026-04-27: `experiments/drift_detection/staleness_scorer.py` is now wired into the detect pipeline. Baseline snapshot stores `captured_at` ISO timestamp (v2 format, backward-compat with v1 array). `detector.detect()` accepts optional `baseline_captured_at`; when present, computes deterministic staleness score (time 60% + structural changes 40%, ceiling 90 days / 5 changes) and classification (fresh/aging/stale/critical). Report markdown and JSON include staleness section. CLI `detect` and `status` commands display the score. 79 tests passing; architecture gate 51/51 green.
+
+- Checkpoint semantic diff experiment created on 2026-04-27: `experiments/checkpoint_semantic_diff/` is a new non-authoritative derived track. Reads `.cerebro/state.json` from a target project, extracts checkpoint text (goal+summary+next_step), reads registered source file content, and computes deterministic Jaccard token overlap between them. Classifies each source as high/medium/low/unavailable alignment. Emits non-authoritative markdown+JSON report. Never writes to `.cerebro/`. 41 tests passing (extractor, tokenizer, jaccard, classify_alignment, score_alignment, report format, end-to-end pipeline, non-mutation boundary).
+
 ## Current Snapshot — 2026-04-25
 
 - Verification artifact root shape hardening passed on 2026-04-25 under `FORMAL_RESUME_TRIGGER_VERIFICATION_ARTIFACT_ROOT_SHAPE_HARDENING`. The audit finding was concrete: an existing non-directory `artifacts/verification` root could be hidden as an empty healthy report. The dry-run now preserves `missing_artifact_root` for absence, but reports `invalid_artifact_root` with one `ambiguous_do_not_touch` entry and zero cleanup-eligible bytes for an invalid existing root. Full AGENTS-equivalent gate is now `941/0/0/6`. Next candidate: continue audit-driven runtime hardening only where the next finding is concrete; still do not open apply-retention without material pressure from a real initialized project.

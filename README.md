@@ -215,8 +215,18 @@ This freeze does not mean total inactivity. It means no new increment is current
 
 Outside that canonical surface, the repository may still carry approved derived tracks that remain explicitly non-authoritative. The current examples are:
 
-- `experiments/recall_eval/`: implemented and benchmarked as an experimental derived evaluation track; not promoted into the approved product surface
-- `experiments/operational_signals/`: implemented as an opt-in derived observability track for operational insufficiency signals; it records outside `.cerebro/`, does not alter runtime authority, and its initial empty registry is the correct state until real signals exist
+- `experiments/recall_eval/`: implemented and benchmarked; archived — lexical baseline matched or beat embeddings; kept as historical evidence
+- `experiments/operational_signals/`: opt-in derived observability track for operational insufficiency signals; advisory-only, records outside `.cerebro/`
+- `experiments/context_discovery/`: derived content-aware discovery track; reports candidates not registered, drift on registered sources, and missing registered sources; non-authoritative, never mutates `.cerebro/`
+- `experiments/context_vectors/`: deterministic local vector-search experiment; indexes bounded textual heads, returns ranked query hits with trace metadata; `recall_at_3=1.000` on 20 real oracle cases
+- `experiments/context_advisor/`: LLM-facing advisory report combining `context_discovery` and `context_vectors` evidence; emits structured Markdown with `may_suggest` / `must_not_apply` boundaries
+- `experiments/claim_extraction/`: deterministic claim-candidate extraction; emits `ClaimCandidate` units with authority and criticality hints; never builds a claim graph or mutates state
+- `experiments/claim_evaluation/`: bounded advisory evaluator over `ClaimCandidate` inputs; evaluates authority, confidence, sufficiency, conflict, and operational readiness
+- `experiments/epistemic_readiness/`: advisory report generator for epistemic-readiness assessment over explicit source manifests; read-only, never gates the runtime
+- `experiments/epistemic_guard/`: deterministic advisory decision-envelope oracle for concrete action questions; evaluates evidence quality and approval status without modifying state
+- `experiments/drift_detection/`: AST-based structural drift detector for `core/`, `cli/`, and `extensions/`; captures baseline snapshots and reports added, modified, and removed Python modules; includes deterministic staleness scoring (time + structural changes formula); never writes to `.cerebro/`
+- `experiments/checkpoint_semantic_diff/`: deterministic Jaccard token-overlap scorer between checkpoint text and registered source content; classifies semantic alignment as high/medium/low/unavailable; never writes to `.cerebro/`
+- `experiments/third_party_trigger_review/`: advisory checker for proposed third-party project triggers; reviews for completeness, boundary safety, and consolidation risk
 
 Those derived tracks do not change the core freeze posture, do not create canonical state, and do not reopen architecture by themselves.
 

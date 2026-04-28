@@ -310,7 +310,7 @@ Structured residual index: `docs/operations/residuals.toml` is the canonical str
 ### dentro do freeze
 
 - Fechado nesta sessão: `session-discard` já recupera o split `registry active + session.local.json` ausente; o residual corretivo de sessão agora ficou fechado também no caminho de refresh com `session.refresh.pending.json` e recovery antecipado antes de `session_revision_invalid`.
-- Adicionar teste direto para perda de `state.json` após bootstrap/init.
+- Fechado nesta sessão: `state.json` loss agora tem 5 regressões diretas em `tests/test_alpha_runtime.py::StateFileCorruptionAndLossTests` cobrindo `analyze`, `plan`, e `verify` nos cenários de estado ausente e JSON corrompido após init; todos os comandos falham fechados com `state_missing` ou `state_invalid_json` sem nunca surfaçar `internal_error`.
 - Fechado nesta sessão: o e2e contínuo `bootstrap -> validate/analyze -> plan -> apply -> verify -> rollback` agora está cristalizado num único teste de integração.
 - Fechado nesta sessão: `invalid_command_registry_command_cwd` agora tem cobertura direta no validator e nos boundaries tardios de `apply`/`verify`.
 - Fechado nesta sessão: `core/command_sandbox.py` agora tem testes diretos para clone descartável e diff de manifesto sem falso positivo por `mtime` de diretório.
@@ -324,7 +324,7 @@ Structured residual index: `docs/operations/residuals.toml` is the canonical str
 - Fechado nesta sessão: `exec.command` agora ancora approval e retry ao snapshot resolvido do `command_registry`, então drift de `argv`/`cwd`/`timeout_ms`/`side_effect` deixa de reaproveitar aprovação antiga silenciosamente.
 - Fechado nesta sessão: `exec.command` com `command_id` removido do `command_registry` agora falha fechado antes de approval/retry, em vez de gerar um novo gate para um comando que já não existe.
 - Documentado nesta sessão: `validate --retention-report` e `validate --retention-apply` ainda recarregam o estado e varrem `events.jsonl` por completo no mesmo comando; o custo agora ficou explícito em `docs/operations/COST_TOPOLOGY.md`, mas segue sem benchmark dedicado.
-- Documentar os comportamentos hoje não explicitados no baseline (`validate_state` retry concorrente, sandbox env completo de `verify`, reset de `batch_registry.used_ids`).
+- Fechado nesta sessão: `validate_state` retry concorrente agora explicitado em `docs/operations/OPERATIONS_BASELINE.md` — `VALIDATION_RETRY_LIMIT = 3` tentativas antes de `state_changed_during_validation`; sandbox env de `verify` e reset de `batch_registry.used_ids` em `plan_updated` já estavam documentados nas linhas 119 e 154 do baseline.
 - Endurecer o teste isolado de `open_session` para não depender de diretórios externos compartilhados.
 - Fechado nesta sessão: `tests/test_analyze.py` remove asserts frágeis por índice e cristaliza o caminho negativo em que `session_token` não é emitido por padrão, enquanto a emissão explícita continua restrita a `emit_session_token=True`.
   Evidência:

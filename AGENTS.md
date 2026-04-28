@@ -258,4 +258,45 @@ e `SYSTEM_STATE.md`. Só então inicie o loop.
 
 ## Prova de parada — quando a fila estiver vazia
 
-Feche agentes anteriores. Spawne e
+Feche agentes anteriores. Spawne em paralelo:
+- `perf_analyst` — P1: novo hotspot de custo?
+- `red_teamer` — P2: nova superfície de bypass?
+- `reliability_engineer` — P3: cenário de falha novo?
+- `architect` — P4: duplicação ou acoplamento novo?
+- `test_engineer` — P5: teste frágil ou edge case?
+
+Todos nível 0 → encerre formalmente.
+Qualquer achado → adicione ao mapa e continue.
+
+## Encerramento formal
+
+Só encerre quando:
+- Fila CRÍTICO e ALTO vazias
+- 5 ciclos de prova de parada sem achado relevante
+- gate obrigatório acima verde (`python -m unittest discover -s tests -v` equivalente neste shell)
+- `python -m unittest tests.test_architecture -v` verde
+- `PHASE_CLOSURE.md` atualizado com evidência rastreável
+
+Após encerramento: `cerebro analyze` para trabalho operacional.
+Retorne ao loop apenas quando Formal Resume Trigger satisfeito.
+
+## Papéis canônicos
+
+Use apenas: `Orchestrator`, `Planner`, `Researcher`, `Implementer`,
+`Reviewer`, `Verifier`, `Documenter`.
+
+Labels históricos (`Guardião`, `Comprovador`, `Orquestrador`,
+`Executor`, `Testador`, `Auditor`) são não-canônicos.
+
+## Formato de fechamento — obrigatório em toda iteração
+
+```
+ITERAÇÃO [N] — [item] — NÍVEL [1/2/3]
+MODO: [BOOTSTRAP/EXECUÇÃO/PROVA DE PARADA/ENCERRAMENTO]
+AGENTES: [lista com veredicto + debates com conclusão]
+RESULTADO: [concluído/bloqueado/revertido]
+EVIDÊNCIA: [arquivo:linha + teste que prova]
+SUÍTE: [N antes → N depois, N falhas]
+ROLLBACK: [sim/não + razão]
+OPPORTUNITY_MAP: [próximo item na fila]
+```
