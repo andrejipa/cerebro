@@ -24,6 +24,8 @@ class DriftReport:
     baseline_snapshot: str
     scanned_files: int
     drift_entries: list[DriftEntry] = field(default_factory=list)
+    staleness_score: float | None = None
+    staleness_classification: str | None = None
 
     @property
     def has_drift(self) -> bool:

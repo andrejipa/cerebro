@@ -20,7 +20,7 @@ def scan(repo_root: Path, roots: list[str] | None = None) -> list[FileHashEntry]
         for py_file in sorted(base.rglob("*.py")):
             if any(ex in py_file.parts for ex in EXCLUDE_PATTERNS):
                 continue
-            rel = str(py_file.relative_to(repo_root))
+            rel = py_file.relative_to(repo_root).as_posix()
             h = ast_hash(py_file)
             lc = len(py_file.read_text(encoding="utf-8", errors="replace").splitlines())
             entries.append(FileHashEntry(path=rel, ast_hash=h or "PARSE_ERROR", line_count=lc))

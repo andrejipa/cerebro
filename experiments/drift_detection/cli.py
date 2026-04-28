@@ -28,19 +28,27 @@ def cmd_baseline() -> int:
 
 def cmd_detect() -> int:
     from .scanner import scan
-    from .baseline import load_baseline
+    from .baseline import load_baseline_with_meta
     from .detector import detect
     from .report import write_report
 
-    baseline = load_baseline(SNAPSHOT_PATH)
-    if baseline is None:
+    result = load_baseline_with_meta(SNAPSHOT_PATH)
+    if result is None:
         print("No baseline found. Run: python -m experiments.drift_detection.cli baseline")
         return 1
 
+    baseline_entries, captured_at = result
     current = scan(REPO_ROOT)
-    report = detect(baseline, current, baseline_name=SNAPSHOT_PATH.name)
+    report = detect(
+        baseline_entries,
+        current,
+        baseline_name=SNAPSHOT_PATH.name,
+        baseline_captured_at=captured_at,
+    )
     md_path, json_path = write_report(report, EXPERIMENT_DIR)
     print(report.summary)
+    if report.staleness_score is not None:
+        print(f"  staleness={report.staleness_score:.3f} ({report.staleness_classification})")
     if report.has_drift:
         for e in report.drift_entries:
             print(f"  [{e.kind}] {e.path}")
@@ -56,6 +64,8 @@ def cmd_status() -> int:
         return 1
     data = json.loads(json_path.read_text(encoding="utf-8"))
     print(data["summary"])
+    if data.get("staleness_score") is not None:
+        print(f"Staleness: {data['staleness_score']:.3f} ({data['staleness_classification']})")
     print(f"Generated: {data['generated_at']}")
     print(f"Scanned: {data['scanned_files']} files")
     return 0

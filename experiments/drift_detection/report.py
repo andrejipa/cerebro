@@ -15,6 +15,14 @@ def to_markdown(report: DriftReport) -> str:
         f"**Status:** {report.summary}",
         "",
     ]
+    if report.staleness_score is not None:
+        lines += [
+            "## Staleness",
+            "",
+            f"**Score:** {report.staleness_score:.3f}  "
+            f"**Classification:** {report.staleness_classification}",
+            "",
+        ]
     if report.has_drift:
         lines += ["## Drift Entries", ""]
         for e in report.drift_entries:
@@ -48,6 +56,8 @@ def write_report(report: DriftReport, out_dir: Path) -> tuple[Path, Path]:
             "scanned_files": report.scanned_files,
             "has_drift": report.has_drift,
             "summary": report.summary,
+            "staleness_score": report.staleness_score,
+            "staleness_classification": report.staleness_classification,
             "drift_entries": [
                 {"path": e.path, "kind": e.kind,
                  "baseline_hash": e.baseline_hash, "current_hash": e.current_hash}
