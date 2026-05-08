@@ -27,7 +27,7 @@ e coordenação multiagente. O sistema está em **freeze deliberado**
 import errno, os, sys, tempfile, unittest
 from pathlib import Path
 
-workspace = Path(r'D:\projetos_cli\cerebro')
+workspace = Path(r'D:\projetos_cli\ambiente_cerebro\cerebro')
 for name in ('.tmp_test', '.tmp_claims', '.tmp_live_proofs'):
     (workspace / name).mkdir(exist_ok=True)
 os.environ['TEMP'] = str((workspace / '.tmp_test').resolve())
