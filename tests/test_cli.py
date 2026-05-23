@@ -374,6 +374,109 @@ reason = "fixture green validation"
             self.assertEqual(next_payload["next"]["required_validations"], ["val-1"])
             self.assertEqual(next_payload["next"]["next_action"], "show status")
 
+    def test_runtime_manager_center_promote_and_export_use_sqlite_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            operations = root / "docs" / "operations"
+            operations.mkdir(parents=True)
+            source = operations / "observation_center.toml"
+            source.write_text(
+                """
+[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[[observations]]
+id = "item"
+title = "Item"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "core/cli read-only"
+trigger = "trigger.md"
+dependencies = ["dep-b", "dep-a"]
+dependencies_satisfied = true
+next_action = "next"
+done_when = "done"
+halt_if = "halt"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            sync_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            promote_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "center", "promote", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            source.write_text(source.read_text(encoding="utf-8") + "\n# drift after promotion\n", encoding="utf-8")
+            status_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "status", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            export_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "center", "export"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            repeated_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "center", "promote"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(sync_result.returncode, 0, sync_result.stderr or sync_result.stdout)
+            self.assertEqual(promote_result.returncode, 0, promote_result.stderr or promote_result.stdout)
+            promote_payload = json.loads(promote_result.stdout)
+            self.assertEqual(promote_payload["center_authority_mode"], "sqlite_primary")
+            self.assertEqual(promote_payload["source_authority"], "runtime.db")
+            self.assertEqual(status_result.returncode, 0, status_result.stderr or status_result.stdout)
+            status_payload = json.loads(status_result.stdout)
+            self.assertFalse(status_payload["stale_source"])
+            self.assertEqual(status_payload["center_authority_mode"], "sqlite_primary")
+            self.assertEqual(export_result.returncode, 0, export_result.stderr or export_result.stdout)
+            export_payload = tomllib.loads(export_result.stdout)
+            self.assertEqual(export_payload["observations"][0]["dependencies"], ["dep-b", "dep-a"])
+            self.assertEqual(repeated_result.returncode, 1)
+            self.assertIn("runtime_manager_failed", repeated_result.stdout)
+            self.assertIn("already promoted", repeated_result.stdout)
+
+    def test_runtime_manager_center_promote_fails_closed_when_db_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            operations = root / "docs" / "operations"
+            operations.mkdir(parents=True)
+            (operations / "observation_center.toml").write_text(
+                """
+[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "center", "promote"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("runtime_manager_failed", result.stdout)
+            self.assertIn("runtime manager database not found", result.stdout)
+
     def test_runtime_manager_status_and_next_write_projection_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
@@ -586,14 +689,25 @@ halt_if = "halt"
                 capture_output=True,
                 text=True,
             )
+            next_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "next"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
 
             self.assertEqual(result.returncode, 1)
+            self.assertEqual(result.stdout.splitlines()[0], "FAIL")
             self.assertIn("state: blocked", result.stdout)
             self.assertIn("stale_source: true", result.stdout)
             self.assertIn("gate_diagnostics_total: 1", result.stdout)
             self.assertIn("gate_diagnostic: stale_source subject=runtime-manager", result.stdout)
             self.assertIn("selection_audit_decision: global_blocked", result.stdout)
             self.assertIn("selection_audit_global_blockers: stale_source", result.stdout)
+            self.assertEqual(next_result.returncode, 1)
+            self.assertEqual(next_result.stdout.splitlines()[0], "FAIL")
+            self.assertIn("state: blocked", next_result.stdout)
+            self.assertIn("stale_source", next_result.stdout)
 
     def test_runtime_manager_cli_explains_validation_and_stop_condition_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

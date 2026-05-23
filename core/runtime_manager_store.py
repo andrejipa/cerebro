@@ -23,7 +23,9 @@ from core.runtime_manager_policy import (
     LEVEL_ORDER as _AUTONOMY_LEVEL_ORDER,
 )
 
-SCHEMA_VERSION = 15
+SCHEMA_VERSION = 16
+CENTER_AUTHORITY_TOML_IMPORT = "toml_import"
+CENTER_AUTHORITY_SQLITE_PRIMARY = "sqlite_primary"
 ADAPTER_TOKEN_SCOPES: frozenset[str] = frozenset(
     {"runtime:read", "runtime:lease", "runtime:execute", "runtime:trace", "runtime:metrics", "runtime:replay"}
 )
@@ -131,6 +133,7 @@ class RuntimeManagerStatus:
     reason: str
     gate_diagnostics: tuple[RuntimeGateDiagnostic, ...]
     selection_audit: RuntimeSelectionAudit
+    center_authority_mode: str
     source_authority: str
     source_path: str
     source_sha256: str
@@ -484,11 +487,30 @@ class RuntimeManagerStore:
             self._create_schema(connection)
             self._upsert_metadata(connection, "schema_version", str(SCHEMA_VERSION))
             self._upsert_metadata(connection, "store_role", "runtime-manager-read-model")
+            if not self._read_metadata(connection).get("center_authority_mode"):
+                self._upsert_metadata(connection, "center_authority_mode", CENTER_AUTHORITY_TOML_IMPORT)
             connection.commit()
 
     def sync_observation_center(self, observation_center_path: str | Path | None = None) -> RuntimeManagerStatus:
         """Import the current observation center into the SQLite read model."""
         source_path = self._resolve_observation_center_path(observation_center_path)
+        self.cerebro_dir.mkdir(parents=True, exist_ok=True)
+        with closing(self._connect()) as connection:
+            self._create_schema(connection)
+            metadata = self._read_metadata(connection)
+            if metadata.get("center_authority_mode") == CENTER_AUTHORITY_SQLITE_PRIMARY:
+                synced_at = _utc_now()
+                self._upsert_metadata(connection, "synced_at", synced_at)
+                self._append_event(
+                    connection,
+                    event_type="runtime_sync_skipped",
+                    subject_id="runtime-manager",
+                    payload={"reason": "center_authority_is_sqlite_primary"},
+                    created_at=synced_at,
+                )
+                connection.commit()
+                return self.read_status()
+
         payload = self._read_observation_center(source_path)
         source_sha256 = self._sha256(source_path)
         imported_at = _utc_now()
@@ -496,7 +518,13 @@ class RuntimeManagerStore:
         if not isinstance(observations, list):
             raise RuntimeManagerStoreError("observation_center.toml observations must be a list")
 
-        self.cerebro_dir.mkdir(parents=True, exist_ok=True)
+        center_payload = payload.get("center", {})
+        if not isinstance(center_payload, dict):
+            center_payload = {}
+        projections_payload = payload.get("projections", {})
+        if not isinstance(projections_payload, dict):
+            projections_payload = {}
+
         with closing(self._connect()) as connection:
             self._create_schema(connection)
             is_first_sync = connection.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 0
@@ -520,12 +548,29 @@ class RuntimeManagerStore:
                 connection.execute("DELETE FROM command_registry")
                 self._upsert_metadata(connection, "schema_version", str(SCHEMA_VERSION))
                 self._upsert_metadata(connection, "store_role", "runtime-manager-read-model")
+                self._upsert_metadata(connection, "center_authority_mode", CENTER_AUTHORITY_TOML_IMPORT)
                 self._upsert_metadata(connection, "source_authority", "observation_center.toml")
                 self._upsert_metadata(connection, "source_path", _relative_or_absolute(source_path, self.root))
                 self._upsert_metadata(connection, "source_sha256", source_sha256)
                 self._upsert_metadata(connection, "synced_at", imported_at)
-                self._upsert_metadata(connection, "queue_authority", _string(payload.get("center", {}).get("queue_authority")))
-                self._upsert_metadata(connection, "single_flight", json.dumps(bool(payload.get("center", {}).get("single_flight", True))))
+                self._upsert_metadata(connection, "center_version", str(center_payload.get("version", "")))
+                self._upsert_metadata(connection, "center_updated_at", _string(center_payload.get("updated_at")))
+                self._upsert_metadata(connection, "center_projection_role", _string(center_payload.get("projection_role")))
+                self._upsert_metadata(connection, "authority_order", _string(center_payload.get("authority_order")))
+                self._upsert_metadata(connection, "selection_contract", _string(center_payload.get("selection_contract")))
+                self._upsert_metadata(connection, "selection_order", _string(center_payload.get("selection_order")))
+                self._upsert_metadata(connection, "reconciliation_rule", _string(center_payload.get("reconciliation_rule")))
+                self._upsert_metadata(connection, "overlap_policy", _string(center_payload.get("overlap_policy")))
+                self._upsert_metadata(connection, "idempotency_contract", _string(center_payload.get("idempotency_contract")))
+                self._upsert_metadata(connection, "history_policy", _string(center_payload.get("history_policy")))
+                self._upsert_metadata(connection, "rotation_policy", _string(center_payload.get("rotation_policy")))
+                self._upsert_metadata(connection, "checkpoint_policy", _string(center_payload.get("checkpoint_policy")))
+                self._upsert_metadata(connection, "queue_authority", _string(center_payload.get("queue_authority")))
+                self._upsert_metadata(connection, "single_flight", json.dumps(bool(center_payload.get("single_flight", True))))
+                self._upsert_metadata(connection, "notify_once_blocked", json.dumps(bool(center_payload.get("notify_once_blocked", False))))
+                self._upsert_metadata(connection, "projection_system_state", _string(projections_payload.get("system_state")))
+                self._upsert_metadata(connection, "projection_opportunity_map", _string(projections_payload.get("opportunity_map")))
+                self._upsert_metadata(connection, "projection_trigger_docs", _string(projections_payload.get("trigger_docs")))
                 if is_first_sync:
                     self._append_event(
                         connection,
@@ -537,13 +582,13 @@ class RuntimeManagerStore:
                 for index, raw_observation in enumerate(observations):
                     observation = self._normalize_observation(raw_observation, source_path, source_sha256, index)
                     self._insert_observation(connection, observation, imported_at)
-                    for dependency in observation.dependencies:
+                    for dependency_index, dependency in enumerate(observation.dependencies):
                         connection.execute(
                             """
-                            INSERT INTO observation_dependencies(observation_id, dependency_id)
-                            VALUES (?, ?)
+                            INSERT INTO observation_dependencies(observation_id, dependency_id, source_index)
+                            VALUES (?, ?, ?)
                             """,
-                            (observation.id, dependency),
+                            (observation.id, dependency, dependency_index),
                         )
                     for decision_id in observation.required_decisions:
                         connection.execute(
@@ -654,6 +699,106 @@ class RuntimeManagerStore:
                 raise
         return self.read_status(observation_center_path=source_path)
 
+    def promote_observation_center(self, observation_center_path: str | Path | None = None) -> RuntimeManagerStatus:
+        """Promote the imported observation center so runtime.db becomes primary authority."""
+        if not self.db_path.exists():
+            raise RuntimeManagerStoreError(
+                f"runtime manager database not found: {self.db_path}",
+                code="center_database_missing",
+            )
+
+        source_path = self._resolve_observation_center_path(observation_center_path)
+        with closing(self._connect()) as connection:
+            self._create_schema(connection)
+            metadata = self._read_metadata(connection)
+            if metadata.get("center_authority_mode") == CENTER_AUTHORITY_SQLITE_PRIMARY:
+                raise RuntimeManagerStoreError(
+                    "observation center is already promoted to SQLite authority",
+                    code="center_already_promoted",
+                )
+
+        self.sync_observation_center(source_path)
+        promoted_at = _utc_now()
+        promoted_from_sha256 = self._sha256(source_path)
+        promoted_from_path = _relative_or_absolute(source_path, self.root)
+        db_source_path = _relative_or_absolute(self.db_path, self.root)
+
+        with closing(self._connect()) as connection:
+            self._create_schema(connection)
+            metadata = self._read_metadata(connection)
+            previous_revision = int(metadata.get("center_revision", "0") or "0")
+            center_revision = previous_revision + 1
+            center_digest = self._center_snapshot_digest(connection)
+            connection.execute("BEGIN")
+            try:
+                self._upsert_metadata(connection, "schema_version", str(SCHEMA_VERSION))
+                self._upsert_metadata(connection, "store_role", "runtime-manager-store")
+                self._upsert_metadata(connection, "center_authority_mode", CENTER_AUTHORITY_SQLITE_PRIMARY)
+                self._upsert_metadata(connection, "center_revision", str(center_revision))
+                self._upsert_metadata(connection, "center_promoted_at", promoted_at)
+                self._upsert_metadata(connection, "center_promoted_from_path", promoted_from_path)
+                self._upsert_metadata(connection, "center_promoted_from_sha256", promoted_from_sha256)
+                self._upsert_metadata(connection, "center_snapshot_sha256", center_digest)
+                self._upsert_metadata(connection, "source_authority", "runtime.db")
+                self._upsert_metadata(connection, "source_path", db_source_path)
+                self._upsert_metadata(connection, "source_sha256", center_digest)
+                self._append_center_authority_event(
+                    connection,
+                    event_type="center_promoted",
+                    authority_mode=CENTER_AUTHORITY_SQLITE_PRIMARY,
+                    revision=center_revision,
+                    source_path=promoted_from_path,
+                    source_sha256=promoted_from_sha256,
+                    payload={"center_snapshot_sha256": center_digest},
+                    created_at=promoted_at,
+                )
+                self._append_event(
+                    connection,
+                    event_type="center_promoted",
+                    subject_id="runtime-manager",
+                    payload={
+                        "center_revision": center_revision,
+                        "center_snapshot_sha256": center_digest,
+                        "promoted_from_path": promoted_from_path,
+                    },
+                    created_at=promoted_at,
+                )
+                self._append_runtime_trace(
+                    connection,
+                    operation="center_promote",
+                    subject_id="runtime-manager",
+                    status="promoted",
+                    input_payload={"source_path": promoted_from_path},
+                    output_payload={
+                        "center_revision": center_revision,
+                        "center_snapshot_sha256": center_digest,
+                        "source_authority": "runtime.db",
+                    },
+                    events=(("center_promoted", {"center_revision": center_revision}),),
+                    causation_id="",
+                    correlation_id="",
+                    started_at=promoted_at,
+                    finished_at=promoted_at,
+                )
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+        return self.read_status()
+
+    def export_observation_center_toml(self) -> str:
+        """Render a deterministic TOML compatibility snapshot from runtime.db."""
+        if not self.db_path.exists():
+            raise RuntimeManagerStoreError(
+                f"runtime manager database not found: {self.db_path}",
+                code="center_database_missing",
+            )
+        with closing(self._connect()) as connection:
+            self._require_schema(connection)
+            metadata = self._read_metadata(connection)
+            observations = self._read_observations(connection)
+        return _render_observation_center_toml(metadata, observations)
+
     def read_status(self, observation_center_path: str | Path | None = None) -> RuntimeManagerStatus:
         """Return read-only queue status from `runtime.db`."""
         if not self.db_path.exists():
@@ -661,10 +806,15 @@ class RuntimeManagerStore:
         with closing(self._connect()) as connection:
             self._require_schema(connection)
             metadata = self._read_metadata(connection)
+            center_authority_mode = metadata.get("center_authority_mode", CENTER_AUTHORITY_TOML_IMPORT)
             source_path = metadata.get("source_path", "")
             source_sha256 = metadata.get("source_sha256", "")
             source_authority = metadata.get("source_authority", "")
-            stale_source = self._is_stale_source(source_sha256, observation_center_path)
+            stale_source = (
+                False
+                if center_authority_mode == CENTER_AUTHORITY_SQLITE_PRIMARY
+                else self._is_stale_source(source_sha256, observation_center_path)
+            )
             observations = self._read_observations(connection)
             ledger = self._read_ledger_counts(connection)
             active_leases, expired_leases = self._read_lease_state(connection)
@@ -695,6 +845,7 @@ class RuntimeManagerStore:
             reason=reason,
             gate_diagnostics=gate_diagnostics,
             selection_audit=selection_audit,
+            center_authority_mode=center_authority_mode,
             source_authority=source_authority,
             source_path=source_path,
             source_sha256=source_sha256,
@@ -2997,6 +3148,7 @@ class RuntimeManagerStore:
             CREATE TABLE IF NOT EXISTS observation_dependencies (
                 observation_id TEXT NOT NULL,
                 dependency_id TEXT NOT NULL,
+                source_index INTEGER NOT NULL DEFAULT 0,
                 PRIMARY KEY (observation_id, dependency_id),
                 FOREIGN KEY (observation_id) REFERENCES observations(id) ON DELETE CASCADE
             );
@@ -3139,6 +3291,16 @@ class RuntimeManagerStore:
                 event_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 event_type TEXT NOT NULL,
                 subject_id TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS center_authority_events (
+                center_event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL,
+                authority_mode TEXT NOT NULL,
+                revision INTEGER NOT NULL,
+                source_path TEXT NOT NULL,
+                source_sha256 TEXT NOT NULL,
                 payload_json TEXT NOT NULL,
                 created_at TEXT NOT NULL
             );
@@ -3293,6 +3455,10 @@ class RuntimeManagerStore:
         self._migrate_schema(connection)
 
     def _migrate_schema(self, connection: sqlite3.Connection) -> None:
+        dependency_columns = self._table_columns(connection, "observation_dependencies")
+        if dependency_columns and "source_index" not in dependency_columns:
+            connection.execute("ALTER TABLE observation_dependencies ADD COLUMN source_index INTEGER NOT NULL DEFAULT 0")
+
         validation_columns = self._table_columns(connection, "validation_records")
         if validation_columns and "fresh_until" not in validation_columns:
             connection.execute("ALTER TABLE validation_records ADD COLUMN fresh_until TEXT NOT NULL DEFAULT ''")
@@ -3476,6 +3642,17 @@ class RuntimeManagerStore:
                 count INTEGER NOT NULL DEFAULT 0,
                 updated_at TEXT NOT NULL DEFAULT ''
             )""")
+        if "center_authority_events" not in existing_tables:
+            connection.execute("""CREATE TABLE IF NOT EXISTS center_authority_events (
+                center_event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL,
+                authority_mode TEXT NOT NULL,
+                revision INTEGER NOT NULL,
+                source_path TEXT NOT NULL,
+                source_sha256 TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )""")
 
     def _require_schema(self, connection: sqlite3.Connection) -> None:
         tables = {
@@ -3492,6 +3669,7 @@ class RuntimeManagerStore:
                     'observation_validation_requirements',
                     'tool_registry', 'approval_records', 'runtime_leases',
                     'replay_runs', 'validation_records', 'stop_conditions', 'events',
+                    'center_authority_events',
                     'runtime_traces', 'runtime_trace_events',
                     'command_registry', 'execution_evidence', 'managed_leases',
                     'managed_stop_conditions', 'managed_validations', 'rollback_registry',
@@ -3519,6 +3697,7 @@ class RuntimeManagerStore:
             "validation_records",
             "stop_conditions",
             "events",
+            "center_authority_events",
             "runtime_traces",
             "runtime_trace_events",
             "command_registry",
@@ -3534,6 +3713,15 @@ class RuntimeManagerStore:
         }
         if tables != expected:
             raise RuntimeManagerStoreError("runtime manager database schema is missing or incomplete")
+        self._require_table_columns(
+            connection,
+            "observation_dependencies",
+            {
+                "observation_id",
+                "dependency_id",
+                "source_index",
+            },
+        )
         self._require_table_columns(
             connection,
             "runtime_leases",
@@ -3649,6 +3837,20 @@ class RuntimeManagerStore:
             connection,
             "policy_counters",
             {"counter_key", "count", "updated_at"},
+        )
+        self._require_table_columns(
+            connection,
+            "center_authority_events",
+            {
+                "center_event_id",
+                "event_type",
+                "authority_mode",
+                "revision",
+                "source_path",
+                "source_sha256",
+                "payload_json",
+                "created_at",
+            },
         )
         self._require_table_columns(
             connection,
@@ -4234,6 +4436,47 @@ class RuntimeManagerStore:
             (event_type, subject_id, json.dumps(payload, sort_keys=True, separators=(",", ":")), created_at),
         )
 
+    def _append_center_authority_event(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        event_type: str,
+        authority_mode: str,
+        revision: int,
+        source_path: str,
+        source_sha256: str,
+        payload: dict,
+        created_at: str,
+    ) -> None:
+        connection.execute(
+            """
+            INSERT INTO center_authority_events(
+                event_type, authority_mode, revision, source_path, source_sha256,
+                payload_json, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                event_type,
+                authority_mode,
+                revision,
+                source_path,
+                source_sha256,
+                json.dumps(payload, sort_keys=True, separators=(",", ":")),
+                created_at,
+            ),
+        )
+
+    def _center_snapshot_digest(self, connection: sqlite3.Connection) -> str:
+        payload = {
+            "observations": [
+                _observation_snapshot_payload(item)
+                for item in self._read_observations(connection)
+            ],
+        }
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()
+
     def _record_operation_trace(
         self,
         *,
@@ -4341,7 +4584,7 @@ class RuntimeManagerStore:
         ).fetchall()
         dependencies_by_id: dict[str, list[str]] = {}
         for row in connection.execute(
-            "SELECT observation_id, dependency_id FROM observation_dependencies ORDER BY dependency_id ASC"
+            "SELECT observation_id, dependency_id FROM observation_dependencies ORDER BY source_index ASC, dependency_id ASC"
         ):
             dependencies_by_id.setdefault(row["observation_id"], []).append(row["dependency_id"])
         decisions_by_id: dict[str, list[str]] = {}
@@ -4819,6 +5062,124 @@ class RuntimeManagerStore:
 
 def _string(value: object) -> str:
     return value if isinstance(value, str) else ""
+
+
+def _observation_snapshot_payload(observation: RuntimeObservation) -> dict[str, object]:
+    return {
+        "id": observation.id,
+        "title": observation.title,
+        "status": observation.status,
+        "kind": observation.kind,
+        "priority": observation.priority,
+        "boundary": observation.boundary,
+        "trigger": observation.trigger,
+        "dependencies": list(observation.dependencies),
+        "dependencies_satisfied": observation.dependencies_satisfied,
+        "required_decisions": list(observation.required_decisions),
+        "required_evidence": list(observation.required_evidence),
+        "required_tools": list(observation.required_tools),
+        "required_approvals": list(observation.required_approvals),
+        "required_validations": list(observation.required_validations),
+        "next_action": observation.next_action,
+        "done_when": observation.done_when,
+        "halt_if": observation.halt_if,
+        "source_index": observation.source_index,
+    }
+
+
+def _render_observation_center_toml(metadata: dict[str, str], observations: tuple[RuntimeObservation, ...]) -> str:
+    center_version = metadata.get("center_version") or "1"
+    try:
+        center_version_text = str(int(center_version))
+    except ValueError:
+        center_version_text = "1"
+    single_flight = _metadata_bool(metadata.get("single_flight"), default=True)
+    notify_once_blocked = _metadata_bool(metadata.get("notify_once_blocked"), default=False)
+    sqlite_primary = metadata.get("center_authority_mode") == CENTER_AUTHORITY_SQLITE_PRIMARY
+    projection_role = (
+        "runtime.db is the primary observation-center authority; this TOML is a deterministic compatibility export/bootstrap surface."
+        if sqlite_primary
+        else metadata.get("center_projection_role", "")
+    )
+    authority_order = (
+        "AGENTS.md -> active triggers -> runtime.db -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
+        if sqlite_primary
+        else metadata.get("authority_order", "")
+    )
+    lines = [
+        "[center]",
+        f"version = {center_version_text}",
+        f"updated_at = {_toml_quote(metadata.get('center_updated_at') or metadata.get('center_promoted_at') or metadata.get('synced_at', ''))}",
+        f"queue_authority = {_toml_quote(metadata.get('queue_authority', 'machine-primary'))}",
+        f"projection_role = {_toml_quote(projection_role or 'runtime.db is primary; this TOML is a compatibility export.')}",
+        f"authority_order = {_toml_quote(authority_order)}",
+        f"selection_contract = {_toml_quote(metadata.get('selection_contract', ''))}",
+        f"selection_order = {_toml_quote(metadata.get('selection_order', ''))}",
+        f"reconciliation_rule = {_toml_quote(metadata.get('reconciliation_rule', ''))}",
+        f"single_flight = {str(single_flight).lower()}",
+        f"overlap_policy = {_toml_quote(metadata.get('overlap_policy', ''))}",
+        f"idempotency_contract = {_toml_quote(metadata.get('idempotency_contract', ''))}",
+        f"notify_once_blocked = {str(notify_once_blocked).lower()}",
+        f"history_policy = {_toml_quote(metadata.get('history_policy', ''))}",
+        f"rotation_policy = {_toml_quote(metadata.get('rotation_policy', ''))}",
+        f"checkpoint_policy = {_toml_quote(metadata.get('checkpoint_policy', ''))}",
+        "",
+        "[projections]",
+        f"system_state = {_toml_quote(metadata.get('projection_system_state', ''))}",
+        f"opportunity_map = {_toml_quote(metadata.get('projection_opportunity_map', ''))}",
+        f"trigger_docs = {_toml_quote(metadata.get('projection_trigger_docs', ''))}",
+        "",
+    ]
+    for observation in sorted(observations, key=lambda item: (item.source_index, item.id)):
+        lines.extend(
+            [
+                "",
+                "[[observations]]",
+                f"id = {_toml_quote(observation.id)}",
+                f"title = {_toml_quote(observation.title)}",
+                f"status = {_toml_quote(observation.status)}",
+                f"kind = {_toml_quote(observation.kind)}",
+                f"priority = {_toml_quote(observation.priority)}",
+                f"boundary = {_toml_quote(observation.boundary)}",
+                f"trigger = {_toml_quote(observation.trigger)}",
+                f"dependencies = {_toml_list(observation.dependencies)}",
+                f"dependencies_satisfied = {str(observation.dependencies_satisfied).lower()}",
+            ]
+        )
+        for field_name, values in (
+            ("required_decisions", observation.required_decisions),
+            ("required_evidence", observation.required_evidence),
+            ("required_tools", observation.required_tools),
+            ("required_approvals", observation.required_approvals),
+            ("required_validations", observation.required_validations),
+        ):
+            if values:
+                lines.append(f"{field_name} = {_toml_list(values)}")
+        lines.extend(
+            [
+                f"next_action = {_toml_quote(observation.next_action)}",
+                f"done_when = {_toml_quote(observation.done_when)}",
+                f"halt_if = {_toml_quote(observation.halt_if)}",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _metadata_bool(value: str | None, *, default: bool) -> bool:
+    if value is None or value == "":
+        return default
+    try:
+        return bool(json.loads(value))
+    except json.JSONDecodeError:
+        return default
+
+
+def _toml_quote(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _toml_list(values: tuple[str, ...]) -> str:
+    return "[" + ", ".join(_toml_quote(value) for value in values) + "]"
 
 
 def _diagnostic(code: str, subject_id: str, details: tuple[str, ...] | list[str] = ()) -> RuntimeGateDiagnostic:
