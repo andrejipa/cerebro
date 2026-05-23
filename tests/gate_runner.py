@@ -34,12 +34,21 @@ MCP_MODULES = (
 
 
 def configure_workspace_environment(workspace: Path = REPO_ROOT) -> None:
+    workspace = workspace.resolve()
     for name in (".tmp_test", ".tmp_claims", ".tmp_live_proofs"):
         (workspace / name).mkdir(exist_ok=True)
     os.environ["TEMP"] = str((workspace / ".tmp_test").resolve())
     os.environ["TMP"] = os.environ["TEMP"]
     os.environ["CEREBRO_SESSION_CLAIMS_DIR"] = str((workspace / ".tmp_claims").resolve())
     os.environ["CEREBRO_SESSION_LIVE_PROOFS_DIR"] = str((workspace / ".tmp_live_proofs").resolve())
+    existing_pythonpath = os.environ.get("PYTHONPATH")
+    root_entry = str(workspace)
+    if existing_pythonpath:
+        paths = existing_pythonpath.split(os.pathsep)
+        if root_entry not in paths:
+            os.environ["PYTHONPATH"] = os.pathsep.join([root_entry, *paths])
+    else:
+        os.environ["PYTHONPATH"] = root_entry
     tempfile.mkdtemp = _workspace_mkdtemp
 
 
