@@ -1,0 +1,468 @@
+{
+  "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+  "boundary": {
+    "may_suggest": [
+      "compare review capsule output under degraded input evidence",
+      "show missing capsule inputs as blockers",
+      "show malformed capsule inputs as blockers",
+      "show mutating capsule inputs as blockers",
+      "show root escapes and .cerebro targets as boundary blockers",
+      "show stale reproducibility as blocking review evidence",
+      "show failed upstream stress matrices as blocking review evidence",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "refresh artifacts automatically",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "create canonical evidence graph",
+      "promote or demote authority",
+      "treat review capsule output as permission",
+      "treat stress matrix output as permission",
+      "treat passing scenarios as permission",
+      "treat digest equality as truth",
+      "hide blockers",
+      "hide malformed capsule input",
+      "hide stale or mismatched reproducibility",
+      "hide failed upstream stress coverage",
+      "infer negative evidence from silence"
+    ]
+  },
+  "guardrails": {
+    "boundary_error_is_review_blocker_not_exception": true,
+    "degraded_capsule_evidence_is_review_evidence_only": true,
+    "digest_equality_is_not_truth": true,
+    "passing_scenario_is_not_permission": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "review_capsule_output_is_not_permission": true,
+    "review_capsule_stress_matrix_is_not_authority": true,
+    "review_capsule_stress_matrix_is_not_claim_graph": true,
+    "review_capsule_stress_matrix_is_not_memory": true,
+    "review_capsule_stress_matrix_is_not_permission": true,
+    "review_capsule_stress_matrix_is_not_runtime_gate": true,
+    "review_capsule_stress_matrix_is_not_source_registry": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "matrix_role": "advisory degraded-evidence operator evidence review capsule stress matrix only",
+  "scenarios": [
+    {
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocker_count": 0,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "advisory_report_allowed",
+        "recommended_human_decision": "none",
+        "visible_error": false
+      },
+      "forbidden_interpretations": [
+        "treat review capsule stress output as permission",
+        "treat review capsule output as permission",
+        "hide degraded capsule input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from review capsule evidence",
+        "register sources from review capsule evidence",
+        "promote review capsule evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 0,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "advisory_report_allowed",
+        "error": "",
+        "recommended_human_decision": "none",
+        "review_status": "review_clear",
+        "visible_error": false
+      },
+      "passed": true,
+      "purpose": "Proves complete capsule evidence stays review-clear without becoming permission.",
+      "review_summary": "review_status=review_clear; recommended_human_decision=none; action_readiness=advisory_report_allowed; blocker_count=0; input_blocker_count=0; missing_review_evidence_count=0",
+      "scenario_id": "clean_review_capsule",
+      "state_change": "none",
+      "title": "Clean review capsule remains advisory"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocker_count": 2,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat review capsule stress output as permission",
+        "treat review capsule output as permission",
+        "hide degraded capsule input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from review capsule evidence",
+        "register sources from review capsule evidence",
+        "promote review capsule evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 1,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "operator_decision_packet: input file is missing: missing-packet.json; operator decision packet action readiness is blocked",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves an absent required input becomes missing review evidence.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=2; input_blocker_count=1; missing_review_evidence_count=1",
+      "scenario_id": "missing_decision_packet",
+      "state_change": "none",
+      "title": "Missing decision packet blocks review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocker_count": 2,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat review capsule stress output as permission",
+        "treat review capsule output as permission",
+        "hide degraded capsule input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from review capsule evidence",
+        "register sources from review capsule evidence",
+        "promote review capsule evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 1,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "intake_reproducibility: input JSON is malformed: Expecting property name enclosed in double quotes; operator evidence intake reproducibility is unknown",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves malformed JSON stays visible to the operator.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=2; input_blocker_count=1; missing_review_evidence_count=1",
+      "scenario_id": "malformed_reproducibility_input",
+      "state_change": "none",
+      "title": "Malformed reproducibility blocks review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat review capsule stress output as permission",
+        "treat review capsule output as permission",
+        "hide degraded capsule input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from review capsule evidence",
+        "register sources from review capsule evidence",
+        "promote review capsule evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "provenance_index: input must preserve state_change none: canonical-mutation",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves state-changing evidence cannot pass as advisory capsule input.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=1; input_blocker_count=1; missing_review_evidence_count=0",
+      "scenario_id": "mutating_provenance_input",
+      "state_change": "none",
+      "title": "Mutating provenance input blocks review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocker_count": 2,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat review capsule stress output as permission",
+        "treat review capsule output as permission",
+        "hide degraded capsule input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from review capsule evidence",
+        "register sources from review capsule evidence",
+        "promote review capsule evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 1,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "operator_decision_packet: path blocked: path escapes project root: C:\\Users\\Admin\\AppData\\Local\\Temp\\cerebro-review-capsule-stress-_j7zmtwn\\outside-packet.json; operator decision packet action readiness is blocked",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves absolute paths outside the project root are visible boundary blockers.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=2; input_blocker_count=1; missing_review_evidence_count=1",
+      "scenario_id": "root_escape_input",
+      "state_change": "none",
+      "title": "Root escape blocks review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocker_count": 2,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat review capsule stress output as permission",
+        "treat review capsule output as permission",
+        "hide degraded capsule input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from review capsule evidence",
+        "register sources from review capsule evidence",
+        "promote review capsule evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 1,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "operator_decision_packet: path blocked: path crosses canonical state boundary; operator decision packet action readiness is blocked",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves canonical state boundary targets are rejected as review evidence.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=2; input_blocker_count=1; missing_review_evidence_count=1",
+      "scenario_id": "cerebro_state_input",
+      "state_change": "none",
+      "title": ".cerebro target blocks review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocker_count": 3,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat review capsule stress output as permission",
+        "treat review capsule output as permission",
+        "hide degraded capsule input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from review capsule evidence",
+        "register sources from review capsule evidence",
+        "promote review capsule evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 0,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "operator evidence intake reproducibility is stale_or_mismatched; operator evidence intake reproducibility reports 1 mismatch(es); operator evidence intake reproducibility digest does not match",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves digest mismatch and stale reproducibility remain blocking evidence.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=3; input_blocker_count=0; missing_review_evidence_count=0",
+      "scenario_id": "stale_reproducibility_input",
+      "state_change": "none",
+      "title": "Stale reproducibility blocks review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat review capsule stress output as permission",
+        "treat review capsule output as permission",
+        "hide degraded capsule input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from review capsule evidence",
+        "register sources from review capsule evidence",
+        "promote review capsule evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 0,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "operator evidence provenance stress matrix reports 1 failing scenario(s)",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves failed upstream stress coverage blocks the review capsule.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=1; input_blocker_count=0; missing_review_evidence_count=0",
+      "scenario_id": "failed_stress_input",
+      "state_change": "none",
+      "title": "Failed upstream stress blocks review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocker_count": 2,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat review capsule stress output as permission",
+        "treat review capsule output as permission",
+        "hide degraded capsule input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from review capsule evidence",
+        "register sources from review capsule evidence",
+        "promote review capsule evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 0,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "operator evidence provenance index reports 1 blocker(s); operator evidence provenance index has missing artifacts: 1/2 present",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves missing provenance artifacts remain visible as review blockers.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=2; input_blocker_count=0; missing_review_evidence_count=0",
+      "scenario_id": "provenance_blocker_input",
+      "state_change": "none",
+      "title": "Provenance blocker blocks review"
+    }
+  ],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "all_scenarios_passed": true,
+    "blocker_count": 15,
+    "boundary_error_count": 2,
+    "decisions": {
+      "cerebro_state_input": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 1,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "clean_review_capsule": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "none",
+        "review_status": "review_clear",
+        "visible_error": false
+      },
+      "failed_stress_input": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "malformed_reproducibility_input": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "missing_decision_packet": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "mutating_provenance_input": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "provenance_blocker_input": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "root_escape_input": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 1,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "stale_reproducibility_input": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      }
+    },
+    "degraded_blocker_count": 15,
+    "fail_count": 0,
+    "input_blocker_count": 5,
+    "missing_review_evidence_count": 4,
+    "pass_count": 9,
+    "scenario_count": 9,
+    "scenario_ids": [
+      "clean_review_capsule",
+      "missing_decision_packet",
+      "malformed_reproducibility_input",
+      "mutating_provenance_input",
+      "root_escape_input",
+      "cerebro_state_input",
+      "stale_reproducibility_input",
+      "failed_stress_input",
+      "provenance_blocker_input"
+    ]
+  }
+}

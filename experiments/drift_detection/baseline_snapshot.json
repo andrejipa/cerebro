@@ -1,0 +1,457 @@
+[
+  {
+    "path": "core/__init__.py",
+    "ast_hash": "32d8c1da0369892c7d60cddd6b3272ee88a9300c5e44c1e76cfa1bec03a9cbb3",
+    "line_count": 18
+  },
+  {
+    "path": "core/action_identity.py",
+    "ast_hash": "6491475c09a431126c46f3a3c61451d7cb6bcd6d5029c05feba4d63450c193c7",
+    "line_count": 80
+  },
+  {
+    "path": "core/action_runtime.py",
+    "ast_hash": "05c4646ede8592a91e04251ce4f989f5848780c9424a0258be1b1d53560dd231",
+    "line_count": 1228
+  },
+  {
+    "path": "core/agent_runtime.py",
+    "ast_hash": "eeda65afd101c6312fdea9d771f0ece14cb8b3b0db84fd72572fdbb66b43301e",
+    "line_count": 722
+  },
+  {
+    "path": "core/command_sandbox.py",
+    "ast_hash": "76fa68fb78a3ba285d3b8244b495c2caf2ec2bd739b839c5bdbde2bcfda0202b",
+    "line_count": 116
+  },
+  {
+    "path": "core/decision_runtime.py",
+    "ast_hash": "4619ae4bde9db88950d184fa2e54c4e1f495204352fd386ee470aafac9e5bca5",
+    "line_count": 599
+  },
+  {
+    "path": "core/digests.py",
+    "ast_hash": "0f99f9bf8ae17113a4125cd5de55aefaa3e44d52cb49608e588286382c58e3b6",
+    "line_count": 31
+  },
+  {
+    "path": "core/discipline_runtime.py",
+    "ast_hash": "aac5e7db01173107eaa10b4db427e8312a8c6ab2875a9dd559b263e45e3797a0",
+    "line_count": 215
+  },
+  {
+    "path": "core/domain_input_adapter.py",
+    "ast_hash": "c0ee7a7480ebfe8d6c626f23fe5eea193db8497d926b4d4fccbaefb14436e07a",
+    "line_count": 673
+  },
+  {
+    "path": "core/event_reducer.py",
+    "ast_hash": "140f8bb12c23a61f7c9e8d2b2885ed548add80ee24451569e85324ff1864db77",
+    "line_count": 193
+  },
+  {
+    "path": "core/execution_policy.py",
+    "ast_hash": "0779a958d428273005ddd49c4e30ef3f8a4c8a1b92f70814ab4c7820865a02b6",
+    "line_count": 243
+  },
+  {
+    "path": "core/material_scope.py",
+    "ast_hash": "6f937a533c68acc857768f63eccea9960cc811aa330b3a54cb3e17317ca91cdb",
+    "line_count": 218
+  },
+  {
+    "path": "core/memory_runtime.py",
+    "ast_hash": "d6ae965279a08f4f78422f8a88a8c49a1cbff9cc5602355b46ab72d0f83e1db4",
+    "line_count": 202
+  },
+  {
+    "path": "core/read_models.py",
+    "ast_hash": "17ebb72a68b5e276a545d4f826d5b2d945556646184e71b9880c580a08110857",
+    "line_count": 53
+  },
+  {
+    "path": "core/replay_model.py",
+    "ast_hash": "f4531980fea59707eb85469ad368fdcb9ab0c8e89c141d0199b51409bd196f91",
+    "line_count": 197
+  },
+  {
+    "path": "core/runtime_event_window.py",
+    "ast_hash": "5cc5b0c0b4a1c30b2391bb25a3d883058ae2703173fc518bd7fd8101b95c1395",
+    "line_count": 15
+  },
+  {
+    "path": "core/runtime_ids.py",
+    "ast_hash": "f37c1fe8302c7899baafb5e69036abcf45543f9ac1cf7b1b1860bb5db3c03cfe",
+    "line_count": 24
+  },
+  {
+    "path": "core/schema.py",
+    "ast_hash": "67cea122dbe3cb7e63dccd1f874c3e0eacfc32fa1aa7fb270012ddf90f18ed36",
+    "line_count": 87
+  },
+  {
+    "path": "core/schema_policy.py",
+    "ast_hash": "62dce78c7a2fe0e17e1c147d3af0d6b8da5088a71074161e8e4cab8e66b5be99",
+    "line_count": 11
+  },
+  {
+    "path": "core/session_backend.py",
+    "ast_hash": "0b2dc05753be21b7ae16af8165a624c56ee4c131ab93de992d24e43519c6e5cf",
+    "line_count": 65
+  },
+  {
+    "path": "core/state_digest.py",
+    "ast_hash": "4aea8ec6ba3fc2fd2653aaed8341270b38641f979500d66253f0becd60a09c93",
+    "line_count": 100
+  },
+  {
+    "path": "core/state_read_model_service.py",
+    "ast_hash": "8ef633d757a7757cf5a8b8a7ffc9b4e21aa89764076b061cb73a06c3119ea2f6",
+    "line_count": 65
+  },
+  {
+    "path": "core/state_retention_service.py",
+    "ast_hash": "fd6418bd6b7f18a0b4407899ebf638bc4259501c9ee9b1a1189ae03598c1ce67",
+    "line_count": 441
+  },
+  {
+    "path": "core/state_runtime_lock_service.py",
+    "ast_hash": "a31499ef9e7d4e0f7220a9f77b32574a34b57cc47a7c4ada714515acf908e620",
+    "line_count": 235
+  },
+  {
+    "path": "core/state_session_artifacts_service.py",
+    "ast_hash": "c24ba7e8804a228d7b37306ce931287d5463fedcf71882ed0bfe624eb2617af5",
+    "line_count": 882
+  },
+  {
+    "path": "core/state_store.py",
+    "ast_hash": "19aee2471b3346cc3b6a537b5185e2fd3e3200f40dd0e8dd6a6d0f6fc75d8a72",
+    "line_count": 4801
+  },
+  {
+    "path": "core/store_protocols.py",
+    "ast_hash": "86886945360a231d7b9daf4e6d5b404a60e613d54907acf2fc8b95d57847dbf1",
+    "line_count": 77
+  },
+  {
+    "path": "core/success_memory.py",
+    "ast_hash": "49b160fde3ab967c3423b4fb1b553aadd960c2a87e1f5947a61224d542cc3bf7",
+    "line_count": 77
+  },
+  {
+    "path": "core/transition_journal.py",
+    "ast_hash": "46ae083094b77ee0d4dc5d72aa6921a2a219e9a9ed327551056e45e848d81b46",
+    "line_count": 235
+  },
+  {
+    "path": "core/validation.py",
+    "ast_hash": "bd317c6fa9cd53f3f8969be9b2ccab4645d96d264dbeeb2d25d2e73a17068f99",
+    "line_count": 1455
+  },
+  {
+    "path": "core/verification_runtime.py",
+    "ast_hash": "ee03b1c791d1567a13fe2a962c562ad35cecbd2c7477f8776183b3904935930f",
+    "line_count": 1034
+  },
+  {
+    "path": "core/windows_credential_store.py",
+    "ast_hash": "ebbb07fc4552a356ba8c94f41c4316dfb2c8e179b32c731325152349e59e98c2",
+    "line_count": 125
+  },
+  {
+    "path": "core/work_profile.py",
+    "ast_hash": "851f02e5cd18c41b56f54a2df3ca9836e0b8b8e41cd1a61ff78540375e148dee",
+    "line_count": 174
+  },
+  {
+    "path": "core/workspace_paths.py",
+    "ast_hash": "14ecaad74b0004af1e457a7b7b2a45dba4b800134c8e73f698beda89c1395b6d",
+    "line_count": 22
+  },
+  {
+    "path": "cli/__init__.py",
+    "ast_hash": "7fa98656df66b2918830d7d84ff8621f75201872e7e5dbba170d5bad9068381d",
+    "line_count": 1
+  },
+  {
+    "path": "cli/__main__.py",
+    "ast_hash": "13a254d62ad731a017cfe30ca9697af34e359b7199e44a75e18ecb957d4cb95d",
+    "line_count": 9
+  },
+  {
+    "path": "cli/commands/__init__.py",
+    "ast_hash": "72f10ce9f1cdf64236d04442838a0fbce011616297cf1a4cc1a7f150003148c3",
+    "line_count": 1
+  },
+  {
+    "path": "cli/commands/_export_support.py",
+    "ast_hash": "15788f7b47d326c8fa26c681cd90335b148fc696de1737a990537ab413aeb83f",
+    "line_count": 87
+  },
+  {
+    "path": "cli/commands/_plan_input.py",
+    "ast_hash": "b81807269dde2aa92fa8a5aa566b723931f44124686f25768795a568110951b9",
+    "line_count": 65
+  },
+  {
+    "path": "cli/commands/_session_ownership.py",
+    "ast_hash": "597b45b05978a199622a310965cc2f9facf9d38b88c1740e579eff1ae8066e81",
+    "line_count": 37
+  },
+  {
+    "path": "cli/commands/analyze.py",
+    "ast_hash": "6e5e436b940f508a36d7125718a6076f27ed9e6c0e5b55a6c10cb6002662df40",
+    "line_count": 76
+  },
+  {
+    "path": "cli/commands/apply.py",
+    "ast_hash": "6aaf08d98d3517f5e1f015737121e2571ceecffd0faecb26e97a386b7e8bdb02",
+    "line_count": 541
+  },
+  {
+    "path": "cli/commands/approve.py",
+    "ast_hash": "00ca31c664565b08d1d07b52196b2e771ecac6c4f174261c40444d0b7c864837",
+    "line_count": 74
+  },
+  {
+    "path": "cli/commands/bootstrap_scan.py",
+    "ast_hash": "7af303349ce4fc109d01b566264c0a5a47c0945967fd2bb01f33d5d2514091c0",
+    "line_count": 326
+  },
+  {
+    "path": "cli/commands/checkpoint.py",
+    "ast_hash": "6ae43a1bd7c4e6369d19c607c818dfa68fa1d7b930b491ec08a17581dac34779",
+    "line_count": 82
+  },
+  {
+    "path": "cli/commands/context_index_export.py",
+    "ast_hash": "cb120d564efad74f3ca65cbd22c5a49db72724c872e1f4a080c127bbe312c262",
+    "line_count": 27
+  },
+  {
+    "path": "cli/commands/doctor.py",
+    "ast_hash": "7ccb31c62932b89a7d4ac624c03df54e9180a1cc515606746b28eadc7013b613",
+    "line_count": 261
+  },
+  {
+    "path": "cli/commands/handoff_export.py",
+    "ast_hash": "082282c20e953891cd6fa30ab446d50422ca6b5f38e9271fd1b5b88adc1f1fe4",
+    "line_count": 27
+  },
+  {
+    "path": "cli/commands/impact_export.py",
+    "ast_hash": "38a14458fd8590e27b9876bfd7470a92557460a0802e8b100c06e2f58710aafb",
+    "line_count": 27
+  },
+  {
+    "path": "cli/commands/import_context.py",
+    "ast_hash": "9339aec367ace48a6a91016bcf453ad5793e7e18e897a3c08f1dcd8ec645a346",
+    "line_count": 64
+  },
+  {
+    "path": "cli/commands/init.py",
+    "ast_hash": "dc58df2628c22fbe8083a18bf374295f0faa98deabfc311d60a04521d313137e",
+    "line_count": 28
+  },
+  {
+    "path": "cli/commands/iteration_commit.py",
+    "ast_hash": "b3d5ea60cd0921198c09532eb5e3f1ed52c3d02d6be340c52c720bf8137ea488",
+    "line_count": 215
+  },
+  {
+    "path": "cli/commands/plan.py",
+    "ast_hash": "084d8cfc2efd5e0924843d85d7c8e641887e9cb1d687a42123e4cd756204663f",
+    "line_count": 150
+  },
+  {
+    "path": "cli/commands/residuals_view.py",
+    "ast_hash": "e99d5a6d82fa8bcf753f11e3ceafe6df9ca30df02953012d1ebbecb75201e609",
+    "line_count": 115
+  },
+  {
+    "path": "cli/commands/resume.py",
+    "ast_hash": "c62fe409691fb9b3267fa0d438b7e7b80bf23c8c6ede57e8b4e363363c965d80",
+    "line_count": 69
+  },
+  {
+    "path": "cli/commands/return_map_export.py",
+    "ast_hash": "8f5c4792284e7644b1777097bae680ea1bcc42972f92a7bb0e0eafc21af81ae5",
+    "line_count": 27
+  },
+  {
+    "path": "cli/commands/rollback.py",
+    "ast_hash": "09822d981fe71bf5ad57fb3809f1526392139ecc64668d07d013ad151495895c",
+    "line_count": 170
+  },
+  {
+    "path": "cli/commands/session_discard.py",
+    "ast_hash": "bd891a2e03fdec414c1d587ee40608cbe4b44afcaced925bd3d92ad8326856ad",
+    "line_count": 74
+  },
+  {
+    "path": "cli/commands/sources_export.py",
+    "ast_hash": "c2ac8a8a084c267aa9905f555eca03da6cdab61585d58b44f237a7ef0f359acf",
+    "line_count": 27
+  },
+  {
+    "path": "cli/commands/status_export.py",
+    "ast_hash": "a2591391eb7d5b9f73cd7d51879c6a950cb0e942b53ba151b16cd78e22082503",
+    "line_count": 27
+  },
+  {
+    "path": "cli/commands/validate.py",
+    "ast_hash": "e9616522f2e7cc7182981b6068e7210221901dc17946713da5b23002fd812b40",
+    "line_count": 70
+  },
+  {
+    "path": "cli/commands/validation_export.py",
+    "ast_hash": "4a094a2d9c9fa51f9ef1124aced863c7601e9ec0d0a33a469216409796876343",
+    "line_count": 27
+  },
+  {
+    "path": "cli/commands/verify.py",
+    "ast_hash": "e10d830ba4da793a6b814a7f178374fc0435ad6a970ff64d157a32a0eee2b9ee",
+    "line_count": 101
+  },
+  {
+    "path": "cli/commands/worktree.py",
+    "ast_hash": "0132a811f4e3f1b238b39c9c62918276a5301914789607e19df6ad783c1dff74",
+    "line_count": 555
+  },
+  {
+    "path": "cli/main.py",
+    "ast_hash": "af0da623148a9a491de288406cd57c5219640b9dfe324cd6f78ebba1ff09ad6c",
+    "line_count": 560
+  },
+  {
+    "path": "cli/output.py",
+    "ast_hash": "e6a31a83662abe123db055b2c5c0099254f6c3de05203253ca2ea3444db498b8",
+    "line_count": 89
+  },
+  {
+    "path": "cli/project_dashboard.py",
+    "ast_hash": "8036a308916af81aa46e9a60431d4c0167da122cf10cf39614f900cd01bf7577",
+    "line_count": 148
+  },
+  {
+    "path": "cli/project_registry.py",
+    "ast_hash": "7bde314e0e7a0b0ca0c3e7f8c224a89105324b9adbb2fa5550c0ea718ef75608",
+    "line_count": 181
+  },
+  {
+    "path": "cli/worktree_registry.py",
+    "ast_hash": "1ad5c00437f616108cd35b8373375971fd95769b05f59c9e1e26ac27479f5466",
+    "line_count": 236
+  },
+  {
+    "path": "extensions/__init__.py",
+    "ast_hash": "4cd0a5ef2b6f67b6aa75e75352b604881c943236bba9e480c7adbcacdce91226",
+    "line_count": 1
+  },
+  {
+    "path": "extensions/_support.py",
+    "ast_hash": "8733ef21da1a89d232dbdf4f66092d53a3e4cdd139d01fb80107c3385b773349",
+    "line_count": 120
+  },
+  {
+    "path": "extensions/_template/__init__.py",
+    "ast_hash": "d291814497e7ef806276ad4dc4f369ae3716051b7066dec369ccd7d4238a7da5",
+    "line_count": 5
+  },
+  {
+    "path": "extensions/_template/extension.py",
+    "ast_hash": "8a652d0de24e112ea200d78f1592ad878e24631e3de3592dbd41c2794d60343c",
+    "line_count": 55
+  },
+  {
+    "path": "extensions/context_index_export/__init__.py",
+    "ast_hash": "641e6c38cb81e92c7becfac5839fe282a2ca13ed924e8867cb098119dd2c685d",
+    "line_count": 1
+  },
+  {
+    "path": "extensions/context_index_export/exporter.py",
+    "ast_hash": "05acd2318522cbeab8c725efe6c2a0752a60b3333eb8ad929a854c1765a047dc",
+    "line_count": 292
+  },
+  {
+    "path": "extensions/external_freshness_verifier/__init__.py",
+    "ast_hash": "b7336f2272ed521e15a6c8a2c37957dc3577a05db1c18f5fe1134057e81cb0ed",
+    "line_count": 82
+  },
+  {
+    "path": "extensions/external_freshness_verifier/contract.py",
+    "ast_hash": "d8718e471eebd186c072e72b2a91e91460120cd2d0de69988388db9a884d4d81",
+    "line_count": 729
+  },
+  {
+    "path": "extensions/external_freshness_verifier/fixtures.py",
+    "ast_hash": "6989cb5dd111a1894ecacf86942f0b8740cb474919de53584ba957b332e59ada",
+    "line_count": 244
+  },
+  {
+    "path": "extensions/external_freshness_verifier/verifier.py",
+    "ast_hash": "93d600f04cf8ab795c09ae7a99030880706dbcb830c4dec4f34dddb38be20bc1",
+    "line_count": 1279
+  },
+  {
+    "path": "extensions/handoff_export/__init__.py",
+    "ast_hash": "abeeca3285a685be17133aac1cae289c2acbced18c2ea1ecf20a8a98e3a73eff",
+    "line_count": 5
+  },
+  {
+    "path": "extensions/handoff_export/exporter.py",
+    "ast_hash": "32d309fca1ffd38b984377de6a0bcce8d950fa590ca5fb5a216d513b89924404",
+    "line_count": 98
+  },
+  {
+    "path": "extensions/impact_export/__init__.py",
+    "ast_hash": "ead4fc1f3cafd0d9822033b43e8a6802549c2a23752cbf4f9d120269d60ad10a",
+    "line_count": 1
+  },
+  {
+    "path": "extensions/impact_export/exporter.py",
+    "ast_hash": "8f285d00c28b66929dde5f4d8b17f64668242337d7ccc1652bacb102c6d5f986",
+    "line_count": 105
+  },
+  {
+    "path": "extensions/return_map_export/__init__.py",
+    "ast_hash": "3fa899cbaa968489d8d8a09a1b72c459ddbde4f2ef9faa5254b2f04f34837d2a",
+    "line_count": 5
+  },
+  {
+    "path": "extensions/return_map_export/exporter.py",
+    "ast_hash": "ad4f2ef72cf888c4d04149145cbfdc1fa0f68a7f520321df25ea4b516ad3fe80",
+    "line_count": 112
+  },
+  {
+    "path": "extensions/sources_export/__init__.py",
+    "ast_hash": "06ea3434a6ce68b379eb534d55e859845d639aaa9572abb69c271f07b46aeeed",
+    "line_count": 1
+  },
+  {
+    "path": "extensions/sources_export/exporter.py",
+    "ast_hash": "1b84857c8253183324e47ba2871fae926215f584ccb511ededd1c0f1a75ea3f0",
+    "line_count": 99
+  },
+  {
+    "path": "extensions/status_export/__init__.py",
+    "ast_hash": "de7decd4b75a43fc65357bd91af03ceb37457921f671fc6ffaad63a01dd1f9ca",
+    "line_count": 5
+  },
+  {
+    "path": "extensions/status_export/exporter.py",
+    "ast_hash": "d4d3641e8a93fe3980171195f6335c1212b45e8aac95951965fd173feaf5320a",
+    "line_count": 1199
+  },
+  {
+    "path": "extensions/validation_export/__init__.py",
+    "ast_hash": "eff1c9de127be1692ab0a6e4ee830ed235ce9ee716e704279de0a9db86e6d70a",
+    "line_count": 2
+  },
+  {
+    "path": "extensions/validation_export/exporter.py",
+    "ast_hash": "3aea2be1b2c0e19ccf33e566c653c035ad264c6185a46325e313bdd9605707fc",
+    "line_count": 96
+  }
+]

@@ -1,0 +1,206 @@
+# Ground-truth dataset for the `INSUFFICIENT_EXPORT_SURFACE` tripwire.
+#
+# Each case supplies:
+# - `text`: a source artifact that may declare required export anchors
+# - `exports_text`: captured export outputs already produced elsewhere
+#
+# The rule is intentionally conservative: it only triggers when the
+# source artifact explicitly declares a `## Required Export Anchors`
+# section with at least two bullet items, and none of them appear in
+# the captured exports.
+
+schema_version = "1"
+
+[[case]]
+id = "pos-exp-001"
+label = "positive"
+label_reason = "two required anchors declared; neither appears anywhere in captured exports"
+expected_confidence = "medium"
+text = """
+# Need Artifact
+
+## Required Export Anchors
+
+- current approved entrypoint
+- next operational step
+"""
+exports_text = """
+# status-export
+
+- authority: derived-read-only
+- current mode: frozen
+- latest suite result: 730 tests
+"""
+
+[[case]]
+id = "pos-exp-002"
+label = "positive"
+label_reason = "three required anchors declared; no export carries any of them"
+expected_confidence = "high"
+text = """
+# Need Artifact
+
+## Required Export Anchors
+
+- approved project root
+- current approved entrypoint
+- expected first action
+"""
+exports_text = """
+# handoff-export
+
+- goal: continue safely
+- summary: runtime remains frozen
+- next step: await review
+"""
+
+[[case]]
+id = "pos-exp-003"
+label = "positive"
+label_reason = "non-empty exports exist, but they omit all explicitly required anchors"
+expected_confidence = "medium"
+text = """
+## Required Export Anchors
+
+- validation basis
+- approved entry sequence
+"""
+exports_text = """
+# validation-export
+
+- validation: ok
+- registered sources: 3
+- validated_at: 2026-04-20
+"""
+
+[[case]]
+id = "pos-exp-004"
+label = "positive"
+label_reason = "multiple export blocks still omit every required anchor"
+expected_confidence = "high"
+text = """
+## Required Export Anchors
+
+- approved entrypoint
+- current operator checklist
+- current blocker
+"""
+exports_text = """
+# status-export
+- revision: 214
+
+# impact-export
+- affected sources: 3
+
+# return-map-export
+- point of return: stable
+"""
+
+[[case]]
+id = "neg-exp-001"
+label = "negative"
+label_reason = "one required anchor is present in the exports, so the rule must stay silent"
+text = """
+## Required Export Anchors
+
+- current approved entrypoint
+- next operational step
+"""
+exports_text = """
+# handoff-export
+
+- current approved entrypoint: README.md
+- summary: continue from current approved entrypoint
+"""
+
+[[case]]
+id = "neg-exp-002"
+label = "negative"
+label_reason = "all required anchors are present"
+text = """
+## Required Export Anchors
+
+- approved project root
+- expected first action
+"""
+exports_text = """
+# synthetic export merge
+
+- approved project root: D:/repo
+- expected first action: run analyze
+"""
+
+[[case]]
+id = "neg-exp-003"
+label = "negative"
+label_reason = "missing anchor section; prose-only expectation is too weak"
+text = """
+# Need Artifact
+
+The approved exports should probably mention the current entrypoint and
+the next operational step, but this is not declared structurally.
+"""
+exports_text = """
+# status-export
+
+- authority: derived-read-only
+"""
+
+[[case]]
+id = "neg-exp-004"
+label = "negative"
+label_reason = "empty exports_text means no captured surface was supplied; rule must stay silent"
+text = """
+## Required Export Anchors
+
+- approved entrypoint
+- current blocker
+"""
+exports_text = ""
+
+[[case]]
+id = "neg-exp-005"
+label = "negative"
+label_reason = "single-anchor declaration is too weak and would be noisy"
+text = """
+## Required Export Anchors
+
+- current blocker
+"""
+exports_text = """
+# status-export
+
+- latest suite result: 730 tests
+"""
+
+[[case]]
+id = "neg-exp-006"
+label = "negative"
+label_reason = "free-form comma list is intentionally ignored to avoid optimistic parsing"
+text = """
+## Required Export Anchors
+
+approved entrypoint, current blocker
+"""
+exports_text = """
+# status-export
+
+- latest suite result: 730 tests
+"""
+
+[[case]]
+id = "neg-exp-007"
+label = "negative"
+label_reason = "anchor appears with punctuation differences, so normalized matching should prevent a false positive"
+text = """
+## Required Export Anchors
+
+- current approved entrypoint
+- next operational step
+"""
+exports_text = """
+# handoff-export
+
+- current-approved-entrypoint: README.md
+- summary: next operational step remains manual
+"""

@@ -1,0 +1,164 @@
+schema_version = "1"
+
+[[case]]
+id = "surface-pos-001"
+label = "positive"
+label_reason = "system state and opportunity map declare divergent current suite counts"
+expected_confidence = "high"
+system_state_text = """
+## Current Snapshot
+
+- Last suite result: `730` tests, `0` failures, `6` skips
+"""
+opportunity_map_text = """
+## Current Snapshot
+
+- Last suite result: `550` tests, `0` failures, `6` skips
+"""
+
+[[case]]
+id = "surface-pos-002"
+label = "positive"
+label_reason = "the two live current-snapshot carriers drift by exactly the low threshold while README stays archival"
+expected_confidence = "low"
+readme_text = """
+# README
+
+- Last suite result: `720` tests
+"""
+system_state_text = """
+## Current Snapshot
+
+- Last suite result: `730` tests
+"""
+opportunity_map_text = """
+## Current Snapshot
+
+- Last suite result: `725` tests
+"""
+
+[[case]]
+id = "surface-pos-003"
+label = "negative"
+label_reason = "README and closure are archival, so the two live carriers drift by less than the minimum threshold"
+readme_text = """
+# README
+
+- Last suite result: `700` tests
+"""
+system_state_text = """
+## Current Snapshot
+
+- Last suite result: `705` tests
+"""
+opportunity_map_text = """
+## Current Snapshot
+
+- Last suite result: `701` tests
+"""
+phase_closure_text = """
+## Closure
+
+- Last suite result: `703` tests
+"""
+
+[[case]]
+id = "surface-pos-004"
+label = "negative"
+label_reason = "phase closure is archival, so one live carrier alone must stay silent by the live-authority scope guard"
+system_state_text = """
+## Current Snapshot
+
+- Last suite result: `645` tests
+"""
+phase_closure_text = """
+## Closure
+
+- Last suite result: `634` tests
+"""
+
+[[case]]
+id = "surface-neg-001"
+label = "negative"
+label_reason = "two sources agree exactly on the same current suite count"
+system_state_text = """
+## Current Snapshot
+
+- Last suite result: `730` tests
+"""
+opportunity_map_text = """
+## Current Snapshot
+
+- Last suite result: `730` tests
+"""
+
+[[case]]
+id = "surface-neg-002"
+label = "negative"
+label_reason = "three sources agree after extracting the first suite line from each doc"
+readme_text = """
+# README
+
+- Last suite result: `700` tests
+- Last suite result: `650` tests
+"""
+system_state_text = """
+## Current Snapshot
+
+- Last suite result: `700` tests
+"""
+phase_closure_text = """
+## Closure
+
+- Last suite result: `700` tests
+"""
+
+[[case]]
+id = "surface-neg-003"
+label = "negative"
+label_reason = "drift below the conservative absolute threshold"
+system_state_text = """
+## Current Snapshot
+
+- Last suite result: `730` tests
+"""
+opportunity_map_text = """
+## Current Snapshot
+
+- Last suite result: `727` tests
+"""
+
+[[case]]
+id = "surface-neg-004"
+label = "negative"
+label_reason = "two sources present but only one carries an extractable suite count"
+readme_text = """
+# README
+
+Operational infrastructure only.
+"""
+system_state_text = """
+## Current Snapshot
+
+- Last suite result: `730` tests
+"""
+
+[[case]]
+id = "surface-guard-001"
+label = "negative"
+label_reason = "single source present must stay silent by scope guard"
+system_state_text = """
+## Current Snapshot
+
+- Last suite result: `730` tests
+"""
+
+[[case]]
+id = "surface-guard-002"
+label = "negative"
+label_reason = "single phase closure source present must stay silent by scope guard"
+phase_closure_text = """
+## Closure
+
+- Last suite result: `548` tests
+"""

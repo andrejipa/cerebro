@@ -1,0 +1,67 @@
+{
+  "authority": "non-authoritative; advisory operator evidence intake reproducibility check only",
+  "blockers": [],
+  "boundary": {
+    "may_suggest": [
+      "compare checked-in intake artifacts with regenerated advisory output",
+      "show stale checked reports as blockers",
+      "show missing checked reports as blockers",
+      "show malformed checked reports as blockers",
+      "show mutating checked reports as blockers",
+      "show stale current manifest evidence as blockers",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "refresh checked artifacts automatically",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat reproducibility as permission",
+      "treat digest equality as truth",
+      "hide blockers",
+      "hide mismatches",
+      "hide stale checked reports",
+      "hide stale manifest evidence",
+      "infer negative evidence from silence"
+    ]
+  },
+  "check_role": "advisory checked-artifact reproducibility evidence only",
+  "evidence": {
+    "checked_report_path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_INTAKE_REPORT.json",
+    "compared_report_authority": "non-authoritative; advisory operator evidence intake report only",
+    "comparison_basis": "full deterministic operator evidence intake report payload",
+    "manifest_path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_INTAKE_MANIFEST.toml"
+  },
+  "guardrails": {
+    "checked_artifact_mismatch_is_review_evidence_only": true,
+    "digest_equality_is_not_truth": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "report_reproducible_is_not_permission": true,
+    "reproducibility_check_is_not_authority": true,
+    "reproducibility_check_is_not_claim_graph": true,
+    "reproducibility_check_is_not_memory": true,
+    "reproducibility_check_is_not_permission": true,
+    "reproducibility_check_is_not_runtime_gate": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "mismatches": [],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "action_readiness": "advisory_report_allowed",
+    "blocked": false,
+    "blocker_count": 0,
+    "checked_report_digest": "c64e3cde2a68c7aa596d7467ec5e993ac76deda1a8ee83ab83fde1ae23d48e70",
+    "digest_match": true,
+    "mismatch_count": 0,
+    "recommended_human_decision": "none",
+    "regenerated_report_digest": "c64e3cde2a68c7aa596d7467ec5e993ac76deda1a8ee83ab83fde1ae23d48e70",
+    "reproducibility_status": "reproducible"
+  }
+}

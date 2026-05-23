@@ -1,0 +1,265 @@
+{
+  "projects": [
+    {
+      "name": "IRPF e Caixa Rural",
+      "root": "D:/projetos_cli/escritorio/IRPF e Caixa Rural",
+      "queries": [
+        {
+          "id": "irpf-001",
+          "query": "qual documento orienta a estrutura documental principal",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "easy",
+          "query_type": "canonical_state",
+          "expected_paths": ["README_ESTRUTURA_GERAL.md", "README_SISTEMA.md"],
+          "expected_paths_exact": [
+            "README_ESTRUTURA_GERAL.md",
+            "IRPF/README_SISTEMA.md"
+          ],
+          "negative_paths": ["90_HISTORICO", "jre/conf/security/policy/README.txt"],
+          "notes": "deve achar documento mestre, não material periférico"
+        },
+        {
+          "id": "irpf-002",
+          "query": "onde ficam dados dos contribuintes",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "routing",
+          "expected_paths": ["CONTRIBUINTES/", "CADASTRO_MESTRE_CLIENTES"],
+          "expected_paths_exact": [
+            "CONTRIBUINTES/README_CONTRIBUINTES.md",
+            "CONTRIBUINTES/01_CADASTRO_MESTRE_CLIENTES/README_CADASTRO_MESTRE.md"
+          ],
+          "negative_paths": ["90_HISTORICO_PROCESSAMENTO", "XMLs/"],
+          "notes": "aceita roteamento estrutural"
+        },
+        {
+          "id": "irpf-003",
+          "query": "qual documento diz que DANFE não substitui NF-e",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "hard",
+          "query_type": "routing",
+          "expected_paths": ["ANEXO II", "material_layout_nfe", "danfe", "nfe"],
+          "expected_paths_exact": [],
+          "negative_paths": ["90_HISTORICO_PROCESSAMENTO", "README_TRIAGEM.md"],
+          "notes": "consulta semântica documental com alvo difuso"
+        },
+        {
+          "id": "irpf-004",
+          "query": "materiais de apoio da atividade rural",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "easy",
+          "query_type": "routing",
+          "expected_paths": ["03_MATERIAIS_DE_APOIO", "atividade_rural"],
+          "expected_paths_exact": [
+            "IRPF/_SISTEMA/03_MATERIAIS_DE_APOIO/material_de_apoio_crc_atividade_rural.pdf",
+            "IRPF/_SISTEMA/03_MATERIAIS_DE_APOIO/irpf-atividade-rural-receitafederal.pdf"
+          ],
+          "negative_paths": ["90_HISTORICO_PROCESSAMENTO", "README_TRIAGEM.md"],
+          "notes": "pode depender de path + nome"
+        }
+      ]
+    },
+    {
+      "name": "estoque_pioneira",
+      "root": "D:/projetos_cli/estoque_pioneira",
+      "queries": [
+        {
+          "id": "est-001",
+          "query": "qual a versão oficial vigente",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "canonical_state",
+          "expected_paths": ["VERSAO_OFICIAL", "ESTADO_ATUAL", "README"],
+          "expected_paths_exact": [
+            "docs/PONTO_2_PACOTE_OFICIAL/02_RETIFICACAO_EFD/08_VERSAO_OFICIAL_PACOTE_PONTO_2_V45_ESTRITA.md",
+            "controle/00_ESTADO_ATUAL.md",
+            "README.md"
+          ],
+          "negative_paths": ["90_VERSOES_ANTIGAS", "logs/backups_criticos", "reconstrucao_historica"],
+          "notes": "deve priorizar canon/estado atual"
+        },
+        {
+          "id": "est-002",
+          "query": "qual é o ponto de entrada prioritário para retomada",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "continuity",
+          "expected_paths": ["CONTEXTO_MESTRE", "GUIA_NAVEGACAO_CONTEXTO", "CONTEXTO_OPERACIONAL"],
+          "expected_paths_exact": [
+            "controle/CONTEXTO_MESTRE.md",
+            "controle/GUIA_NAVEGACAO_CONTEXTO.md",
+            "controle/CONTEXTO_OPERACIONAL.md"
+          ],
+          "negative_paths": ["cerebro_base/09_BASE_RETOMADA.base", "90_VERSOES_ANTIGAS", "logs/"],
+          "notes": "consulta de continuidade operacional"
+        },
+        {
+          "id": "est-003",
+          "query": "onde está a confirmação de EFD 02/2024 transmitida",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "canonical_state",
+          "expected_paths": ["RECIBO_TRANSMISSAO_EFD_02_2024", "RETIFICACAO_EFD"],
+          "expected_paths_exact": [
+            "docs/PONTO_2_PACOTE_OFICIAL/02_RETIFICACAO_EFD/11_RECIBO_TRANSMISSAO/11_RECIBO_TRANSMISSAO_EFD_02_2024_V45_ESTRITA.pdf"
+          ],
+          "negative_paths": ["90_VERSOES_ANTIGAS", "logs/", "00_entregas_rapidas/retificacao_efd_02_2024_v44"],
+          "notes": "deve evitar backup/histórico"
+        },
+        {
+          "id": "est-004",
+          "query": "onde ficam anexos de prova item a item",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "routing",
+          "expected_paths": ["03_LASTRO_E_PROVA", "ANEXO", "LASTRO"],
+          "expected_paths_exact": [
+            "docs/PONTO_2_PACOTE_OFICIAL/03_LASTRO_E_PROVA/02_LISTA_MESTRA_LASTRO_ENTRADAS_2023.csv",
+            "docs/PONTO_2_PACOTE_OFICIAL/00_ENTREGA_EMAIL_SIMPLIFICADA/04_ANEXO_TABELA_LASTRO_ENTRADAS_2023_EIXO_FINAL.xlsx"
+          ],
+          "negative_paths": ["20_ACERVO_TECNICO", "90_VERSOES_ANTIGAS", "logs/anexo_notificacao_tmp"],
+          "notes": "distinguir oficial de base auxiliar"
+        }
+      ]
+    },
+    {
+      "name": "rpg_caminhada",
+      "root": "D:/projetos_cli/pessoais/rpg_caminhada",
+      "queries": [
+        {
+          "id": "rpg-001",
+          "query": "qual o primeiro arquivo a implementar no backend",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "continuity",
+          "expected_paths": ["README.md", "VIGILANTE_DE_CONTEXTO.md"],
+          "expected_paths_exact": [
+            "README.md",
+            "cerebro_base/05_GOVERNANCA/00_MANUAL_CONTINUIDADE/VIGILANTE_DE_CONTEXTO.md"
+          ],
+          "negative_paths": ["node_modules/"],
+          "notes": "deve achar instrução de entrada"
+        },
+        {
+          "id": "rpg-002",
+          "query": "onde está a lógica de progressão",
+          "preferred_scope": "code",
+          "expected_scope": "code",
+          "difficulty": "hard",
+          "query_type": "code_logic",
+          "expected_paths": ["progression.ts"],
+          "expected_paths_exact": [
+            "supabase/functions/_shared/progression.ts"
+          ],
+          "negative_paths": ["README.md", "cerebro_base/", "node_modules/"],
+          "notes": "teste crítico para evitar docs laterais"
+        },
+        {
+          "id": "rpg-003",
+          "query": "onde está o schema SQL",
+          "preferred_scope": "code",
+          "expected_scope": "code",
+          "difficulty": "easy",
+          "query_type": "code_logic",
+          "expected_paths": ["schema.sql"],
+          "expected_paths_exact": [
+            "database/schema.sql",
+            "supabase/migrations/20260405000000_initial_schema.sql"
+          ],
+          "negative_paths": ["README.md", "node_modules/"],
+          "notes": "consulta de código/infra"
+        },
+        {
+          "id": "rpg-004",
+          "query": "qual arquivo descreve o estado atual do app",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "canonical_state",
+          "expected_paths": ["README.md", "VIGILANTE_DE_CONTEXTO.md"],
+          "expected_paths_exact": [
+            "README.md",
+            "cerebro_base/05_GOVERNANCA/00_MANUAL_CONTINUIDADE/VIGILANTE_DE_CONTEXTO.md"
+          ],
+          "negative_paths": ["node_modules/"],
+          "notes": "deve favorecer estado atual"
+        }
+      ]
+    },
+    {
+      "name": "Resolução Humaita Codex",
+      "root": "D:/projetos_cli/Portal/Resolução Humaita Codex",
+      "queries": [
+        {
+          "id": "hum-001",
+          "query": "o que manda hoje",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "canonical_state",
+          "expected_paths": ["CANON_OPERACIONAL", "README.md"],
+          "expected_paths_exact": [
+            "01_TRABALHO_VIGENTE/03_RELATORIOS/CANON_OPERACIONAL_E_ORDEM_2026-04-06.md",
+            "01_TRABALHO_VIGENTE/03_RELATORIOS/README.md"
+          ],
+          "negative_paths": ["90_HISTORICO", "04_HISTORICO_SENSIVEL_BACKUP_FISCAL", "98_TEMPORARIOS_DESCARTE_TECNICO"],
+          "notes": "deve achar documento vigente"
+        },
+        {
+          "id": "hum-002",
+          "query": "qual a ordem de execução vigente",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "continuity",
+          "expected_paths": ["CHECKLIST_PRE_PVA", "ORDEM_REAL_SANEAMENTO", "CANON_OPERACIONAL"],
+          "expected_paths_exact": [
+            "01_TRABALHO_VIGENTE/03_RELATORIOS/CHECKLIST_PRE_PVA.md",
+            "01_TRABALHO_VIGENTE/03_RELATORIOS/ORDEM_REAL_SANEAMENTO_CRONOLOGICO_2026-04-06.md"
+          ],
+          "negative_paths": ["90_HISTORICO", "04_HISTORICO_SENSIVEL_BACKUP_FISCAL", "98_TEMPORARIOS_DESCARTE_TECNICO"],
+          "notes": "continuidade operacional"
+        },
+        {
+          "id": "hum-003",
+          "query": "quais pendências existem antes da validação prática",
+          "preferred_scope": "documentation",
+          "expected_scope": "documentation",
+          "difficulty": "medium",
+          "query_type": "continuity",
+          "expected_paths": ["CONFIRMACOES_EXTERNAS_PENDENTES", "CHECKLIST_PRE_PVA", "PENDENCIAS"],
+          "expected_paths_exact": [
+            "01_TRABALHO_VIGENTE/03_RELATORIOS/CONFIRMACOES_EXTERNAS_PENDENTES_2026-04-06.md",
+            "01_TRABALHO_VIGENTE/03_RELATORIOS/CHECKLIST_PRE_PVA.md"
+          ],
+          "negative_paths": ["90_HISTORICO", "04_HISTORICO_SENSIVEL_BACKUP_FISCAL", "98_TEMPORARIOS_DESCARTE_TECNICO"],
+          "notes": "deve evitar histórico"
+        },
+        {
+          "id": "hum-004",
+          "query": "onde ficou o histórico antigo",
+          "preferred_scope": "historical",
+          "expected_scope": "historical",
+          "difficulty": "easy",
+          "query_type": "historical_lookup",
+          "expected_paths": ["90_HISTORICO", "HISTORICO_SENSIVEL_BACKUP_FISCAL", "arquivo"],
+          "expected_paths_exact": [
+            "01_TRABALHO_VIGENTE/03_RELATORIOS/90_HISTORICO_PRE_DOSSIE_2026-04-01_A_2026-04-06/README.md",
+            "05_GOVERNANCA/90_HISTORICO_MEMORIAS/README.md"
+          ],
+          "negative_paths": [],
+          "notes": "consulta intencionalmente histórica"
+        }
+      ]
+    }
+  ]
+}

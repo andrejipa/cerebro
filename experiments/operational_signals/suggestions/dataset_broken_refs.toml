@@ -1,0 +1,117 @@
+# Ground-truth dataset for the `CONTEXT_NOT_FOUND` broken-refs tripwire.
+#
+# The rule is intentionally narrow:
+# - only markdown links are inspected
+# - only source artifacts under `docs/operations/` are in scope
+# - only path existence is checked
+#
+# Label vocabulary:
+#   - positive: the rule should emit a suggestion
+#   - negative: the rule must stay silent
+
+schema_version = "1"
+
+[[case]]
+id = "docs/operations/synthetic-broken-001.md"
+label = "positive"
+label_reason = "one broken relative ref inside canonical scope should emit low confidence"
+expected_confidence = "low"
+text = """
+See the missing handoff in [ghost](MISSING_HANDOFF.md).
+"""
+
+[[case]]
+id = "docs/operations/synthetic-broken-002.md"
+label = "positive"
+label_reason = "two broken relative refs should emit medium confidence"
+expected_confidence = "medium"
+text = """
+- [missing-a](DOES_NOT_EXIST_A.md)
+- [missing-b](DOES_NOT_EXIST_B.md)
+"""
+
+[[case]]
+id = "docs/operations/synthetic-broken-003.md"
+label = "positive"
+label_reason = "four broken refs should emit high confidence"
+expected_confidence = "high"
+text = """
+- [missing-a](BROKEN_A.md)
+- [missing-b](BROKEN_B.md)
+- [missing-c](BROKEN_C.md)
+- [missing-d](BROKEN_D.md)
+"""
+
+[[case]]
+id = "docs/operations/synthetic-broken-004.md"
+label = "positive"
+label_reason = "broken absolute path should emit"
+expected_confidence = "low"
+text = """
+See [absolute ghost](D:/definitely_missing_tripwire_target/ghost.md).
+"""
+
+[[case]]
+id = "docs/operations/synthetic-broken-005.md"
+label = "positive"
+label_reason = "mixed link set still emits when two local refs remain broken"
+expected_confidence = "medium"
+text = """
+- [state](SYSTEM_STATE.md)
+- [map](OPPORTUNITY_MAP.md:12)
+- [broken-a](BROKEN_MIX_A.md)
+- [broken-b](BROKEN_MIX_B.md)
+- [external](https://example.com/ref)
+- [mail](mailto:ops@example.com)
+"""
+
+[[case]]
+id = "docs/operations/synthetic-clean-001.md"
+label = "negative"
+label_reason = "valid relative refs inside canonical scope should stay silent"
+text = """
+- [state](SYSTEM_STATE.md)
+- [signals](OPERATIONAL_INSUFFICIENCY_SIGNALS.md)
+"""
+
+[[case]]
+id = "docs/operations/synthetic-clean-002.md"
+label = "negative"
+label_reason = "line suffix is normalized away before existence check"
+text = """
+See [state line](<SYSTEM_STATE.md:12>).
+"""
+
+[[case]]
+id = "docs/operations/synthetic-clean-003.md"
+label = "negative"
+label_reason = "anchor fragment is normalized away before existence check"
+text = """
+See [adr anchor](<../adr/ADR-004-local-session-isolated.md#decision>).
+"""
+
+[[case]]
+id = "docs/operations/synthetic-clean-004.md"
+label = "negative"
+label_reason = "external URLs, mailto, and fragment-only refs are ignored"
+text = """
+- [external](https://example.com/a)
+- [mail](mailto:ops@example.com)
+- [fragment](#current-snapshot)
+"""
+
+[[case]]
+id = "docs/operations/synthetic-clean-005.md"
+label = "negative"
+label_reason = "artifacts without markdown links stay silent"
+text = """
+No markdown links live in this case.
+"""
+
+[[case]]
+id = "docs/reference/synthetic-out-of-scope-001.md"
+label = "negative"
+label_reason = "source outside docs/operations is intentional out_of_scope silence"
+text = """
+See [missing](DOES_NOT_EXIST.md).
+"""

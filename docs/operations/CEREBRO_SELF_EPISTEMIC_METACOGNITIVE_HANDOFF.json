@@ -1,0 +1,70 @@
+{
+  "authority": "non-authoritative; advisory metacognitive handoff evidence only",
+  "boundary": {
+    "may_suggest": [
+      "summarize known evidence",
+      "summarize unknowns without treating silence as negative evidence",
+      "request human review",
+      "recommend a future trigger"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat handoff as permission"
+    ]
+  },
+  "conflicts": [],
+  "guardrails": {
+    "handoff_is_not_authority": true,
+    "handoff_is_not_claim_graph": true,
+    "handoff_is_not_memory": true,
+    "handoff_is_not_permission": true,
+    "handoff_is_not_runtime_gate": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "known": [
+    "readiness trace covers 18 bounded source reads",
+    "35 findings evaluated; 35 ready; 0 blocked; 0 insufficient",
+    "replay baseline and current trace match",
+    "drift policy reports no drift and no action",
+    "protocol self-audit reports no candidates"
+  ],
+  "missing_evidence": [],
+  "report_role": "advisory metacognitive handoff only",
+  "risk_notes": [
+    "registered != true",
+    "retrieved != relevant",
+    "remembered != trusted",
+    "handoff output is advisory and not permission"
+  ],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "action_readiness": "no_action",
+    "blocked_count": 0,
+    "candidates_extracted": 35,
+    "conflict_count": 0,
+    "findings_evaluated": 35,
+    "insufficient_count": 0,
+    "known_count": 5,
+    "missing_evidence_count": 0,
+    "ready_count": 35,
+    "recommended_human_decision": "none",
+    "risk_note_count": 4,
+    "source_count": 18,
+    "unknown_count": 3
+  },
+  "unknown": [
+    "bounded source heads do not prove full-project completeness",
+    "silence is not negative evidence; absent claims are not evidence of absence",
+    "readiness evidence does not grant permission to mutate state"
+  ]
+}

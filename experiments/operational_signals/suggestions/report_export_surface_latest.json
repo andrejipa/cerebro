@@ -1,0 +1,271 @@
+{
+  "authority": "derived-advisory-only",
+  "non_authoritative": true,
+  "read_only": true,
+  "schema_version": "1",
+  "evaluated_at": "2026-04-20T00:00:00Z",
+  "rule": "detect_export_surface_gap",
+  "thresholds": {
+    "accept_precision": 0.7,
+    "accept_recall": 0.6,
+    "iterate_precision": 0.6
+  },
+  "metrics": {
+    "dataset_cases": 11,
+    "total_cases": 11,
+    "excluded_cases": 0,
+    "tp": 4,
+    "fp": 0,
+    "tn": 7,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "confidence_checked": 4,
+    "confidence_match_rate": 1.0
+  },
+  "verdict": {
+    "classification": "accept_for_staged_promotion",
+    "rationale": "precision and recall clear the conservative acceptance bar; rule is safe for opt-in derived use pending a second tripwire before any wider adoption"
+  },
+  "per_case": [
+    {
+      "id": "pos-exp-001",
+      "label": "positive",
+      "label_reason": "two required anchors declared; neither appears anywhere in captured exports",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "medium",
+      "actual_confidence": "medium",
+      "suggestion": {
+        "id": "sugg-export-gap-20260420T000000Z-pos-exp-001-02",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-exp-001",
+        "project_context": "dataset",
+        "task_description": "The source artifact declares export anchors required for a basic operational need, but none of those anchors were found in the captured export outputs.",
+        "suggested_failure_mode": "INSUFFICIENT_EXPORT_SURFACE",
+        "supporting_signals": [
+          "missing_anchor=current approved entrypoint",
+          "missing_anchor=next operational step",
+          "captured_exports_chars=103"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "medium",
+        "reason_flags": [
+          "insufficient_surface_detected",
+          "required_export_anchors_missing"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "pos-exp-002",
+      "label": "positive",
+      "label_reason": "three required anchors declared; no export carries any of them",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "high",
+      "actual_confidence": "high",
+      "suggestion": {
+        "id": "sugg-export-gap-20260420T000000Z-pos-exp-002-03",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-exp-002",
+        "project_context": "dataset",
+        "task_description": "The source artifact declares export anchors required for a basic operational need, but none of those anchors were found in the captured export outputs.",
+        "suggested_failure_mode": "INSUFFICIENT_EXPORT_SURFACE",
+        "supporting_signals": [
+          "missing_anchor=approved project root",
+          "missing_anchor=current approved entrypoint",
+          "missing_anchor=expected first action",
+          "captured_exports_chars=101"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "high",
+        "reason_flags": [
+          "insufficient_surface_detected",
+          "required_export_anchors_missing"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "pos-exp-003",
+      "label": "positive",
+      "label_reason": "non-empty exports exist, but they omit all explicitly required anchors",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "medium",
+      "actual_confidence": "medium",
+      "suggestion": {
+        "id": "sugg-export-gap-20260420T000000Z-pos-exp-003-02",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-exp-003",
+        "project_context": "dataset",
+        "task_description": "The source artifact declares export anchors required for a basic operational need, but none of those anchors were found in the captured export outputs.",
+        "suggested_failure_mode": "INSUFFICIENT_EXPORT_SURFACE",
+        "supporting_signals": [
+          "missing_anchor=validation basis",
+          "missing_anchor=approved entry sequence",
+          "captured_exports_chars=88"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "medium",
+        "reason_flags": [
+          "insufficient_surface_detected",
+          "required_export_anchors_missing"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "pos-exp-004",
+      "label": "positive",
+      "label_reason": "multiple export blocks still omit every required anchor",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "high",
+      "actual_confidence": "high",
+      "suggestion": {
+        "id": "sugg-export-gap-20260420T000000Z-pos-exp-004-03",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-exp-004",
+        "project_context": "dataset",
+        "task_description": "The source artifact declares export anchors required for a basic operational need, but none of those anchors were found in the captured export outputs.",
+        "suggested_failure_mode": "INSUFFICIENT_EXPORT_SURFACE",
+        "supporting_signals": [
+          "missing_anchor=approved entrypoint",
+          "missing_anchor=current operator checklist",
+          "missing_anchor=current blocker",
+          "captured_exports_chars=117"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "high",
+        "reason_flags": [
+          "insufficient_surface_detected",
+          "required_export_anchors_missing"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "neg-exp-001",
+      "label": "negative",
+      "label_reason": "one required anchor is present in the exports, so the rule must stay silent",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-exp-002",
+      "label": "negative",
+      "label_reason": "all required anchors are present",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-exp-003",
+      "label": "negative",
+      "label_reason": "missing anchor section; prose-only expectation is too weak",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-exp-004",
+      "label": "negative",
+      "label_reason": "empty exports_text means no captured surface was supplied; rule must stay silent",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-exp-005",
+      "label": "negative",
+      "label_reason": "single-anchor declaration is too weak and would be noisy",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-exp-006",
+      "label": "negative",
+      "label_reason": "free-form comma list is intentionally ignored to avoid optimistic parsing",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-exp-007",
+      "label": "negative",
+      "label_reason": "anchor appears with punctuation differences, so normalized matching should prevent a false positive",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    }
+  ]
+}

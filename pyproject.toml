@@ -9,8 +9,14 @@ description = "Local context checkpoint CLI for agent-assisted execution."
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+mcp = ["mcp>=1.27,<2"]
+
 [project.scripts]
 cerebro = "cli.main:main"
 
 [tool.setuptools]
-packages = ["cli", "cli.commands", "core", "extensions", "extensions.handoff_export"]
+packages = ["cli", "cli.commands", "core", "extensions", "extensions.context_index_export", "extensions.external_freshness_verifier", "extensions.handoff_export", "extensions.impact_export", "extensions.return_map_export", "extensions.sources_export", "extensions.status_export", "extensions.validation_export", "adapters", "adapters.runtime_manager_mcp_stdio", "adapters.runtime_manager_local_agent"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "experiments"]

@@ -1,0 +1,13 @@
+{
+  "experimental": true,
+  "authority": "derived-assistive",
+  "non_authoritative": true,
+  "read_only": true,
+  "historical": true,
+  "status": "superseded",
+  "superseded_by": {
+    "markdown": "report_round2_latest.md",
+    "json": "report_round2_latest.json"
+  },
+  "note": "Legacy pre-Round-2 recall_eval snapshot preserved only as a historical tombstone. The live benchmark output is report_round2_latest.*."
+}

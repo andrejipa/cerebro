@@ -1,0 +1,102 @@
+{
+  "action_readiness": "advisory_report_allowed",
+  "advisory_allowed_count": 1,
+  "advisory_pass_is_not_permission": true,
+  "authority": "non-authoritative; advisory pre-action report only",
+  "blocked_or_human_count": 0,
+  "blocker_count": 0,
+  "conflict_count": 0,
+  "derived_experiment_allowed_count": 0,
+  "envelope_count": 1,
+  "envelopes": [
+    {
+      "action_profile": {
+        "active_trigger": true,
+        "authority_impact": "none",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "AGENTS.md",
+          "docs/operations/SYSTEM_STATE.md",
+          "docs/operations/OPPORTUNITY_MAP.md",
+          "docs/operations/FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md",
+          "docs/operations/THIRD_PARTY_INTAKE_GATE_RPG_CAMINHADA.md",
+          "docs/operations/THIRD_PARTY_PILOT_RECON_CLAUDE.md"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [],
+        "zone": "ZONE_1"
+      },
+      "action_readiness": "advisory_report_allowed",
+      "approval_status": "not_required",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [],
+      "claim_summary": [
+        "claim-action-advisory-only: applied_third_party_pilot_decision_slice_8 authority_impact none [third_party_trigger]",
+        "claim-current-decision-real: third_party_pilot_resume_decision decision_kind real_operator_decision [opportunity_map]",
+        "claim-human-decisions-required: third_party_pilot required_human_decisions target_legacy_state_source_set [intake_gate]",
+        "claim-intake-status: rpg_caminhada_intake_gate status proposal_ready_for_human_approval [intake_gate]",
+        "claim-legacy-state-known: rpg_caminhada legacy_state schema_v1_not_reusable_without_out_of_scope_migration [intake_gate]",
+        "claim-runtime-impact-none: applied_third_party_pilot_decision_slice_8 runtime_impact none [third_party_trigger]",
+        "claim-selected-target: third_party_pilot selected_target D:\\projetos_cli\\pessoais\\rpg_caminhada [claude_recon]",
+        "claim-source-set-expanded: rpg_caminhada_source_set minimum_import_list seven_required_files [intake_gate]",
+        "claim-state-change-none: applied_third_party_pilot_decision_slice_8 state_change none [third_party_trigger]",
+        "claim-target-mutation-not-authorized: third_party_pilot target_mutation_authorized false [intake_gate]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Assess whether the third-party pilot workstream can be resumed as an advisory decision without executing target-project mutation.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "not_applicable",
+      "read_set": [
+        "AGENTS.md",
+        "docs/operations/FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md",
+        "docs/operations/OPPORTUNITY_MAP.md",
+        "docs/operations/SYSTEM_STATE.md",
+        "docs/operations/THIRD_PARTY_INTAKE_GATE_RPG_CAMINHADA.md",
+        "docs/operations/THIRD_PARTY_PILOT_RECON_CLAUDE.md"
+      ],
+      "recommended_human_decision": "none",
+      "scenario_id": "assess_resume_third_party_pilot_now",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "sufficient",
+      "warnings": [
+        "advisory_assessment_is_not_permission",
+        "existing_state_v1_blocks_automatic_reuse",
+        "source_set_selection_remains_human_approved",
+        "target_mutation_requires_separate_human_go"
+      ]
+    }
+  ],
+  "missing_evidence_count": 0,
+  "must_not_execute_automatically": true,
+  "proposed_action": {
+    "action_id": "applied_third_party_pilot_decision_slice_8",
+    "action_kind": "advisory_decision_assessment",
+    "created_at": "2026-04-24",
+    "expected_state_change": "none",
+    "intent": "Apply the Epistemic Guard to the real operator decision of whether to resume the third-party project-management pilot now.",
+    "notes": [
+      "advisory only",
+      "does not grant permission",
+      "does not create runtime authority",
+      "does not mutate any third-party project",
+      "actual third-party .cerebro mutation remains separately gated"
+    ],
+    "proposed_by": "operator"
+  },
+  "recommended_human_decision": "none",
+  "stale_claim_count": 0,
+  "state_change": "none",
+  "warning_count": 4
+}

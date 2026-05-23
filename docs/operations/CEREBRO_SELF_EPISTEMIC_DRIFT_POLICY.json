@@ -1,0 +1,69 @@
+{
+  "action_readiness": "no_action",
+  "authority": "non-authoritative; advisory replay drift policy evidence only",
+  "baseline_label": "slice-13-refreshed-baseline",
+  "baseline_lifecycle": {
+    "action_readiness": "no_action",
+    "recommendation": "baseline_already_current"
+  },
+  "boundary": {
+    "may_suggest": [
+      "classify replay drift",
+      "request human acknowledgement",
+      "propose a human-approved baseline refresh",
+      "block refresh when drift regresses or protocol self-audit is high"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "update baseline automatically",
+      "hide drift",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat drift policy as permission"
+    ]
+  },
+  "classification": "no_drift",
+  "current_label": "slice-13-current-trace",
+  "digests": {
+    "baseline_lifecycle": "2e46a8e43b193bd7cea501e17dc366df2f6bf78a645eb6a2161cadfb5ce4f730",
+    "protocol_self_audit": "2be27f61d98f4772001590798e4eb276aae6affaaace2dcc8598d60bb6874d3b",
+    "trace_diff": "69bae1aad7bdd221180a911760df1f89725e08bb1b1535effc5e6ef1d07ae314"
+  },
+  "drift": {
+    "metadata_total": 0,
+    "semantic_total": 0,
+    "source_total": 0,
+    "total": 0,
+    "traceability_total": 0
+  },
+  "guardrails": {
+    "anti_noise_no_auto_learning": true,
+    "baseline_refresh_is_not_automatic": true,
+    "drift_policy_is_not_authority": true,
+    "drift_policy_is_not_memory": true,
+    "drift_policy_is_not_permission": true,
+    "drift_policy_is_not_runtime_gate": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "protocol_self_audit": {
+    "candidate_count": 0,
+    "high_or_blocking_count": 0
+  },
+  "reasons": [
+    "baseline and current replay evidence match"
+  ],
+  "recommendation": "no_action",
+  "regression": {
+    "has_regression": false,
+    "reasons": []
+  },
+  "report_role": "advisory replay drift disposition only",
+  "required_human_action": "none",
+  "schema_version": "1",
+  "state_change": "none"
+}

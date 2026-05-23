@@ -1,0 +1,23 @@
+# Handoff: Read-Only Exports Exhausted
+
+- Front: extensions read-only
+- State: stopped at the current safe limit
+- Stop point:
+  - the project now has seven constrained read-only exports: `handoff`, `status`, `return-map`, `impact`, `sources`, `validation`, and `context-index`
+  - shared support remains narrow and limited to snapshot loading, timestamps, session-file presence labels, runtime-path rejection, and safe Markdown writes
+- What is already safe:
+  - all exports stay read-only
+  - all exports reject writes inside `.cerebro/`
+  - all exports fail explicitly on invalid state JSON or schema
+  - all exports remain subordinate to persisted validation after a real `analyze` block
+- What was validated:
+  - direct export tests
+  - shared extension contract tests
+  - subprocess export flow with stdout and `--out`
+  - full suite green after convergence
+- Risk that blocks further progress:
+  - the next candidate would either duplicate existing views, drift into external analysis semantics, or require medium-risk graph derivation rules
+- Decision still required:
+  - reopen this front only if a concrete and repeated unmet use case is documented against the current approved operational surface
+- First action after release:
+  - keep corrective maintenance only and require the formal freeze-break protocol before authorizing any new increment from this front

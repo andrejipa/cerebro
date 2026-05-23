@@ -1,0 +1,24 @@
+# Freeze Review Cadence
+#
+# Canonical derived artifact tracking freeze posture review state.
+# This is NOT part of core state authority: it is an operational
+# discipline artifact, consumed by documenter/reviewer flows and
+# by `tests/test_doc_governance.py`. It MUST NOT be read or written
+# by `core/` or by any runtime mutator.
+#
+# Dates are absolute ISO-8601 (YYYY-MM-DD). Counts are non-negative
+# integers. See `docs/operations/FREEZE_POLICY.md#review-cadence`
+# for the cadence contract and `last_outcome.verdict` vocabulary.
+
+[review]
+last_review_date = "2026-05-08"
+trigger_count_since_review = 0
+round_count_since_review = 0
+mandatory_review_after_rounds = 50
+mandatory_review_after_days = 90
+
+[last_outcome]
+date = "2026-05-08"
+verdict = "resume_authorized"
+rationale = "human-approved opening for Cerebro Control Plane Growth 001: current approved surfaces are strong but do not yet provide a single operational control-plane contract for queue, decision envelope, evidence, capability policy, trace/replay, and third-party governance"
+next_review_due = "2026-08-06"

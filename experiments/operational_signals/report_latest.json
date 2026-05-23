@@ -1,0 +1,20 @@
+{
+  "authority": "derived-observability-only",
+  "by_confidence": {},
+  "by_failure_mode": {},
+  "by_project_context": {},
+  "candidate_triggers": [],
+  "non_authoritative": true,
+  "records": [],
+  "schema_version": "1",
+  "top_repeaters": [],
+  "totals": {
+    "candidate_trigger_count": 0,
+    "costs": {
+      "avg_extra_files_opened": 0.0,
+      "avg_manual_search_rounds": 0.0,
+      "avg_minutes_spent": 0.0
+    },
+    "count": 0
+  }
+}

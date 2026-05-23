@@ -1,0 +1,199 @@
+# Ground-truth dataset for the `STALE_INFORMATION` tripwire over
+# `SYSTEM_STATE.md`-shaped text.
+#
+# This dataset is derived, non-authoritative, and exists solely to
+# measure precision/recall of `detect_stale_system_state`. It must not
+# be treated as canonical state. Every case carries a human-authored
+# label and an explicit reason.
+#
+# Label vocabulary:
+#   - positive: the rule should emit a suggestion
+#   - negative: the rule must stay silent
+#
+# The dataset intentionally includes borderline and adversarial cases
+# to expose over-triggering and under-triggering.
+
+schema_version = "1"
+
+[[case]]
+id = "pos-001"
+label = "positive"
+label_reason = "real drift observed in SYSTEM_STATE.md: 730 current vs 550 gate"
+expected_confidence = "high"
+text = """
+# System State
+
+## Current Snapshot — 2026-04-20
+
+- Last suite result: `730` tests, `0` failures, `6` skips
+
+## Gate Status
+
+- Last suite result: `550` tests, `0` failures, `6` skips
+"""
+
+[[case]]
+id = "pos-002"
+label = "positive"
+label_reason = "medium drift of 20 tests across sections"
+expected_confidence = "medium"
+text = """
+# State
+
+## Current Snapshot
+
+- Last suite result: `730` tests, `0` failures
+
+## Gate Status
+
+- Last suite result: `710` tests, `0` failures
+"""
+
+[[case]]
+id = "pos-003"
+label = "positive"
+label_reason = "drift at the medium threshold boundary (diff=10)"
+expected_confidence = "medium"
+text = """
+## Current Snapshot
+
+- Last suite result: `735` tests
+
+## Gate Status
+
+- Last suite result: `725` tests
+"""
+
+[[case]]
+id = "pos-004"
+label = "positive"
+label_reason = "reverse drift: gate reports more than current; still stale evidence"
+expected_confidence = "high"
+text = """
+## Current Snapshot
+
+- Last suite result: `500` tests
+
+## Gate Status
+
+- Last suite result: `730` tests
+"""
+
+[[case]]
+id = "pos-005"
+label = "positive"
+label_reason = "extreme drift, classic stale-history signal"
+expected_confidence = "high"
+text = """
+## Current Snapshot
+
+- Last suite result: `0` tests
+
+## Gate Status
+
+- Last suite result: `1000` tests
+"""
+
+[[case]]
+id = "pos-006"
+label = "positive"
+label_reason = "borderline low-confidence drift at exactly the MIN threshold (diff=5)"
+expected_confidence = "low"
+text = """
+## Current Snapshot
+
+- Last suite result: `735` tests
+
+## Gate Status
+
+- Last suite result: `730` tests
+"""
+
+[[case]]
+id = "neg-001"
+label = "negative"
+label_reason = "both sections agree exactly"
+text = """
+## Current Snapshot
+
+- Last suite result: `730` tests, `0` failures
+
+## Gate Status
+
+- Last suite result: `730` tests, `0` failures
+"""
+
+[[case]]
+id = "neg-002"
+label = "negative"
+label_reason = "drift below the conservative threshold (diff=1)"
+text = """
+## Current Snapshot
+
+- Last suite result: `731` tests
+
+## Gate Status
+
+- Last suite result: `730` tests
+"""
+
+[[case]]
+id = "neg-003"
+label = "negative"
+label_reason = "drift below the conservative threshold (diff=3)"
+text = """
+## Current Snapshot
+
+- Last suite result: `730` tests
+
+## Gate Status
+
+- Last suite result: `727` tests
+"""
+
+[[case]]
+id = "neg-004"
+label = "negative"
+label_reason = "only Current Snapshot present; no cross-section evidence of drift"
+text = """
+## Current Snapshot
+
+- Last suite result: `730` tests
+"""
+
+[[case]]
+id = "neg-005"
+label = "negative"
+label_reason = "only Gate Status present; no cross-section evidence of drift"
+text = """
+## Gate Status
+
+- Last suite result: `730` tests
+"""
+
+[[case]]
+id = "neg-006"
+label = "negative"
+label_reason = "no recognisable canonical sections; numbers appear in prose only"
+text = """
+# Release Notes
+
+The project currently reports 730 tests passing. Historical rounds
+reported around 550 tests. These numbers appear in prose and do not
+belong to canonical status sections.
+"""
+
+[[case]]
+id = "neg-007"
+label = "negative"
+label_reason = "sections present but no `Last suite result` line anywhere"
+text = """
+## Current Snapshot
+
+- overall posture: frozen
+
+## Gate Status
+
+- suite status: green
+"""
+

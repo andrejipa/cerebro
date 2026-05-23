@@ -1,0 +1,411 @@
+{
+  "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+  "boundary": {
+    "may_suggest": [
+      "compare provenance index output under degraded evidence",
+      "show missing artifacts as blockers",
+      "show malformed artifacts as blockers",
+      "show mutating artifacts as blockers",
+      "show root escapes and .cerebro targets as boundary errors",
+      "show duplicate ids and missing dependencies as boundary errors",
+      "prove markdown/text-only reports remain advisory digest evidence",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "refresh artifacts automatically",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "create canonical evidence graph",
+      "promote or demote authority",
+      "treat provenance output as permission",
+      "treat passing scenarios as permission",
+      "treat artifact digests as truth",
+      "hide blockers",
+      "hide malformed provenance input",
+      "hide dependency gaps",
+      "infer negative evidence from silence"
+    ]
+  },
+  "guardrails": {
+    "artifact_digest_is_not_truth": true,
+    "degraded_provenance_is_review_evidence_only": true,
+    "dependency_map_is_not_canonical_graph": true,
+    "passing_scenario_is_not_permission": true,
+    "provenance_index_output_is_not_permission": true,
+    "provenance_stress_matrix_is_not_authority": true,
+    "provenance_stress_matrix_is_not_claim_graph": true,
+    "provenance_stress_matrix_is_not_memory": true,
+    "provenance_stress_matrix_is_not_permission": true,
+    "provenance_stress_matrix_is_not_runtime_gate": true,
+    "provenance_stress_matrix_is_not_source_registry": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true,
+    "text_digest_only_is_not_truth": true
+  },
+  "matrix_role": "advisory degraded-evidence operator evidence provenance stress matrix only",
+  "scenarios": [
+    {
+      "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+      "blocker_count": 0,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      },
+      "forbidden_interpretations": [
+        "treat provenance stress output as permission",
+        "treat provenance index output as truth",
+        "hide degraded provenance evidence",
+        "register sources from provenance evidence",
+        "write memory from provenance evidence",
+        "promote provenance evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "none"
+      },
+      "passed": true,
+      "provenance_summary": "artifacts=2; present=2; dependencies=1; blockers=0; readiness=advisory_report_allowed",
+      "purpose": "Proves a complete JSON chain is inspectable without becoming permission.",
+      "scenario_id": "clean_provenance_chain",
+      "state_change": "none",
+      "text_digest_only_count": 0,
+      "title": "Clean provenance chain remains advisory"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat provenance stress output as permission",
+        "treat provenance index output as truth",
+        "hide degraded provenance evidence",
+        "register sources from provenance evidence",
+        "write memory from provenance evidence",
+        "promote provenance evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "provenance_summary": "artifacts=1; present=0; dependencies=0; blockers=1; readiness=blocked",
+      "purpose": "Proves absent declared provenance files block the advisory index.",
+      "scenario_id": "missing_artifact",
+      "state_change": "none",
+      "text_digest_only_count": 0,
+      "title": "Missing artifact is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat provenance stress output as permission",
+        "treat provenance index output as truth",
+        "hide degraded provenance evidence",
+        "register sources from provenance evidence",
+        "write memory from provenance evidence",
+        "promote provenance evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "provenance_summary": "artifacts=1; present=1; dependencies=0; blockers=1; readiness=blocked",
+      "purpose": "Proves parse failure remains visible as blocker evidence.",
+      "scenario_id": "malformed_json",
+      "state_change": "none",
+      "text_digest_only_count": 0,
+      "title": "Malformed JSON is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat provenance stress output as permission",
+        "treat provenance index output as truth",
+        "hide degraded provenance evidence",
+        "register sources from provenance evidence",
+        "write memory from provenance evidence",
+        "promote provenance evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "provenance_summary": "artifacts=1; present=1; dependencies=0; blockers=1; readiness=blocked",
+      "purpose": "Proves provenance artifacts cannot quietly declare state mutation.",
+      "scenario_id": "mutating_artifact",
+      "state_change": "none",
+      "text_digest_only_count": 0,
+      "title": "Mutating artifact is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat provenance stress output as permission",
+        "treat provenance index output as truth",
+        "hide degraded provenance evidence",
+        "register sources from provenance evidence",
+        "write memory from provenance evidence",
+        "promote provenance evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "path blocked: path escapes project root: C:\\Users\\Admin\\AppData\\Local\\Temp\\outside-cerebro-provenance-stress-kbl7jepo.json",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "provenance_summary": "artifacts=1; present=0; dependencies=0; blockers=1; readiness=blocked",
+      "purpose": "Proves provenance specs cannot escape the project root.",
+      "scenario_id": "root_escape",
+      "state_change": "none",
+      "text_digest_only_count": 0,
+      "title": "Root escape is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat provenance stress output as permission",
+        "treat provenance index output as truth",
+        "hide degraded provenance evidence",
+        "register sources from provenance evidence",
+        "write memory from provenance evidence",
+        "promote provenance evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "path blocked: path targets canonical state boundary: .cerebro/state.json",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "provenance_summary": "artifacts=1; present=0; dependencies=0; blockers=1; readiness=blocked",
+      "purpose": "Proves provenance specs cannot target canonical Cerebro state.",
+      "scenario_id": "cerebro_state_target",
+      "state_change": "none",
+      "text_digest_only_count": 0,
+      "title": ".cerebro target is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat provenance stress output as permission",
+        "treat provenance index output as truth",
+        "hide degraded provenance evidence",
+        "register sources from provenance evidence",
+        "write memory from provenance evidence",
+        "promote provenance evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "duplicate artifact id declared: dup",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "provenance_summary": "artifacts=2; present=2; dependencies=0; blockers=1; readiness=blocked",
+      "purpose": "Proves duplicated provenance ids are blocker evidence, not silent overwrite.",
+      "scenario_id": "duplicate_artifact_id",
+      "state_change": "none",
+      "text_digest_only_count": 0,
+      "title": "Duplicate artifact id is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat provenance stress output as permission",
+        "treat provenance index output as truth",
+        "hide degraded provenance evidence",
+        "register sources from provenance evidence",
+        "write memory from provenance evidence",
+        "promote provenance evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "artifact a declares unknown upstream artifact: missing",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "provenance_summary": "artifacts=1; present=1; dependencies=1; blockers=1; readiness=blocked",
+      "purpose": "Proves dependency gaps do not become a canonical graph by accident.",
+      "scenario_id": "missing_upstream_dependency",
+      "state_change": "none",
+      "text_digest_only_count": 0,
+      "title": "Missing upstream dependency is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence provenance stress matrix only",
+      "blocker_count": 0,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      },
+      "forbidden_interpretations": [
+        "treat provenance stress output as permission",
+        "treat provenance index output as truth",
+        "hide degraded provenance evidence",
+        "register sources from provenance evidence",
+        "write memory from provenance evidence",
+        "promote provenance evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "none"
+      },
+      "passed": true,
+      "provenance_summary": "artifacts=1; present=1; dependencies=0; blockers=0; readiness=advisory_report_allowed",
+      "purpose": "Proves markdown reports can be fingerprinted without truth inference.",
+      "scenario_id": "text_digest_only_report",
+      "state_change": "none",
+      "text_digest_only_count": 1,
+      "title": "Text digest-only report remains advisory"
+    }
+  ],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "all_scenarios_passed": true,
+    "blocker_count": 7,
+    "boundary_error_count": 4,
+    "decisions": {
+      "cerebro_state_target": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "clean_provenance_chain": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      },
+      "duplicate_artifact_id": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "malformed_json": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "missing_artifact": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "missing_upstream_dependency": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "mutating_artifact": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "root_escape": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "text_digest_only_report": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      }
+    },
+    "fail_count": 0,
+    "pass_count": 9,
+    "scenario_count": 9,
+    "scenario_ids": [
+      "clean_provenance_chain",
+      "missing_artifact",
+      "malformed_json",
+      "mutating_artifact",
+      "root_escape",
+      "cerebro_state_target",
+      "duplicate_artifact_id",
+      "missing_upstream_dependency",
+      "text_digest_only_report"
+    ],
+    "text_digest_only_count": 1
+  }
+}

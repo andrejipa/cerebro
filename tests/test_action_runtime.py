@@ -1,0 +1,499 @@
+from __future__ import annotations
+
+import io
+import hashlib
+import json
+import sys
+import tempfile
+import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
+from unittest.mock import patch
+
+from cli.commands.apply import run_apply
+from cli.commands.init import run_init
+from core.action_runtime import ActionRuntimeError, _resolve_workspace_path, apply_action
+from core.agent_runtime import build_initial_agent_runtime
+from core.execution_policy import ExecutionPolicyError
+from core.state_store import StateStore
+
+
+class ActionRuntimeCommandTests(unittest.TestCase):
+    def test_exec_command_rejects_command_cwd_that_resolves_outside_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello\n", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            validation = store.validate_state()
+            store.update_agent_plan(
+                {
+                    "goal": "Reject escaped cwd",
+                    "summary": "apply must fail closed when command cwd escapes the workspace root.",
+                    "tasks": [
+                        {
+                            "id": "task-001",
+                            "title": "Run command",
+                            "status": "ready",
+                            "details": "Run command",
+                            "depends_on": [],
+                            "working_set": ["tracked.txt"],
+                            "acceptance_criteria": ["escaped cwd is rejected"],
+                            "action_ids": [],
+                        }
+                    ],
+                    "command_registry": [
+                        {
+                            "id": "cmd-001",
+                            "argv": ["python", "-c", "print('ok')"],
+                            "cwd": "../escape",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "workspace_write",
+                            "risk": "medium",
+                            "allow_in_verify": False,
+                        }
+                    ],
+                    "required_command_ids": [],
+                    "autonomy_level": "A2",
+                    "protected_paths": [".cerebro/**", ".git/**"],
+                    "blocked_command_prefixes": ["rm"],
+                    "approval_required_kinds": [],
+                },
+                validated_revision=validation["revision"],
+            )
+
+            action_file = root / "command.json"
+            action_file.write_text(
+                json.dumps(
+                    {
+                        "id": "act-command",
+                        "kind": "exec.command",
+                        "summary": "run escaped cwd command",
+                        "command_id": "cmd-001",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                exit_code = run_apply(
+                    root,
+                    type("Args", (), {"action_file": str(action_file), "task_id": "", "batch_id": "", "retry_justification": ""}),
+                )
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("action_rejected", output.getvalue())
+            self.assertIn("command cwd resolves outside root: ../escape", output.getvalue())
+            self.assertEqual(store.read_agent_runtime()["actions"], [])
+
+    def test_exec_command_launch_failure_is_structured_and_audited(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("hello\n", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            validation = store.validate_state()
+            store.update_agent_plan(
+                {
+                    "goal": "Launch failure",
+                    "summary": "Missing executables must fail cleanly.",
+                    "tasks": [
+                        {
+                            "id": "task-001",
+                            "title": "Run command",
+                            "status": "ready",
+                            "details": "Run command",
+                            "depends_on": [],
+                            "working_set": ["tracked.txt"],
+                            "acceptance_criteria": ["launch failure is explicit"],
+                            "action_ids": [],
+                        }
+                    ],
+                    "command_registry": [
+                        {
+                            "id": "cmd-001",
+                            "argv": ["__definitely_missing_executable__"],
+                            "cwd": ".",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "workspace_write",
+                            "risk": "medium",
+                            "allow_in_verify": False,
+                        }
+                    ],
+                    "required_command_ids": [],
+                    "autonomy_level": "A2",
+                    "protected_paths": [".cerebro/**", ".git/**"],
+                    "blocked_command_prefixes": ["rm"],
+                    "approval_required_kinds": [],
+                },
+                validated_revision=validation["revision"],
+            )
+
+            action_file = root / "command.json"
+            action_file.write_text(
+                json.dumps(
+                    {
+                        "id": "act-command",
+                        "kind": "exec.command",
+                        "summary": "run missing command",
+                        "command_id": "cmd-001",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            output = io.StringIO()
+            with redirect_stdout(output):
+                exit_code = run_apply(
+                    root,
+                    type("Args", (), {"action_file": str(action_file), "task_id": "", "batch_id": "", "retry_justification": ""}),
+                )
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("action_rejected", output.getvalue())
+            self.assertIn("failed to execute command_id cmd-001", output.getvalue())
+            self.assertNotIn("internal_error", output.getvalue())
+            self.assertEqual(store.read_agent_runtime()["actions"], [])
+
+            recent_events = store.read_recent_events(limit=8)
+            matching = [event for event in recent_events if event.get("event") == "apply_failed" and event.get("action_id") == "act-command"]
+            self.assertEqual(len(matching), 1)
+            self.assertEqual(matching[0]["reason_code"], "command_execution_exception")
+
+    def test_exec_command_artifact_write_failure_records_failed_action(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("seed\n", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            validation = store.validate_state()
+            store.update_agent_plan(
+                {
+                    "goal": "Artifact persistence failure",
+                    "summary": "Artifact write failures must keep a canonical failed action record.",
+                    "tasks": [
+                        {
+                            "id": "task-001",
+                            "title": "Run mutating command",
+                            "status": "ready",
+                            "details": "Run command",
+                            "depends_on": [],
+                            "working_set": ["tracked.txt"],
+                            "acceptance_criteria": ["artifact persistence failure is recorded canonically"],
+                            "action_ids": [],
+                        }
+                    ],
+                    "command_registry": [
+                        {
+                            "id": "cmd-001",
+                            "argv": [
+                                sys.executable,
+                                "-c",
+                                (
+                                    "from pathlib import Path; "
+                                    "path = Path('mutated.txt'); "
+                                    "existing = path.read_text(encoding='utf-8') if path.exists() else ''; "
+                                    "path.write_text(existing + 'ran\\n', encoding='utf-8'); "
+                                    "print('stdout ok'); "
+                                    "import sys; "
+                                    "sys.stderr.write('stderr ok\\n')"
+                                ),
+                            ],
+                            "cwd": ".",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "workspace_write",
+                            "risk": "medium",
+                            "allow_in_verify": False,
+                        }
+                    ],
+                    "required_command_ids": [],
+                    "autonomy_level": "A2",
+                    "protected_paths": [".cerebro/**", ".git/**"],
+                    "blocked_command_prefixes": ["rm"],
+                    "approval_required_kinds": [],
+                },
+                validated_revision=validation["revision"],
+            )
+
+            action_file = root / "command.json"
+            action_file.write_text(
+                json.dumps(
+                    {
+                        "id": "act-command",
+                        "kind": "exec.command",
+                        "summary": "run mutating command",
+                        "command_id": "cmd-001",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            original_write_text = Path.write_text
+
+            def flaky_write_text(path: Path, text: str, *args, **kwargs) -> int:
+                if (
+                    path.name == "stderr.txt"
+                    and path.parent.name == "act-command"
+                    and path.parent.parent.name == "actions"
+                ):
+                    raise OSError("forced stderr artifact write failure")
+                return original_write_text(path, text, *args, **kwargs)
+
+            output = io.StringIO()
+            with patch("pathlib.Path.write_text", new=flaky_write_text):
+                with redirect_stdout(output):
+                    exit_code = run_apply(
+                        root,
+                        type("Args", (), {"action_file": str(action_file), "task_id": "", "batch_id": "", "retry_justification": ""}),
+                    )
+
+            self.assertEqual(exit_code, 1)
+            self.assertIn("action_failed", output.getvalue())
+            self.assertNotIn("internal_error", output.getvalue())
+            self.assertEqual(tracked.read_text(encoding="utf-8"), "seed\n")
+            self.assertEqual((root / "mutated.txt").read_text(encoding="utf-8"), "ran\n")
+
+            runtime = store.read_agent_runtime()
+            self.assertEqual(len(runtime["actions"]), 1)
+            action_record = runtime["actions"][0]
+            self.assertEqual(action_record["id"], "act-command")
+            self.assertEqual(action_record["status"], "failed")
+            self.assertEqual(action_record["artifact_refs"], [])
+            self.assertEqual(action_record["details"]["exit_code"], 0)
+            self.assertIn("failed to persist command artifacts", action_record["details"]["failure_message"])
+
+            recent_events = store.read_recent_events(limit=8)
+            matching = [
+                event
+                for event in recent_events
+                if event.get("event") == "action_recorded" and event.get("action_id") == "act-command"
+            ]
+            self.assertEqual(len(matching), 1)
+            self.assertEqual(matching[0]["status"], "failed")
+
+
+class ActionRuntimePolicyBoundaryTests(unittest.TestCase):
+    def _build_agent_runtime(self) -> dict:
+        runtime = build_initial_agent_runtime()
+        runtime["execution_policy"]["autonomy_level"] = "A2"
+        runtime["execution_policy"]["approval_required_kinds"] = ["fs.write_patch"]
+        return runtime
+
+    def test_apply_action_blocks_destructive_create_file_without_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            draft = root / "draft.txt"
+            draft.write_text("before\n", encoding="utf-8")
+
+            with self.assertRaises(ActionRuntimeError) as ctx:
+                apply_action(
+                    root,
+                    store,
+                    self._build_agent_runtime(),
+                    {
+                        "id": "act-overwrite-direct",
+                        "kind": "fs.create_file",
+                        "summary": "overwrite draft directly",
+                        "path": "draft.txt",
+                        "content": "after\n",
+                        "overwrite": True,
+                    },
+                    {},
+                    set(),
+                )
+
+            self.assertIn("requires a non-empty approval_id", str(ctx.exception))
+            self.assertEqual(draft.read_text(encoding="utf-8"), "before\n")
+            self.assertFalse((store.artifacts_dir / "actions" / "act-overwrite-direct").exists())
+
+    def test_apply_action_blocks_destructive_move_without_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            source = root / "source.txt"
+            target = root / "target.txt"
+            source.write_text("source\n", encoding="utf-8")
+            target.write_text("target\n", encoding="utf-8")
+
+            with self.assertRaises(ActionRuntimeError) as ctx:
+                apply_action(
+                    root,
+                    store,
+                    self._build_agent_runtime(),
+                    {
+                        "id": "act-move-direct",
+                        "kind": "fs.move",
+                        "summary": "move over existing target directly",
+                        "from": "source.txt",
+                        "to": "target.txt",
+                        "overwrite": True,
+                    },
+                    {},
+                    set(),
+                )
+
+            self.assertIn("requires a non-empty approval_id", str(ctx.exception))
+            self.assertEqual(source.read_text(encoding="utf-8"), "source\n")
+            self.assertEqual(target.read_text(encoding="utf-8"), "target\n")
+            self.assertFalse((store.artifacts_dir / "actions" / "act-move-direct").exists())
+
+    def test_apply_action_rejects_approved_id_bound_to_different_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            draft = root / "draft.txt"
+            draft.write_text("before\n", encoding="utf-8")
+            runtime = self._build_agent_runtime()
+            runtime["approvals"]["items"] = [
+                {
+                    "id": "apr-001",
+                    "status": "approved",
+                    "fingerprint": "fp-other",
+                    "action_kind": "fs.write_patch",
+                    "task_id": "task-001",
+                    "target": "draft.txt",
+                    "reason": "approved elsewhere",
+                    "requested_at": "",
+                    "resolved_at": "",
+                }
+            ]
+
+            with self.assertRaises(ActionRuntimeError) as ctx:
+                apply_action(
+                    root,
+                    store,
+                    runtime,
+                    {
+                        "id": "act-patch-direct",
+                        "kind": "fs.write_patch",
+                        "summary": "patch draft directly",
+                        "path": "draft.txt",
+                        "expected_sha256": hashlib.sha256(b"before\n").hexdigest(),
+                        "replacements": [{"old": "before", "new": "after", "count": 1}],
+                    },
+                    {},
+                    set(),
+                    task_id="task-001",
+                    approval_id="apr-001",
+                )
+
+            self.assertIn("does not match expected action fingerprint", str(ctx.exception))
+            self.assertEqual(draft.read_text(encoding="utf-8"), "before\n")
+
+    def test_apply_action_blocks_path_qualified_blocked_command_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            runtime = build_initial_agent_runtime()
+            runtime["execution_policy"]["autonomy_level"] = "A2"
+            runtime["execution_policy"]["blocked_command_prefixes"] = ["powershell"]
+
+            with self.assertRaises(ExecutionPolicyError) as ctx:
+                apply_action(
+                    root,
+                    store,
+                    runtime,
+                    {
+                        "id": "act-command-direct",
+                        "kind": "exec.command",
+                        "summary": "run blocked shell directly",
+                        "command_id": "cmd-001",
+                    },
+                    {
+                        "cmd-001": {
+                            "id": "cmd-001",
+                            "argv": [r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe", "-c", "echo ok"],
+                            "cwd": ".",
+                            "timeout_ms": 120000,
+                            "determinism": "high",
+                            "side_effect": "workspace_write",
+                            "risk": "medium",
+                            "allow_in_verify": False,
+                        }
+                    },
+                    set(),
+                )
+
+            self.assertIn("command prefix is blocked by execution policy: powershell", str(ctx.exception))
+
+    def test_apply_action_rejects_action_id_path_segment_escape_before_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            run_init(root, None)
+            store = StateStore(root)
+            runtime = build_initial_agent_runtime()
+            runtime["execution_policy"]["autonomy_level"] = "A2"
+
+            with self.assertRaises(ActionRuntimeError) as ctx:
+                apply_action(
+                    root,
+                    store,
+                    runtime,
+                    {
+                        "id": "../escape",
+                        "kind": "fs.create_file",
+                        "summary": "attempt artifact escape",
+                        "path": "draft.txt",
+                        "content": "owned\n",
+                    },
+                    {},
+                    set(),
+                )
+
+            self.assertIn("id must contain only letters", str(ctx.exception))
+            self.assertFalse((root / "draft.txt").exists())
+            self.assertFalse((store.artifacts_dir / "actions").exists())
+            self.assertFalse((store.trash_dir / "escape").exists())
+
+
+class ActionRuntimeWorkspacePathTests(unittest.TestCase):
+    def test_resolve_workspace_path_rejects_absolute_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+
+            with self.assertRaisesRegex(ActionRuntimeError, "path must be relative"):
+                _resolve_workspace_path(root, str((root / "draft.txt").resolve()))
+
+    def test_resolve_workspace_path_rejects_parent_directory_segments(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+
+            with self.assertRaisesRegex(ActionRuntimeError, "path cannot contain '\\.\\.'"):
+                _resolve_workspace_path(root, "../draft.txt")
+
+    def test_resolve_workspace_path_translates_containment_failure_to_action_runtime_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            candidate = root / "draft.txt"
+            escaped = root.parent / "escaped.txt"
+            original_resolve = Path.resolve
+
+            def fake_resolve(path_self: Path, *args, **kwargs) -> Path:
+                if path_self == root:
+                    return root
+                if path_self == candidate:
+                    return escaped
+                return original_resolve(path_self, *args, **kwargs)
+
+            with patch.object(Path, "resolve", autospec=True, side_effect=fake_resolve):
+                with self.assertRaisesRegex(ActionRuntimeError, "path resolves outside workspace"):
+                    _resolve_workspace_path(root, "draft.txt")
+
+
+if __name__ == "__main__":
+    unittest.main()

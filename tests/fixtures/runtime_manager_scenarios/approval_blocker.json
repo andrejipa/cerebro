@@ -1,0 +1,12 @@
+{
+  "scenario_id": "approval-blocker",
+  "description": "Verifies that a guarded command is blocked when no approval is recorded.",
+  "checks": [
+    {
+      "id": "blocked-by-approval",
+      "type": "command_blocker",
+      "command_id": "cmd-guarded",
+      "expected_blocker": "approval_required"
+    }
+  ]
+}

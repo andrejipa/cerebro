@@ -1,0 +1,28 @@
+# Handoff: External Analysis Boundary
+
+- State: first concrete external `analysis` increment implemented as a read-only classifier; source acquisition still external
+- Where it stopped:
+  - the project now ships one concrete external `analysis` package, `Verificador de Atualidade Externa`, as a deterministic classifier over supplied external evidence
+  - live source acquisition, source selection, and web querying still remain outside the tracked package
+- What is already safe:
+  - `export`, `analysis`, and `integration` remain distinct consumer shapes
+  - `Verificador de Atualidade Externa` is defined as read-only, non-canonical, and non-decisory
+  - `search_scope` is now enforced technically against supplied source domains inside the classifier-only increment
+  - equivalent resource URLs are now normalized before classification so one document does not count twice
+  - citation and provenance metadata can now be carried without opening live acquisition
+  - derived reports are now bound to the snapshot revision and validation result they actually read
+  - caller-supplied `internal_proven_items` must now bind to canonical snapshot refs instead of arbitrary text
+  - the package now exposes one versioned serializable contract for request/report payloads without touching the core
+  - the package now exposes reusable v1 fixture builders and serialized payload fixtures for integration and regression reuse
+  - the final report now states `bundle_identity_scope=report_scoped` explicitly so bundle keys are not confused with cross-round identity
+  - the component is positioned before `Comprovador`, `Avaliador de Risco` when justified, and `Guardião`, not in place of them
+  - external evidence may challenge or enrich a path but may not become runtime truth by itself
+- What was validated:
+  - documentation now converges on the same named external-analysis use case across boundary and integration references
+  - the tracked increment stays inside the freeze posture because it remains read-only, non-canonical, and subordinate to the existing decision chain
+- Risk that blocks further progress:
+  - live source acquisition would still introduce source-selection policy, domain policy, and external-trust handling beyond the current increment
+- Decision still required:
+  - decide whether to keep the current classifier-only increment or open a second increment for live source acquisition
+- First action after release:
+  - if live acquisition is authorized later, keep it outside the core, keep it read-only, and add proportional adversarial coverage before treating it as accepted

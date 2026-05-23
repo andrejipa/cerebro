@@ -1,0 +1,68 @@
+# Residual Taxonomy
+#
+# Structured operational index for accepted or blocked residuals.
+# This file is a derived documentation artifact. It is not canonical
+# runtime authority, must not be read or written by `core/`, and must
+# not become a second source of truth for project state.
+#
+# Closed vocabularies for this file:
+# - class: accepted | blocked_by_architecture | out_of_envelope | investigating
+# - severity: critical | high | medium | low
+# - risk_vector: continuity | auditability | host_integrity | data_integrity | confidentiality
+# - unblock_gate: none | architecture_decision | formal_resume_trigger | corrective_runtime_slice
+
+schema_version = "1"
+
+[[residual]]
+id = "RES-SESSION-OWNERSHIP-001"
+title = "file-backed session ownership does not close same-user tamper or restore"
+status = "accepted"
+class = "accepted"
+severity = "medium"
+surface = "state_store"
+risk_vector = "auditability"
+unblock_gate = "architecture_decision"
+unblock_criterion = "introduce a stronger external authority store or equivalent same-user restore protection without breaking the current Windows-compatible session flow"
+introduced_phase = "GAP-01"
+last_reviewed = "2026-04-27"
+links = [
+  "docs/operations/SYSTEM_STATE.md#accepted-residuals",
+  "docs/operations/OPERATIONS_BASELINE.md#current-runtime-rules",
+  "docs/operations/OPPORTUNITY_MAP.md#accepted-residuals-that-are-not-queue-items-by-default",
+]
+
+[[residual]]
+id = "RES-VERIFY-BOUNDARY-001"
+title = "verify retains bounded residual around perfectly restored transient tamper and out-of-root side effects"
+status = "accepted"
+class = "accepted"
+severity = "medium"
+surface = "verification_runtime"
+risk_vector = "host_integrity"
+unblock_gate = "formal_resume_trigger"
+unblock_criterion = "authorize a narrowly scoped verification-isolation increment beyond the current disposable workspace clone"
+introduced_phase = "post-hardening-audit"
+last_reviewed = "2026-04-27"
+links = [
+  "docs/operations/SYSTEM_STATE.md#accepted-residuals",
+  "docs/operations/OPERATIONS_BASELINE.md#current-runtime-rules",
+  "docs/operations/OPPORTUNITY_MAP.md#accepted-residuals-that-are-not-queue-items-by-default",
+]
+
+[[residual]]
+id = "RES-APPLY-ROLLBACK-ATOMICITY-001"
+title = "apply and rollback do not promise perfect atomicity against arbitrary external writers during execution"
+status = "accepted"
+class = "accepted"
+severity = "medium"
+surface = "action_runtime"
+risk_vector = "data_integrity"
+unblock_gate = "formal_resume_trigger"
+unblock_criterion = "authorize a deeper runtime hardening slice for external-writer isolation or transaction semantics"
+introduced_phase = "post-hardening-audit"
+last_reviewed = "2026-04-27"
+links = [
+  "docs/operations/SYSTEM_STATE.md#accepted-residuals",
+  "docs/operations/OPERATIONS_BASELINE.md#current-runtime-rules",
+  "docs/operations/OPPORTUNITY_MAP.md#accepted-residuals-that-are-not-queue-items-by-default",
+]

@@ -1,0 +1,105 @@
+schema_version = "1"
+
+[[case]]
+id = "supersedes-pos-001"
+source_path = "exports/status_export/task-019.md"
+label = "positive"
+label_reason = "mechanical supersedes token without nearby rationale should emit low confidence"
+expected_confidence = "low"
+text = """
+- task task-019: id=cons-002; winner=approach-b (approach B); supersedes=cons-001; compared=approach-a, approach-b
+"""
+
+[[case]]
+id = "supersedes-pos-002"
+source_path = "exports/status_export/recent-events.txt"
+label = "positive"
+label_reason = "stale replay with decision but no winner remains ambiguous and should emit medium confidence"
+expected_confidence = "medium"
+text = """
+stale_parallel_approach_consolidation_record | subject=task:task-021 | consolidation=cons-001 | target=current=cons-002
+decision: replayed record appeared in the recent-events tail without the winner line
+"""
+
+[[case]]
+id = "supersedes-pos-003"
+source_path = "exports/status_export/batch-compare.md"
+label = "positive"
+label_reason = "two ambiguous supersedes tokens in one operator-facing artifact should emit medium confidence"
+expected_confidence = "medium"
+text = """
+- task task-020: id=cons-010; winner=approach-a; supersedes=cons-009
+- task task-021: id=cons-011; winner=approach-c; supersedes=cons-010
+"""
+
+[[case]]
+id = "supersedes-pos-004"
+source_path = "exports/status_export/recent-events-high.md"
+label = "positive"
+label_reason = "stale replay without winner or rationale should emit high confidence"
+expected_confidence = "high"
+text = """
+stale_parallel_approach_consolidation_record | subject=task:task-022 | consolidation=cons-050 | target=current=cons-051
+"""
+
+[[case]]
+id = "supersedes-pos-005"
+source_path = "exports/status_export/multi-subject.txt"
+label = "positive"
+label_reason = "three ambiguous supersedes hits should emit high confidence"
+expected_confidence = "high"
+text = """
+- task task-031: id=cons-101; winner=approach-a; supersedes=cons-100
+- task task-032: id=cons-102; winner=approach-b; supersedes=cons-101
+- task task-033: id=cons-103; winner=approach-c; supersedes=cons-102
+"""
+
+[[case]]
+id = "supersedes-neg-001"
+source_path = "exports/status_export/task-019.md"
+label = "negative"
+label_reason = "contextualized status-export fragment already exposes winner and rationale nearby"
+text = """
+- task task-019: id=cons-002; winner=approach-b (approach B); supersedes=cons-001; compared=approach-a, approach-b; rejected=approach-a
+  basis: lower rollback cost; stronger verify coverage
+  decision: selected approach B after comparing reversibility and verification cost
+"""
+
+[[case]]
+id = "supersedes-neg-002"
+source_path = "docs/operations/PROJECT_OS_BACKLOG.md"
+label = "negative"
+label_reason = "conceptual prose about superseding does not contain a mechanical token and must stay silent"
+text = """
+The operator must explicitly supersede the current head only after a defensible comparison is complete.
+"""
+
+[[case]]
+id = "supersedes-neg-003"
+source_path = "tests/test_status_export.py"
+label = "negative"
+label_reason = "test fixtures mentioning supersedes metadata are intentional out_of_scope silence"
+count_in_metrics = false
+text = """
+self.assertIn("supersedes_consolidation_id", payload)
+"""
+
+[[case]]
+id = "supersedes-neg-004"
+source_path = "experiments/operational_signals/suggestions/report_surface_drift_latest.md"
+label = "negative"
+label_reason = "derived reports stay out of scope even if they mention stale diagnostics"
+count_in_metrics = false
+text = """
+stale_parallel_approach_consolidation_record | subject=task:task-022 | consolidation=cons-050 | target=current=cons-051
+"""
+
+[[case]]
+id = "supersedes-neg-005"
+source_path = "exports/status_export/task-020.txt"
+label = "negative"
+label_reason = "winner plus a nearby decision line is enough to keep the artifact contextualized"
+text = """
+- task task-020: id=cons-200; winner=approach-d; supersedes=cons-199
+  decision: promoted approach D after verify succeeded on the narrowed path
+"""

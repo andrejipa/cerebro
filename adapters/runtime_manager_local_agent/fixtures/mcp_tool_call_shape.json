@@ -1,0 +1,124 @@
+{
+  "_comment": "Reference shape for MCP-compatible tool calls to LocalAgentAdapter. No real MCP server; advisory only.",
+  "_authority": "adapter fixture only; not permission, not a runtime gate, not an execution approval",
+  "_version": "phase-6-pilot",
+
+  "agent_context": {
+    "agent_id": "ci-runner-01",
+    "agent_role": "runner",
+    "session_id": "session-abc123"
+  },
+
+  "tool_calls": [
+    {
+      "tool_name": "runtime_manager__status",
+      "parameters": {},
+      "expected_response_fields": ["state", "selected_id", "stale_source", "gate_diagnostics"]
+    },
+    {
+      "tool_name": "runtime_manager__next",
+      "parameters": {},
+      "expected_response_fields": ["id", "title", "status", "priority"]
+    },
+    {
+      "tool_name": "runtime_manager__acquire_lease",
+      "parameters": {
+        "observation_id": "<observation-id>",
+        "ttl_seconds": 300,
+        "reason": "agent session start"
+      },
+      "expected_response_fields": ["lease_id", "observation_id", "owner", "expires_at"]
+    },
+    {
+      "tool_name": "runtime_manager__release_lease",
+      "parameters": {
+        "lease_id": "<lease-id>",
+        "observation_id": "<observation-id>"
+      },
+      "expected_response_fields": ["released"]
+    },
+    {
+      "tool_name": "runtime_manager__heartbeat_lease",
+      "parameters": {
+        "lease_id": "<lease-id>",
+        "observation_id": "<observation-id>",
+        "extend_seconds": 300
+      },
+      "expected_response_fields": ["renewed"]
+    },
+    {
+      "tool_name": "runtime_manager__check_command",
+      "parameters": {
+        "command_id": "<command-id>"
+      },
+      "expected_response_fields": ["eligible", "reason", "command_id"]
+    },
+    {
+      "tool_name": "runtime_manager__record_approval",
+      "parameters": {
+        "command_id": "<command-id>",
+        "subject_id": "<observation-id>",
+        "scope": "single-use",
+        "expires_at": ""
+      },
+      "lease_required": true,
+      "expected_response_fields": ["approval_id", "command_id", "subject_id", "status"]
+    },
+    {
+      "tool_name": "runtime_manager__run_command",
+      "parameters": {
+        "command_id": "<command-id>",
+        "observation_id": "<observation-id>"
+      },
+      "lease_required": true,
+      "expected_response_fields": ["evidence_id", "returncode", "timed_out", "command_id"]
+    },
+    {
+      "tool_name": "runtime_manager__list_traces",
+      "parameters": {
+        "operation": "",
+        "subject_id": "",
+        "limit": 20
+      },
+      "expected_response_fields": ["traces"]
+    },
+    {
+      "tool_name": "runtime_manager__read_metrics",
+      "parameters": {},
+      "expected_response_fields": [
+        "runs_total", "runs_passed", "runs_failed", "leases_active",
+        "stop_conditions_active", "traces_total"
+      ],
+      "_note": "metrics_is_not_permission=True always; never use metric values as execution authorization"
+    },
+    {
+      "tool_name": "runtime_manager__replay_scenario",
+      "parameters": {
+        "scenario_path": "tests/fixtures/runtime_manager_scenarios/basic_run_trace_and_metric.json"
+      },
+      "expected_response_fields": ["scenario_id", "passed", "replay_digest", "checks", "authority"],
+      "_note": "replay pass is not truth; authority field must be present; never use passed=true as permission"
+    },
+    {
+      "tool_name": "runtime_manager__read_adapter_metrics",
+      "parameters": {},
+      "expected_response_fields": [
+        "adapter_calls_total", "adapter_calls_blocked", "adapter_rate_limited",
+        "adapter_mutations_total", "adapter_permission_laundering_blocked",
+        "active_agent_leases", "metrics_is_not_permission"
+      ]
+    }
+  ],
+
+  "security_invariants": {
+    "no_argv_acceptance": "Tool calls never pass raw argv; only command_id is accepted.",
+    "no_direct_sql": "Adapter layer never exposes SQLite connection or raw query interface.",
+    "no_replay_as_permission": "replay_scenario passed=true is never used to authorize run_command.",
+    "no_metrics_as_permission": "metrics values are never used to authorize execution.",
+    "no_trace_as_permission": "trace content is never used to authorize execution.",
+    "lease_required_for_mutations": "run_command, record_approval, raise_stop_condition, etc. require active lease.",
+    "lease_owner_bound": "release_lease / heartbeat_lease only succeed for the session that acquired.",
+    "rate_limit_enforced": "10 mutate ops / 60 read ops per agent_id per minute.",
+    "no_external_sdk": "No MCP real server, no OpenAI SDK, no Temporal, no LangGraph imported."
+  }
+}

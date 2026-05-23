@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cli.output import print_fail, print_ok, user_error
+from cli.commands._session_ownership import resolve_session_token
+from cli.output import print_fail, print_ok, state_store_user_error, user_error
 from core.state_store import StateStore, StateStoreError, StateValidationError
 
 
@@ -18,7 +19,7 @@ def run_import_context(root: Path, args) -> int:
         print_fail(exc.errors)
         return 1
     except StateStoreError as exc:
-        print_fail([user_error("operation_failed", str(exc))])
+        print_fail([state_store_user_error(root, "operation_failed", str(exc))])
         return 1
 
     current_paths = {item.path for item in current_sources}
@@ -45,13 +46,13 @@ def run_import_context(root: Path, args) -> int:
         return 0
 
     try:
-        store.register_sources(args.files)
+        store.register_sources(args.files, expected_session_token=resolve_session_token(args))
         snapshot = store.read_snapshot()
     except StateValidationError as exc:
         print_fail(exc.errors)
         return 1
     except StateStoreError as exc:
-        print_fail([user_error("operation_failed", str(exc))])
+        print_fail([state_store_user_error(root, "operation_failed", str(exc))])
         return 1
 
     print_ok(

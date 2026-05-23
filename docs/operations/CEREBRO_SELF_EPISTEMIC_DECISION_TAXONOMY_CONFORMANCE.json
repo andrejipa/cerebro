@@ -1,0 +1,220 @@
+{
+  "authority": "non-authoritative; advisory decision taxonomy conformance evidence only",
+  "boundary": {
+    "may_suggest": [
+      "verify stress-matrix decision/readiness pairs are covered by the taxonomy",
+      "surface incompatible pairs for future hardening",
+      "recommend a future corrective trigger when coverage fails"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat conformance pass as permission",
+      "hide incompatible pairs",
+      "infer negative evidence from silence"
+    ]
+  },
+  "cases": [
+    {
+      "action_readiness": "no_action",
+      "allowed_next_actions": [
+        "record that no human decision is currently requested",
+        "continue observation in derived layers",
+        "open a future trigger only if separate evidence appears"
+      ],
+      "authority": "non-authoritative; advisory decision taxonomy conformance evidence only",
+      "conformance_passed": true,
+      "escalation_level": "none",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "treat clean advisory evidence as canonical truth",
+        "skip future gates because no action is requested now",
+        "treat conformance pass as permission"
+      ],
+      "issues": [],
+      "recommended_human_decision": "none",
+      "required_evidence": [
+        "clean metacognitive handoff",
+        "zero active conflicts",
+        "zero insufficient findings",
+        "zero blockers"
+      ],
+      "scenario_id": "clean_no_action",
+      "state_change": "none",
+      "stress_scenario_passed": true,
+      "taxonomy_compatible": true
+    },
+    {
+      "action_readiness": "human_approval_required",
+      "allowed_next_actions": [
+        "ask for the missing evidence",
+        "read a newly approved bounded source in a future derived run",
+        "rerun the advisory report after evidence is supplied"
+      ],
+      "authority": "non-authoritative; advisory decision taxonomy conformance evidence only",
+      "conformance_passed": true,
+      "escalation_level": "evidence_request",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "infer falsehood from absent evidence",
+        "invent a source",
+        "import or register sources automatically",
+        "treat conformance pass as permission"
+      ],
+      "issues": [],
+      "recommended_human_decision": "provide_missing_evidence",
+      "required_evidence": [
+        "insufficient finding or missing-evidence note",
+        "description of the missing source or fact",
+        "explicit statement that silence is not negative evidence"
+      ],
+      "scenario_id": "insufficient_evidence",
+      "state_change": "none",
+      "stress_scenario_passed": true,
+      "taxonomy_compatible": true
+    },
+    {
+      "action_readiness": "human_approval_required",
+      "allowed_next_actions": [
+        "request human conflict adjudication",
+        "mark conflict unresolved in advisory output",
+        "open a separate promotion or demotion trigger after adjudication"
+      ],
+      "authority": "non-authoritative; advisory decision taxonomy conformance evidence only",
+      "conformance_passed": true,
+      "escalation_level": "human_adjudication",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "resolve conflict by recency alone",
+        "hide unresolved conflict behind a green summary",
+        "promote or demote authority automatically",
+        "treat conformance pass as permission"
+      ],
+      "issues": [],
+      "recommended_human_decision": "adjudicate_conflict",
+      "required_evidence": [
+        "named conflict",
+        "conflicting source evidence",
+        "authority and freshness context for each side"
+      ],
+      "scenario_id": "active_conflict",
+      "state_change": "none",
+      "stress_scenario_passed": true,
+      "taxonomy_compatible": true
+    },
+    {
+      "action_readiness": "human_approval_required",
+      "allowed_next_actions": [
+        "open a separate baseline-refresh trigger",
+        "prepare a derived baseline refresh audit packet",
+        "apply only the approved derived baseline refresh inside that trigger"
+      ],
+      "authority": "non-authoritative; advisory decision taxonomy conformance evidence only",
+      "conformance_passed": true,
+      "escalation_level": "human_approval",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "refresh the baseline automatically",
+        "treat replay freshness as canonical truth",
+        "mutate canonical state",
+        "treat conformance pass as permission"
+      ],
+      "issues": [],
+      "recommended_human_decision": "approve_baseline_refresh",
+      "required_evidence": [
+        "material drift or refresh candidate",
+        "no regression",
+        "no high or blocking protocol self-audit candidate",
+        "explicit human approval before any refresh"
+      ],
+      "scenario_id": "drift_review_required",
+      "state_change": "none",
+      "stress_scenario_passed": true,
+      "taxonomy_compatible": true
+    },
+    {
+      "action_readiness": "blocked",
+      "allowed_next_actions": [
+        "stop the current action path",
+        "inspect blocker evidence",
+        "open a corrective trigger before retrying"
+      ],
+      "authority": "non-authoritative; advisory decision taxonomy conformance evidence only",
+      "conformance_passed": true,
+      "escalation_level": "blocker_review",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "continue with best effort",
+        "override blocker silently",
+        "demote canonical behavior automatically",
+        "treat conformance pass as permission"
+      ],
+      "issues": [],
+      "recommended_human_decision": "review_blockers",
+      "required_evidence": [
+        "blocked readiness",
+        "blocker reason",
+        "rollback or stop condition context",
+        "explicit human review before continuation"
+      ],
+      "scenario_id": "protocol_blocker",
+      "state_change": "none",
+      "stress_scenario_passed": true,
+      "taxonomy_compatible": true
+    }
+  ],
+  "conformance_role": "advisory stress-matrix-to-taxonomy conformance evidence only",
+  "guardrails": {
+    "conformance_is_not_authority": true,
+    "conformance_is_not_claim_graph": true,
+    "conformance_is_not_memory": true,
+    "conformance_is_not_permission": true,
+    "conformance_is_not_runtime_gate": true,
+    "covered_pair_is_not_permission": true,
+    "incompatible_pair_must_be_visible": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "all_cases_passed": true,
+    "case_count": 5,
+    "covered_pairs": [
+      {
+        "action_readiness": "no_action",
+        "recommended_human_decision": "none",
+        "scenario_id": "clean_no_action"
+      },
+      {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "provide_missing_evidence",
+        "scenario_id": "insufficient_evidence"
+      },
+      {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "adjudicate_conflict",
+        "scenario_id": "active_conflict"
+      },
+      {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "approve_baseline_refresh",
+        "scenario_id": "drift_review_required"
+      },
+      {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "scenario_id": "protocol_blocker"
+      }
+    ],
+    "fail_count": 0,
+    "pass_count": 5
+  }
+}

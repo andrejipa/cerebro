@@ -1,0 +1,244 @@
+{
+  "authority": "non-authoritative; advisory human decision taxonomy evidence only",
+  "boundary": {
+    "may_suggest": [
+      "interpret a handoff decision/readiness pair",
+      "identify required evidence for a human decision",
+      "identify forbidden interpretations",
+      "recommend a future trigger when a decision needs action"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat a human decision as permission",
+      "treat a compatible pair as permission",
+      "infer negative evidence from silence"
+    ]
+  },
+  "compatibility_matrix": {
+    "acknowledge": [
+      "advisory_report_allowed",
+      "observe_only"
+    ],
+    "adjudicate_conflict": [
+      "human_approval_required"
+    ],
+    "approve_baseline_refresh": [
+      "human_approval_required"
+    ],
+    "none": [
+      "no_action"
+    ],
+    "provide_missing_evidence": [
+      "human_approval_required"
+    ],
+    "review_blockers": [
+      "blocked"
+    ]
+  },
+  "entries": [
+    {
+      "allowed_next_actions": [
+        "record that no human decision is currently requested",
+        "continue observation in derived layers",
+        "open a future trigger only if separate evidence appears"
+      ],
+      "authority": "non-authoritative; advisory human decision taxonomy evidence only",
+      "can_grant_permission": false,
+      "can_mutate_state": false,
+      "compatible_action_readiness": [
+        "no_action"
+      ],
+      "decision": "none",
+      "escalation_level": "none",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "treat clean advisory evidence as canonical truth",
+        "skip future gates because no action is requested now"
+      ],
+      "meaning": "No human decision is requested because the advisory evidence contains no conflict, missing evidence, drift approval, or blocker.",
+      "required_evidence": [
+        "clean metacognitive handoff",
+        "zero active conflicts",
+        "zero insufficient findings",
+        "zero blockers"
+      ],
+      "state_change": "none"
+    },
+    {
+      "allowed_next_actions": [
+        "record acknowledgement in a future human-facing note",
+        "keep the artifact advisory",
+        "open a separate trigger if the acknowledgement implies work"
+      ],
+      "authority": "non-authoritative; advisory human decision taxonomy evidence only",
+      "can_grant_permission": false,
+      "can_mutate_state": false,
+      "compatible_action_readiness": [
+        "advisory_report_allowed",
+        "observe_only"
+      ],
+      "decision": "acknowledge",
+      "escalation_level": "operator_acknowledgement",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "treat acknowledgement as approval",
+        "promote advisory evidence to authority"
+      ],
+      "meaning": "A human may acknowledge advisory evidence that is visible but not severe enough to require approval, adjudication, or blocker review.",
+      "required_evidence": [
+        "advisory report allowed readiness",
+        "no active blocker",
+        "no authority promotion requested"
+      ],
+      "state_change": "none"
+    },
+    {
+      "allowed_next_actions": [
+        "open a separate baseline-refresh trigger",
+        "prepare a derived baseline refresh audit packet",
+        "apply only the approved derived baseline refresh inside that trigger"
+      ],
+      "authority": "non-authoritative; advisory human decision taxonomy evidence only",
+      "can_grant_permission": false,
+      "can_mutate_state": false,
+      "compatible_action_readiness": [
+        "human_approval_required"
+      ],
+      "decision": "approve_baseline_refresh",
+      "escalation_level": "human_approval",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "refresh the baseline automatically",
+        "treat replay freshness as canonical truth",
+        "mutate canonical state"
+      ],
+      "meaning": "A human may approve refreshing a derived replay baseline after material drift is visible and blockers are absent.",
+      "required_evidence": [
+        "material drift or refresh candidate",
+        "no regression",
+        "no high or blocking protocol self-audit candidate",
+        "explicit human approval before any refresh"
+      ],
+      "state_change": "none"
+    },
+    {
+      "allowed_next_actions": [
+        "request human conflict adjudication",
+        "mark conflict unresolved in advisory output",
+        "open a separate promotion or demotion trigger after adjudication"
+      ],
+      "authority": "non-authoritative; advisory human decision taxonomy evidence only",
+      "can_grant_permission": false,
+      "can_mutate_state": false,
+      "compatible_action_readiness": [
+        "human_approval_required"
+      ],
+      "decision": "adjudicate_conflict",
+      "escalation_level": "human_adjudication",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "resolve conflict by recency alone",
+        "hide unresolved conflict behind a green summary",
+        "promote or demote authority automatically"
+      ],
+      "meaning": "A human must resolve or explicitly park conflicting advisory evidence before an agent treats the affected conclusion as usable.",
+      "required_evidence": [
+        "named conflict",
+        "conflicting source evidence",
+        "authority and freshness context for each side"
+      ],
+      "state_change": "none"
+    },
+    {
+      "allowed_next_actions": [
+        "ask for the missing evidence",
+        "read a newly approved bounded source in a future derived run",
+        "rerun the advisory report after evidence is supplied"
+      ],
+      "authority": "non-authoritative; advisory human decision taxonomy evidence only",
+      "can_grant_permission": false,
+      "can_mutate_state": false,
+      "compatible_action_readiness": [
+        "human_approval_required"
+      ],
+      "decision": "provide_missing_evidence",
+      "escalation_level": "evidence_request",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "infer falsehood from absent evidence",
+        "invent a source",
+        "import or register sources automatically"
+      ],
+      "meaning": "The agent lacks enough evidence and must seek bounded evidence rather than infer from silence.",
+      "required_evidence": [
+        "insufficient finding or missing-evidence note",
+        "description of the missing source or fact",
+        "explicit statement that silence is not negative evidence"
+      ],
+      "state_change": "none"
+    },
+    {
+      "allowed_next_actions": [
+        "stop the current action path",
+        "inspect blocker evidence",
+        "open a corrective trigger before retrying"
+      ],
+      "authority": "non-authoritative; advisory human decision taxonomy evidence only",
+      "can_grant_permission": false,
+      "can_mutate_state": false,
+      "compatible_action_readiness": [
+        "blocked"
+      ],
+      "decision": "review_blockers",
+      "escalation_level": "blocker_review",
+      "forbidden_interpretations": [
+        "treat decision as permission",
+        "continue with best effort",
+        "override blocker silently",
+        "demote canonical behavior automatically"
+      ],
+      "meaning": "The current path is blocked by protocol risk, regression, or another high-severity advisory signal and must stop.",
+      "required_evidence": [
+        "blocked readiness",
+        "blocker reason",
+        "rollback or stop condition context",
+        "explicit human review before continuation"
+      ],
+      "state_change": "none"
+    }
+  ],
+  "guardrails": {
+    "compatible_pair_is_not_permission": true,
+    "human_decision_is_not_permission": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true,
+    "taxonomy_is_not_authority": true,
+    "taxonomy_is_not_claim_graph": true,
+    "taxonomy_is_not_memory": true,
+    "taxonomy_is_not_runtime_gate": true
+  },
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "all_entries_can_grant_permission": false,
+    "all_entries_can_mutate_state": false,
+    "decision_count": 6,
+    "decision_order": [
+      "none",
+      "acknowledge",
+      "approve_baseline_refresh",
+      "adjudicate_conflict",
+      "provide_missing_evidence",
+      "review_blockers"
+    ]
+  },
+  "taxonomy_role": "advisory handoff decision vocabulary only"
+}

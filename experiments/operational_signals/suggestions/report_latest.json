@@ -1,0 +1,345 @@
+{
+  "authority": "derived-advisory-only",
+  "non_authoritative": true,
+  "read_only": true,
+  "schema_version": "1",
+  "evaluated_at": "2026-04-20T00:00:00Z",
+  "rule": "detect_stale_system_state",
+  "thresholds": {
+    "accept_precision": 0.7,
+    "accept_recall": 0.6,
+    "iterate_precision": 0.6
+  },
+  "metrics": {
+    "dataset_cases": 13,
+    "total_cases": 13,
+    "excluded_cases": 0,
+    "tp": 6,
+    "fp": 0,
+    "tn": 7,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "confidence_checked": 6,
+    "confidence_match_rate": 1.0
+  },
+  "verdict": {
+    "classification": "accept_for_staged_promotion",
+    "rationale": "precision and recall clear the conservative acceptance bar; rule is safe for opt-in derived use pending a second tripwire before any wider adoption"
+  },
+  "per_case": [
+    {
+      "id": "pos-001",
+      "label": "positive",
+      "label_reason": "real drift observed in SYSTEM_STATE.md: 730 current vs 550 gate",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "high",
+      "actual_confidence": "high",
+      "suggestion": {
+        "id": "sugg-stale-20260420T000000Z-pos-001-0180",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-001",
+        "project_context": "dataset",
+        "task_description": "SYSTEM_STATE.md carries two divergent `Last suite result` counts across its canonical sections; the older number may still be consulted as ground truth.",
+        "suggested_failure_mode": "STALE_INFORMATION",
+        "supporting_signals": [
+          "current_snapshot_suite_count=730",
+          "gate_status_suite_count=550",
+          "suite_count_drift=180"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "high",
+        "reason_flags": [
+          "stale_snapshot_detected",
+          "suite_count_mismatch"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "pos-002",
+      "label": "positive",
+      "label_reason": "medium drift of 20 tests across sections",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "medium",
+      "actual_confidence": "medium",
+      "suggestion": {
+        "id": "sugg-stale-20260420T000000Z-pos-002-0020",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-002",
+        "project_context": "dataset",
+        "task_description": "SYSTEM_STATE.md carries two divergent `Last suite result` counts across its canonical sections; the older number may still be consulted as ground truth.",
+        "suggested_failure_mode": "STALE_INFORMATION",
+        "supporting_signals": [
+          "current_snapshot_suite_count=730",
+          "gate_status_suite_count=710",
+          "suite_count_drift=20"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "medium",
+        "reason_flags": [
+          "stale_snapshot_detected",
+          "suite_count_mismatch"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "pos-003",
+      "label": "positive",
+      "label_reason": "drift at the medium threshold boundary (diff=10)",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "medium",
+      "actual_confidence": "medium",
+      "suggestion": {
+        "id": "sugg-stale-20260420T000000Z-pos-003-0010",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-003",
+        "project_context": "dataset",
+        "task_description": "SYSTEM_STATE.md carries two divergent `Last suite result` counts across its canonical sections; the older number may still be consulted as ground truth.",
+        "suggested_failure_mode": "STALE_INFORMATION",
+        "supporting_signals": [
+          "current_snapshot_suite_count=735",
+          "gate_status_suite_count=725",
+          "suite_count_drift=10"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "medium",
+        "reason_flags": [
+          "stale_snapshot_detected",
+          "suite_count_mismatch"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "pos-004",
+      "label": "positive",
+      "label_reason": "reverse drift: gate reports more than current; still stale evidence",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "high",
+      "actual_confidence": "high",
+      "suggestion": {
+        "id": "sugg-stale-20260420T000000Z-pos-004-0230",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-004",
+        "project_context": "dataset",
+        "task_description": "SYSTEM_STATE.md carries two divergent `Last suite result` counts across its canonical sections; the older number may still be consulted as ground truth.",
+        "suggested_failure_mode": "STALE_INFORMATION",
+        "supporting_signals": [
+          "current_snapshot_suite_count=500",
+          "gate_status_suite_count=730",
+          "suite_count_drift=-230"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "high",
+        "reason_flags": [
+          "stale_snapshot_detected",
+          "suite_count_mismatch"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "pos-005",
+      "label": "positive",
+      "label_reason": "extreme drift, classic stale-history signal",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "high",
+      "actual_confidence": "high",
+      "suggestion": {
+        "id": "sugg-stale-20260420T000000Z-pos-005-1000",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-005",
+        "project_context": "dataset",
+        "task_description": "SYSTEM_STATE.md carries two divergent `Last suite result` counts across its canonical sections; the older number may still be consulted as ground truth.",
+        "suggested_failure_mode": "STALE_INFORMATION",
+        "supporting_signals": [
+          "current_snapshot_suite_count=0",
+          "gate_status_suite_count=1000",
+          "suite_count_drift=-1000"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "high",
+        "reason_flags": [
+          "stale_snapshot_detected",
+          "suite_count_mismatch"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "pos-006",
+      "label": "positive",
+      "label_reason": "borderline low-confidence drift at exactly the MIN threshold (diff=5)",
+      "expected_suggestion": true,
+      "actual_suggestion": true,
+      "outcome": "tp",
+      "count_in_metrics": true,
+      "expected_confidence": "low",
+      "actual_confidence": "low",
+      "suggestion": {
+        "id": "sugg-stale-20260420T000000Z-pos-006-0005",
+        "timestamp": "2026-04-20T00:00:00Z",
+        "source_artifact": "pos-006",
+        "project_context": "dataset",
+        "task_description": "SYSTEM_STATE.md carries two divergent `Last suite result` counts across its canonical sections; the older number may still be consulted as ground truth.",
+        "suggested_failure_mode": "STALE_INFORMATION",
+        "supporting_signals": [
+          "current_snapshot_suite_count=735",
+          "gate_status_suite_count=730",
+          "suite_count_drift=5"
+        ],
+        "operational_cost_estimate": {
+          "minutes_spent": 0,
+          "extra_files_opened": 0,
+          "manual_search_rounds": 0
+        },
+        "confidence": "low",
+        "reason_flags": [
+          "stale_snapshot_detected",
+          "suite_count_mismatch"
+        ],
+        "human_review_required": true,
+        "authority": "derived-advisory-only",
+        "schema_version": "1",
+        "notes": ""
+      }
+    },
+    {
+      "id": "neg-001",
+      "label": "negative",
+      "label_reason": "both sections agree exactly",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-002",
+      "label": "negative",
+      "label_reason": "drift below the conservative threshold (diff=1)",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-003",
+      "label": "negative",
+      "label_reason": "drift below the conservative threshold (diff=3)",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-004",
+      "label": "negative",
+      "label_reason": "only Current Snapshot present; no cross-section evidence of drift",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-005",
+      "label": "negative",
+      "label_reason": "only Gate Status present; no cross-section evidence of drift",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-006",
+      "label": "negative",
+      "label_reason": "no recognisable canonical sections; numbers appear in prose only",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    },
+    {
+      "id": "neg-007",
+      "label": "negative",
+      "label_reason": "sections present but no `Last suite result` line anywhere",
+      "expected_suggestion": false,
+      "actual_suggestion": false,
+      "outcome": "tn",
+      "count_in_metrics": true,
+      "expected_confidence": null,
+      "actual_confidence": null,
+      "suggestion": null
+    }
+  ]
+}

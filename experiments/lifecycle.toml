@@ -1,0 +1,374 @@
+# Experiments Lifecycle Ledger
+#
+# This ledger is a derived governance artifact listing every folder
+# under `experiments/` that counts as an experiment, together with its
+# lifecycle status and review cadence.
+#
+# It is NOT canonical runtime state. It must not be read or written by
+# `core/` or by any runtime mutator, and it must never be treated as a
+# second source of truth.
+#
+# Vocabulary for `status`:
+#
+#   - active     — currently in use; must carry `last_reviewed`,
+#                  `next_review_due`, and `outcome_so_far`
+#   - graduated  — promoted into an approved surface; must carry
+#                  `graduated_on`, `graduated_to`, and `outcome_so_far`
+#   - archived   — complete, kept as historical evidence, not in use;
+#                  must carry `archived_on` and `outcome_so_far`
+#
+# Deletion of an archived experiment requires an explicit ADR.
+
+schema_version = "1"
+default_review_interval_days = 90
+
+[[experiment]]
+name = "operational_signals"
+status = "active"
+started = "2026-04-20"
+last_reviewed = "2026-04-20"
+next_review_due = "2026-07-19"
+outcome_so_far = "observability-only layer for operational insufficiency signals; advisory tripwire sub-layer `suggestions/` carries one narrow externally validated rule (`detect_stale_system_state`) plus one rule that passed an author-curated dataset but did not validate on the real corpus (`detect_export_surface_gap`); the layer remains advisory-only, human-reviewed, and currently classified as marginal rather than ready for wider expansion"
+
+[[experiment]]
+name = "recall_eval"
+status = "archived"
+started = "2026-04-20"
+archived_on = "2026-04-20"
+outcome_so_far = "semantic retrieval benchmarked against four real-project corpora across four variants (A-D); lexical baseline matched or beat embeddings in most variants; not promoted into the approved product surface; kept as historical evidence that semantic retrieval did not clear the lexical bar on this corpus"
+
+[[experiment]]
+name = "context_discovery"
+status = "active"
+started = "2026-04-23"
+last_reviewed = "2026-04-23"
+next_review_due = "2026-07-22"
+outcome_so_far = "derived content-discovery track added after the bootstrap-scan enrichment trigger was withdrawn for architecture-invariant collision; produces a read-only report comparing registered sources in .cerebro/state.json against the target project filesystem (candidates_not_registered, drift_on_registered_sources, missing_registered_sources); non-authoritative, advisory-only, never mutates .cerebro/ or cli/"
+
+[[experiment]]
+name = "context_vectors"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "deterministic local vector-search experiment for project context; indexes bounded textual heads, returns ranked query hits with trace metadata, includes an oracle evaluation helper, uses no network/model downloads, and remains derived/read-only/non-authoritative; four real oracles now pass at top-3 across rpg_caminhada, Cerebro self, Portal Humaita, and Escritorio IRPF/Caixa Rural (20 total cases, aggregate recall_at_1=0.750, aggregate recall_at_3=1.000); synthesis concludes the layer is mature enough to feed an LLM-facing advisory report but not for runtime authority or automatic source registration"
+
+[[experiment]]
+name = "context_advisor"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "LLM-facing advisory report layer that combines context_discovery candidate/drift/missing-source evidence with context_vectors deterministic ranking evidence; emits structured Markdown for downstream agents with explicit may_suggest/must_not_apply boundaries; local-only, read-only, non-authoritative, and preserves state_change none"
+
+[[experiment]]
+name = "claim_evaluation"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "bounded advisory evaluator over ClaimCandidate inputs; emits EvaluationFinding and EvaluationReport artifacts for authority, confidence, sufficiency, conflict, supersession, staleness-by-conflict, and operational readiness; explicitly preserves registered-is-not-true, retrieved-is-not-relevant, remembered-is-not-trusted, and silence-is-not-negative-evidence boundaries; no claim graph, no runtime gate, no canonical mutation"
+
+[[experiment]]
+name = "claim_extraction"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "deterministic local claim-candidate extraction experiment opened from the epistemic runtime planning lane; emits ClaimCandidate units only, keeps authority_hint and criticality_hint non-final, passes the 12 documented fixtures with forbidden-candidate guards including Fixture 9, and remains derived/read-only/non-authoritative with no claim graph or runtime integration"
+
+[[experiment]]
+name = "epistemic_readiness"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "bounded advisory report generator for epistemic-readiness reports; accepts explicit source manifests, reads bounded heads only, runs claim_extraction plus claim_evaluation, emits stable Markdown with state_change none and baseline comparison hooks, rejects .cerebro/root-escape manifest paths, and remains derived/read-only/non-authoritative with no claim graph or runtime gate"
+
+[[experiment]]
+name = "epistemic_guard"
+status = "active"
+started = "2026-04-24"
+last_reviewed = "2026-04-24"
+next_review_due = "2026-07-23"
+outcome_so_far = "deterministic advisory decision-envelope oracle over concrete action questions; evaluates stale or missing evidence, conflicts, approval expiry, read/write drift, existing-state ambiguity, and missing runtime triggers while preserving state_change none; slice 2 adds bounded TOML manifest loading so explicit action evidence packs can be re-executed into JSON/Markdown reports; slice 3 adds concrete pre-action guard reports over a required proposed_action manifest table; slice 4 adds a pre-action stress matrix proving degraded operator-facing cases stay blocked; slice 5 adds a compact pre-action decision packet that combines report and stress evidence into one operator-facing posture without permission semantics; slice 6 adds packet-level stress/repro evidence proving clean, blocked, human-review, failed-stress, reproducible, stale, malformed, missing, root-escaping, and .cerebro-target packet artifact cases stay advisory and blocked where appropriate; slice 7 adds a final packet review closeout declaring the current pre-action packet lane closed_until_new_evidence with no_action and zero blockers; no runtime gate, no canonical claim graph, no source registration, no memory writing, no automatic execution, and no authority promotion"
+
+[[experiment]]
+name = "third_party_trigger_review"
+status = "active"
+started = "2026-04-25"
+last_reviewed = "2026-04-25"
+next_review_due = "2026-07-24"
+outcome_so_far = "deterministic advisory checker for proposed third-party project triggers; reviews caller-supplied trigger text for target_path, slice_kind, dogfood_value, proof_cost, source roles, target .cerebro handling, rollback, cleanup, stop conditions, forbidden paths, consecutive target-slice consolidation risk, and runtime boundary drift; slice 2 calibrated legacy trigger wording such as Allowed target files under and Explicit Prohibitions, added multi-trigger retrospective summaries, and produced the rpg_caminhada retrospective showing 25/25 historical triggers predate the stricter structured management fields and 14/25 would now force consolidation; emits state_change none and can only report ready_for_human_review, never execution permission"
+
+[[experiment]]
+name = "drift_detection"
+status = "active"
+started = "2026-04-27"
+last_reviewed = "2026-04-27"
+next_review_due = "2026-07-26"
+outcome_so_far = "AST-based structural drift detection for core/, cli/, and extensions/ modules; computes SHA-256 of normalized AST (whitespace/comment-independent) per file, captures baseline snapshot, detects added/modified/removed files between sessions; emits non-authoritative markdown+JSON report; includes deterministic staleness scoring (time+structural formula) via staleness_scorer.py; baseline snapshot now stores captured_at timestamp for time-decay scoring; 79 tests passing; never writes to .cerebro/, never registers sources, never calls import-context, never modifies canonical state"
+
+[[experiment]]
+name = "checkpoint_semantic_diff"
+status = "active"
+started = "2026-04-27"
+last_reviewed = "2026-04-27"
+next_review_due = "2026-07-26"
+outcome_so_far = "Deterministic token-overlap (Jaccard) scoring between checkpoint text (goal+summary+next_step) and registered source file content; classifies alignment as high/medium/low/unavailable; emits non-authoritative markdown+JSON report; reads .cerebro/state.json from target project but never writes to it; 41 tests passing (extractor, scorer, tokenizer, jaccard, classify_alignment, score_alignment, report, end-to-end pipeline, non-mutation boundary)"
+
+[[experiment]]
+name = "control_plane_assessment"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory composition layer for the Cerebro Control Plane front; composes decision_runtime task selection and consistency replay with epistemic_guard DecisionEnvelope readiness, claim_evaluation summaries, and operational_signals summaries; emits state_change none and non-authoritative reports only; does not schedule, grant permission, write memory, create a claim graph, mutate .cerebro/, or add CLI/runtime authority"
+
+[[experiment]]
+name = "capability_policy"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory capability-policy layer for the Cerebro Control Plane front; loads explicit TOML capability rules and evaluates proposed command/tool requests for argv prefix, path scope, data sensitivity, network use, output budget, approval, and .cerebro write boundaries; emits state_change none and non-authoritative assessments only; does not execute commands, register tools, grant permission, expose MCP/external adapters, mutate .cerebro/, or add CLI/runtime authority"
+
+[[experiment]]
+name = "control_plane_trace"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory trace/correlation layer for the Cerebro Control Plane front; correlates ControlPlaneAssessment and CapabilityAssessment inputs into a deterministic replay digest, combined_review_status, recommended_human_decision, blockers, capability review list, and local trace events; rejects inputs that are not non-authoritative state_change none; does not select tasks, recompute readiness, execute commands, register tools, grant permission, expose adapters, mutate .cerebro/, or add CLI/runtime authority"
+
+[[experiment]]
+name = "control_plane_event_ledger"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory JSONL replay layer for the Cerebro Control Plane front; turns ControlPlaneTrace events into an in-memory JSONL ledger and parses/verifies that ledger for sequence continuity, single trace id, single replay digest, event vocabulary, per-row event digests, non-authority guardrails, digest-is-not-truth guardrails, and decision_opened/decision_closed boundaries; does not write files, append logs, register memory, export OpenTelemetry, execute commands, grant permission, expose adapters, mutate .cerebro/, or add CLI/runtime authority"
+
+[[experiment]]
+name = "control_plane_replay_eval"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory replay-contract evaluator for the Cerebro Control Plane front; evaluates caller-supplied JSONL from control_plane_event_ledger and classifies replay_contract_passed, replay_incomplete, replay_contract_failed, or replay_contains_authority_drift while preserving state_change none, non-authoritative output, evaluation-is-not-permission, replay-pass-is-not-truth, and must-not-execute guardrails; does not write files, append logs, register memory, export OpenTelemetry, execute commands, select tasks, recompute readiness, grant permission, expose adapters, mutate .cerebro/, or add CLI/runtime authority"
+
+[[experiment]]
+name = "control_plane_review_packet"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review-packet facade for the Cerebro Control Plane front; composes existing ControlPlaneAssessment, CapabilityAssessment, ControlPlaneTrace, ControlPlaneEventLedger, JSONL replay, and ControlPlaneReplayEvaluation evidence into one operator-facing packet with advisory, human-review, blocked, or replay-invalid packet verdicts; preserves state_change none, non-authoritative output, packet-is-not-permission, replay-pass-is-not-truth, packet-pass-is-not-execution-approval, and must-not-execute guardrails; does not write files, append logs, register memory, export OpenTelemetry, execute commands, recompute readiness, grant permission, expose adapters, mutate .cerebro/, or add CLI/runtime authority"
+
+[[experiment]]
+name = "control_plane_review_matrix"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory matrix over already-built ControlPlaneReviewPacket objects; summarizes observed packet verdict counts, combined review status counts, replay evaluation verdict counts, replay status counts, blockers, replay issues, and required human decisions without emitting a single pass/fail matrix verdict; preserves state_change none, non-authoritative output, matrix-is-not-permission, matrix-pass-is-not-execution-approval, replay-pass-is-not-truth, and must-not-execute guardrails; does not write files, append logs, register memory, export OpenTelemetry, execute commands, select tasks, schedule scenarios, recompute readiness, grant permission, expose adapters, mutate .cerebro/, or add CLI/runtime authority"
+
+[[experiment]]
+name = "control_plane_scenario_lab"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory scenario lab for the Cerebro Control Plane front; runs declared in-memory ControlPlaneScenario objects through ControlPlaneReviewPacket and ControlPlaneReviewMatrix, includes a built-in scenario battery for clean advisory, missing capability, runtime/canonical blocked, and network-review-required paths, and adds adversarial probes for replay authority drift, missing decision_opened, packet guardrail drift, duplicate matrix trace ids, advisory_allow non-permission preservation, assessment blocker laundering, readiness contradictions, capability decision contradictions, expectation laundering, replay-pass laundering, and capability identity collisions; reports expectation drift and adversarial findings without permission semantics; preserves state_change none, non-authoritative output, lab-is-not-permission, expectation-match-is-not-execution-approval, adversarial-findings-are-not-execution-approval, replay-pass-is-not-truth, and must-not-execute guardrails; does not read manifests, write files, append logs, register memory, export OpenTelemetry, execute commands, choose tasks, rank scenarios, schedule scenarios, grant permission, expose adapters, mutate .cerebro/, or add CLI/runtime authority"
+
+[[experiment]]
+name = "control_plane_telemetry_projection"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory in-memory telemetry projection for the Cerebro Control Plane front; maps existing ControlPlaneReviewPacket, ControlPlaneReviewMatrix, ControlPlaneScenarioLabReport, and ControlPlaneAdversarialReport objects to deterministic INTERNAL spans and events with development-only OTel GenAI semantic-convention compatibility markers; preserves projection-is-not-OpenTelemetry-export, projection-is-not-permission, telemetry-is-not-permission, span-status-is-not-truth, semconv-compat-is-not-stability, and must-not-execute guardrails; does not import opentelemetry, emit OTLP, write files, append logs, register memory, execute commands, expose CLI/MCP/Agents SDK adapters, mutate .cerebro/, normalize away blockers/drift/findings, or add runtime authority"
+
+[[experiment]]
+name = "control_plane_guardrail_eval"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory guardrail evaluator for ControlPlaneTelemetryProjection outputs; detects authority, permission, truth, and stability laundering in projection status/name/event/attribute surfaces, exported telemetry markers, stable-looking OTel semconv claims, missing span/event non-permission markers, sensitive GenAI model/message/token attributes, and packet verdict/status contradictions; preserves eval-is-not-permission, finding-is-not-truth, finding-is-not-execution-approval, and must-not-execute guardrails; does not import opentelemetry, export telemetry, write files, append logs, execute commands, expose CLI/MCP/Agents SDK adapters, mutate .cerebro/, consume non-projection inputs, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_boundary_audit"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory static boundary audit for current Control Plane experiment packages; reads bounded production package source files under experiments/ recursively while excluding tests and __pycache__, and reports missing non-authority/no-state-change/no-auto-execute markers, forbidden runtime or adapter imports including direct cli/extensions imports, dangerous file/process/network/export surfaces, and permission/truth/runtime-authority laundering text with local negative-marker suppression only; preserves audit-is-not-permission, finding-is-not-truth, audit-pass-is-not-execution-approval, and must-not-execute guardrails; does not write files, execute commands, expose CLI/MCP/Agents SDK/Temporal/LangGraph/OpenTelemetry adapters, mutate .cerebro/, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_lineage_invariant_eval"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory cross-layer invariant evaluator for the Control Plane evidence chain; consumes already-built packets, matrices, scenario-lab reports, adversarial reports, telemetry projections, and guardrail-eval reports to verify trace ids, packet verdicts, mapped statuses, blockers, replay issues, trace-event sequence/subject/detail, replay digest/status/evaluation verdict, matrix summaries and rows, human-review counts and identities, scenario drift, expectation failures, scenario child spans/status/attributes, adversarial finding counts/codes/severity/detail, adversarial probe child spans/status/attributes, guardrail source projection roles, guardrail summary consistency, and span/event counts survive projection; preserves eval-is-not-permission, invariant-pass-is-not-truth, finding-is-not-execution-approval, and must-not-execute guardrails; does not read .cerebro/, rebuild packets, rerun labs, write files, execute commands, export telemetry, expose adapters, schedule work, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_integrity_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory integrity review for the Control Plane evidence chain; consolidates already-built boundary-audit, guardrail-eval, and lineage-invariant reports into one non-authoritative review status with evidence summaries, source-status counts, severity counts, and finding details; hardening now rejects boundary finding-code, severity, and package summary laundering, guardrail category/severity summary laundering, lineage severity summary laundering, and empty checked-layer identity; preserves review-is-not-permission, integrity-pass-is-not-truth, finding-is-not-execution-approval, and must-not-execute guardrails; does not read observation_center.toml, write files, execute commands, mutate .cerebro/, expose adapters, schedule work, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_action_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory pre-action bundle for one caller-supplied observation-center item; composes observation status/dependencies, capability assessments, ControlPlaneAssessment, review packet, review matrix, telemetry projection, guardrail eval, packet-projection lineage eval, and integrity review into one action posture such as waiting_checkpoint_blocked, blocked_by_boundary, blocked_by_integrity_drift, blocked_by_review, human_review_required, or advisory_review_only; hardening now rejects unknown capability decisions and capability guardrail drift, blocks auto_continuation, carries unsatisfied dependencies as missing evidence for all observation kinds, and rejects render-time matrix/telemetry mix-and-match from another packet; preserves bundle-is-not-permission, action-posture-is-not-execution-approval, replay-pass-is-not-truth, and must-not-execute guardrails; does not read observation_center.toml itself, write files, execute commands, mutate .cerebro/, expose adapters, schedule work, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_observation_set_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory observation-set review for caller-supplied observation-center snapshots; checks machine-primary queue-contract evidence, single_flight, overlap wait posture, duplicate/path-safe ids, resolved live items, auto_continuation, dependency/trigger state, supplied action-review bundle identity, focus drift, and multiple advisory bundles under single_flight; hardening rejects partial bundle/snapshot payload drift, authority-text laundering, bundle guardrail drift, and forged summary counts/identity lists while preserving review-is-not-permission, observed-frontier-is-not-scheduler, advisory-posture-is-not-execution-approval, finding-is-not-truth, and must-not-execute guardrails; does not read observation_center.toml itself, write files, execute commands, mutate .cerebro/, expose adapters, schedule work, choose next action, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_observation_transition_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory observation-transition review for caller-supplied before/after observation-center snapshots; detects temporal laundering such as silent waiting-to-open promotion, silent dependency satisfaction, unresolved item disappearance, resolution without evidence, queue-contract drift, payload drift, auto_continuation introduction, resolved item reopening, and multiple open-ready items under single_flight while preserving transition-review-is-not-permission, observed-transition-is-not-truth, observed-frontier-is-not-scheduler, transition-pass-is-not-execution-approval, finding-is-not-truth, and must-not-execute guardrails; does not read observation_center.toml itself, write files, execute commands, mutate .cerebro/, expose adapters, schedule work, choose next action, grant permission, reconcile state, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_handoff_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory handoff review for caller-supplied handoff claims between agents, roles, or human checkpoints; consumes already-built observation-set, observation-transition, and action-review evidence to detect blocked-state laundering, ready claims outside the observed frontier, clean-transition claims over drift, dropped human decisions, auto_continue, authority/scheduler wording, and forged derived summaries while preserving handoff-review-is-not-permission, handoff-is-not-scheduler, handoff-is-not-execution-approval, observed-frontier-is-not-scheduler, finding-is-not-truth, and must-not-execute guardrails; does not read observation_center.toml itself, write files, execute commands, mutate .cerebro/, expose adapters, transfer control, schedule work, choose next action, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_decision_version_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory decision-version review for caller-supplied decision records before any durable decision store exists; detects revision gaps, duplicate current decisions, non-latest current decisions, unknown or cross-thread supersession, expired current decisions, missing human_decision_id for current human-required decisions, auto_continue, authority/scheduler wording, stale handoff decision references, current approvals over handoff/transition drift, unresolved action-review human decisions, and forged derived summaries while preserving decision-review-is-not-permission, decision-current-is-not-execution-approval, decision-record-is-not-truth, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations or .cerebro/, write files, execute commands, mutate state, expose adapters, apply decisions, schedule work, choose next action, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_rule_promotion_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for caller-supplied rule-change candidates before any rule/contract promotion store exists; detects automatic application, authority/scheduler wording, runtime-boundary candidates without explicit human decision evidence, unknown or non-current decision references, promotion over decision or integrity drift, refresh without evidence, blocked/conflicting rule laundering, blocked action posture, supplied-review guardrail drift, and forged derived summaries; hardening adds caller-supplied rule_thread_id/revision/supersedes_rule_id checks for duplicate thread revisions, revision gaps, missing/unknown/self/cross-thread/non-previous supersession, multiple active versions, active-not-latest versions, stale rule-change candidates, and forged active/non-active summaries while preserving rule-review-is-not-permission, promotion-candidate-is-not-runtime-authority, rule-record-is-not-truth, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations or .cerebro/, write files, execute commands, mutate state, expose adapters, store/apply/promote/enforce rules, schedule work, choose next action, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_runtime_adoption_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for caller-supplied runtime technology adoption proposals before any MCP, Temporal, OpenTelemetry, LangGraph, OpenAI Agents SDK, Cloudflare Agents SDK, adapter, scheduler, or durable runtime boundary exists; detects automatic application, adapter/import requests, I/O or network requests, scheduler-authority requests, missing human decision evidence, missing current decision references, missing integrity review, missing rule references, unsafe pilot/production plans, blocked/rejected/conflicting proposal laundering, authority wording, proposal revision gaps, duplicate thread revisions, unknown/self/cross-thread/non-previous supersession, multiple active candidates, active-not-latest candidates, stale runtime-change candidates, drift in decision/integrity/rule/action inputs, supplied-review guardrail drift, and forged derived summaries while preserving adoption-review-is-not-permission, adoption-status-is-not-execution-approval, technology-selection-is-not-authority, proposal-record-is-not-truth, finding-is-not-truth, and must-not-execute guardrails; does not import runtime SDKs, read docs/operations or .cerebro/, write files, execute commands, mutate state, expose adapters, schedule work, choose next action, grant permission, approve technology, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_runtime_state_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for caller-supplied runtime-state snapshots and optional caller-supplied state/session/event/lock payloads before any canonical runtime_state.json or state-review store exists; detects snapshot identity drift, revision gaps, duplicate thread revisions, missing/unknown/self/cross-thread/non-previous supersession, multiple observed snapshots, observed-not-latest snapshots, canonical-state/scheduler/execution-permission claims, automatic application, secret or raw-evidence claims, missing evidence, blocked snapshot ready-work laundering, queue authority drift, open-ready/blocker contradictions, state root/schema/revision drift, agent-runtime block drift, plan graph dependency drift, plan status contradictions, action/approval/verification relationship drift, trace event continuity drift, session revision or claim drift, lock observation drift, integration drift over observation/decision/integrity/rule/runtime-adoption/action reviews, supplied-review guardrail drift, and forged summaries while preserving state-review-is-not-permission, snapshot-is-not-canonical-state, observed-state-is-not-scheduler, state-status-is-not-execution-approval, finding-is-not-truth, and must-not-execute guardrails; does not import core runtime modules, read state files, read docs/operations or .cerebro/, write files, execute commands, mutate state, recover locks, read queues, schedule work, choose next action, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_runtime_contract_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for caller-supplied runtime manager contract candidates before any canonical runtime contract, runtime_state.json, scheduler, state store, queue reader, adapter, or runtime boundary exists; detects missing contract sections for mission, non-goals, states, transitions, gates, permissions, evidence, queue, dependencies, retry, rollback, observability, decision versioning, handoff, tool manifest, security limits, memory, and stop rules; detects missing machine-readable state, queue model, approval/evidence/security/stop policies, missing evidence, revision/supersession drift, multiple active candidates, runtime-authority/canonical-contract/execution/scheduler/state-store/adapter/auto-apply/secret claims, authority-text laundering, missing decision/rule/adoption/state/integrity evidence, references to non-current decisions, non-active rules, unknown or blocked adoption candidates, unknown or blocked state snapshots, integrity drift, action-review blockers, supplied-review guardrail drift, and forged summaries while preserving contract-review-is-not-permission, contract-candidate-is-not-canonical-runtime-contract, contract-status-is-not-execution-approval, contract-review-is-not-scheduler, contract-review-is-not-state-store, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations or .cerebro/, read state files, write files, execute commands, mutate state, import core runtime modules, expose adapters, schedule work, choose next action, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_runtime_state_transition_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for deltas between caller-supplied ControlPlaneRuntimeStateReview objects and caller-supplied transition evidence; detects blocked before/after state reviews, review date regression, latest snapshot changes without supersession or continuity evidence, latest snapshot regression, snapshot-thread fork/regression, open-ready observation introduction without evidence, active observation removal without resolution evidence, current decision changes without human evidence, active rule changes without rule evidence, runtime adoption candidate introduction/removal without adoption/resolution evidence, state-scope drift without transition evidence, blocked adoption introduction, unresolved action bundles, transition evidence permission laundering, and session/lock recovery-authority claims while preserving transition-review-is-not-permission, observed-transition-is-not-truth, observed-transition-is-not-scheduler, transition-pass-is-not-execution-approval, transition-review-is-not-state-store, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations or .cerebro/, read state files, write files, execute commands, mutate state, import core runtime modules, expose adapters, schedule work, choose next action, grant permission, apply transitions, promote state, recover locks, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_tool_manifest_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for caller-supplied tool manifest candidates before any registered tool manifest, MCP server, Agents SDK tool boundary, adapter, scheduler, queue reader, state store, runtime registry, or durable runtime exists; detects manifest revision/supersession drift, multiple active candidates, missing evidence and required policies, tool-authority/execution-permission/register/adapters/MCP/scheduler/live-state/state-mutation/auto-apply/secret/raw-output claims, high-risk/network/mutating/destructive/sensitive-output tool laundering, missing timeouts, capability-rule drift, decision/rule/integrity/action-review drift, supplied-review guardrail drift, and forged summaries while preserving tool-manifest-review-is-not-permission, manifest-candidate-is-not-registered-tool-manifest, tool-decision-is-not-execution-approval, tool-manifest-review-is-not-adapter, tool-manifest-review-is-not-scheduler, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations or .cerebro/, read state files, write files, execute commands, mutate state, import core runtime modules, expose adapters, register tools, call tools, schedule work, choose next action, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_evidence_policy_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for caller-supplied evidence policy candidates and evidence records before any evidence store, evidence registry, runtime state, scheduler, queue reader, adapter, or canonical gate exists; detects policy revision/supersession drift, multiple active candidates, missing evidence/kinds/status/policies, raw/secret/sensitive/expired/personal-data evidence laundering, accepted evidence without policy/active policy/sanitization/redaction/human decision, truth/permission/store/live-state/state-mutation/auto-apply/secret claims, decision/rule/integrity/action-review drift, supplied-review guardrail drift, and forged summaries while preserving evidence-policy-review-is-not-permission, accepted-evidence-is-not-truth, evidence-record-is-not-truth, evidence-sufficiency-is-not-execution-approval, approval-presence-is-not-sufficient-evidence, silence-is-not-negative-evidence, secret-material-must-not-be-retained, raw-tool-output-must-not-be-retained, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations or .cerebro/, read state files, write files, execute commands, mutate state, import core runtime modules, expose adapters, register/store evidence, schedule work, choose next action, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_work_queue_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for caller-supplied work queue candidates before any QA queue, work queue file, queue reader, scheduler, state store, worker reservation, adapter, or canonical runtime boundary exists; detects item revision/supersession drift, multiple ready candidates, missing evidence/expected evidence/acceptance criteria/owner, unknown or blocked dependencies, high-priority items without decision evidence, ready candidates with unsatisfied dependencies or missing human approval, queue/scheduler/priority-truth/execution-permission/live-queue/state-mutation/queue-reader/auto-dispatch/secret claims, decision/rule/integrity/evidence-policy/action-review drift, supplied-review guardrail drift, and forged summaries while preserving work-queue-review-is-not-permission, work-queue-review-is-not-scheduler, queue-item-is-not-execution-approval, queue-priority-is-not-truth, dependency-status-is-not-truth, ready-status-is-not-execution-approval, work-queue-review-is-not-queue-reader, work-queue-review-is-not-state-store, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations, tasks/, .cerebro/, queue files, or state files, write files, execute commands, mutate state, enqueue/dequeue work, reserve workers, call tools, expose adapters, schedule work, choose next action, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_approval_policy_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for caller-supplied approval policy candidates before any approval store, permission layer, scheduler, state store, queue reader, adapter, or canonical runtime gate exists; detects policy revision/supersession drift, multiple active candidates, missing evidence/required evidence/current decision/human decision/accepted evidence/integrity/explicit scope/action fingerprint/expiration/audit logging/revocation path controls, blanket approval and reuse-after-scope-drift risk, approval authority/execution-permission/permission-layer/approval-store/live-store-read/scheduler/next-action/state-mutation/auto-apply/secret claims, decision/rule/evidence/tool/work-queue/integrity/action-review drift, supplied-review guardrail drift, and forged summaries while preserving approval-policy-review-is-not-permission, approval-policy-review-is-not-approval-store, approval-status-is-not-execution-approval, approval-presence-is-not-sufficient-evidence, approval-policy-review-is-not-scheduler, approval-policy-review-is-not-runtime-gate, approval-policy-review-is-not-state-store, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations, .cerebro/, queue files, state files, approval stores, evidence stores, tool registries, or target files, write files, execute commands, mutate state, register approvals, approve execution, schedule work, select next action, call tools, expose adapters, grant permission, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_adversarial_posture_review"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory review for caller-supplied Control Plane review artifacts; detects false guardrails, forged finding summaries, authority/status/text laundering, clean-status-with-findings contradictions, clean-status-with-blockers contradictions, blocking-status-without-evidence contradictions, expected blocker disappearance, missing required guardrails, duplicate subject ids, mutating state claims, non-authority drift, and auto-execution drift while preserving posture-review-is-not-permission, posture-review-is-not-runtime-gate, posture-status-is-not-truth, posture-review-is-not-scheduler, posture-review-is-not-state-store, posture-review-is-not-approval, finding-is-not-truth, finding-is-not-execution-approval, and must-not-execute guardrails; does not read docs/operations, .cerebro/, state files, queue files, approval stores, evidence stores, tool registries, target files, or raw evidence, write files, execute commands, mutate state, rank or choose work, schedule work, approve execution, grant permission, call tools, expose adapters, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_cross_review_consistency_eval"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory cross-review consistency evaluator for caller-supplied Control Plane review artifacts; detects duplicate subject ids, shared-identity status conflicts, shared trace/replay-digest conflicts, action advisory posture over integrity drift, action advisory posture over packet blockers, action advisory posture with blockers, ready work/tool/approval candidates over blocked dependency evidence, clean statuses with blocked ids/blockers/missing evidence, blocked statuses without structured evidence, forged finding counts/codes/severity summaries, mutating state claims, non-authority drift, and auto-execution drift while preserving consistency-eval-is-not-permission, consistency-status-is-not-truth, consistency-eval-is-not-execution-approval, consistency-eval-is-not-scheduler, consistency-eval-is-not-runtime-gate, consistency-eval-is-not-state-store, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations, .cerebro/, state files, queue files, approval stores, evidence stores, tool registries, target files, or raw evidence, write files, execute commands, mutate state, rank or choose work, schedule work, approve execution, grant permission, call tools, expose adapters, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "control_plane_loop_stop_eval"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-08"
+next_review_due = "2026-08-06"
+outcome_so_far = "Read-only advisory loop-frame consistency evaluator for caller-supplied Control Plane loop-step records; detects continuation after failed/missing/stale validation, validation revision drift, met stop conditions, missing or closed trigger evidence, waiting/blocked/resolved/superseded/non-latest queue heads, unsatisfied dependencies, blocked ids, missing evidence ids, blocking referenced review statuses, agent-focus/queue-head drift, multiple frontiers or ready ids under single-flight, repeated same evidence digest without human/evidence override, stop-condition drift without override, auto-continue requests, state-mutation claims, live-queue-read claims, scheduler-authority claims, execution-permission claims, and authority-text laundering while preserving loop-stop-eval-is-not-permission, loop-stop-status-is-not-truth, loop-stop-eval-is-not-execution-approval, loop-stop-eval-is-not-scheduler, loop-stop-eval-is-not-runtime-gate, loop-stop-eval-is-not-state-store, finding-is-not-truth, and must-not-execute guardrails; does not read docs/operations, .cerebro/, queue files, state files, approval stores, evidence stores, tool registries, target files, runtime stores, logs, locks, sessions, or raw evidence, write files, execute commands, mutate state, validate live state, rank or choose work, schedule work, dispatch agents, approve execution, grant permission, call tools, expose adapters, or become a runtime/canonical gate"
+
+[[experiment]]
+name = "runtime_manager_evals"
+status = "active"
+started = "2026-05-08"
+last_reviewed = "2026-05-09"
+next_review_due = "2026-08-07"
+outcome_so_far = "Deterministic evaluators for runtime manager trace/metrics/replay artifacts. Checks trace structural invariants (required fields, non-permission markers, valid outcomes, duplicate ids), metrics sanity invariants (required fields, sum consistency, no negatives), and replay structural invariants (required fields, digest format, duplicate check ids, missing passed field). Phase 9 evals: per-call auth, no HTTP, persistent rate limit, lease contention, token revocation, no raw token in outputs. Phase 10 evals: stress_pass_is_not_permission, integrity_report_is_not_permission, metrics not authority, trace no secret, replay path guard, L4 blocked, token revoke blocks next call, mcp_level_blocked covers all tools. Advisory-only: eval_is_not_permission always True."
+
+[[experiment]]
+name = "runtime_manager_stress_lab"
+status = "active"
+started = "2026-05-09"
+last_reviewed = "2026-05-09"
+next_review_due = "2026-08-07"
+outcome_so_far = "Phase 10 local stress lab with 8 deterministic scenarios: lease race (8-process, exactly 1 wins), rate limit concurrency (≤10 allowed), token revoke mid-session, token expire mid-session, expired-lease reclaim, replay path guard, reads under load (12 concurrent), DB busy contention (16 concurrent writers). All results carry stress_pass_is_not_permission=True and authority='advisory/local stress only'. No long sleeps; runs inside pytest gate."

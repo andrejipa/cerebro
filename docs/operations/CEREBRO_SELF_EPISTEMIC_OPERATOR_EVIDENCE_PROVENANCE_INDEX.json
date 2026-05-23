@@ -1,0 +1,440 @@
+{
+  "artifacts": [
+    {
+      "artifact_format": "toml",
+      "artifact_id": "readiness_manifest",
+      "authority": "non-authoritative; advisory evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "821b020a57474533a89d38a8f5184f839a157c65513168be9356dd6ec58a2960",
+      "exists": true,
+      "parse_status": "parsed_toml",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_MANIFEST.toml",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "no indexed summary fields",
+      "upstream_artifacts": []
+    },
+    {
+      "artifact_format": "markdown",
+      "artifact_id": "readiness_report",
+      "authority": "not_declared_text_digest_only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "6fc8f4eeaa9b47f11b603934e1ddf83c3691e447f64bfccaeb1c464eaff128b2",
+      "exists": true,
+      "parse_status": "text_digest_only",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_REPORT.md",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "not_declared_text_digest_only",
+      "state_change": "not_declared_text_digest_only",
+      "summary": "text digest only; no truth inferred",
+      "upstream_artifacts": [
+        "readiness_manifest"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "readiness_trace",
+      "authority": "non-authoritative; advisory trace evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "5e2c0236c54d9dd1a60557357eda3654b4a0d508ff6c22fa1780cec01bbd5f44",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "action_readiness=derived_experiment_allowed",
+      "upstream_artifacts": [
+        "readiness_manifest"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "readiness_trace_baseline",
+      "authority": "non-authoritative; advisory trace evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "5e2c0236c54d9dd1a60557357eda3654b4a0d508ff6c22fa1780cec01bbd5f44",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_BASELINE.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "action_readiness=derived_experiment_allowed",
+      "upstream_artifacts": [
+        "readiness_trace"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "readiness_trace_diff",
+      "authority": "non-authoritative; advisory trace-diff evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "8b7db86ff8c822f89eb721796dfe978eb53292ab19b6d019d475ea9d12ce12d2",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_DIFF.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "no indexed summary fields",
+      "upstream_artifacts": [
+        "readiness_trace",
+        "readiness_trace_baseline"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "protocol_self_audit",
+      "authority": "non-authoritative; advisory protocol self-audit evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "c1d5ab6ae3947928af446541a0a200c1b192ecf37cd9c0e06a32de0b68dcdfdd",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_PROTOCOL_SELF_AUDIT.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "no indexed summary fields",
+      "upstream_artifacts": [
+        "readiness_trace_diff"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "baseline_lifecycle",
+      "authority": "non-authoritative; advisory baseline lifecycle evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "9ecae3c306a345649cc43144ef6693240b9474559ce545f615fea217c519e547",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_LIFECYCLE.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "no indexed summary fields",
+      "upstream_artifacts": [
+        "readiness_trace",
+        "readiness_trace_baseline",
+        "readiness_trace_diff",
+        "protocol_self_audit"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "drift_policy",
+      "authority": "non-authoritative; advisory replay drift policy evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "8a6a00025b8a5860921ba79414f592824cfc45b4420ae67ab0c1348eaf09d809",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_DRIFT_POLICY.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "no indexed summary fields",
+      "upstream_artifacts": [
+        "readiness_trace_diff",
+        "protocol_self_audit",
+        "baseline_lifecycle"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "metacognitive_handoff",
+      "authority": "non-authoritative; advisory metacognitive handoff evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "ac110d0def9bffa90d02ffb2da3c26c2110012694aeca34497796856f1d0d3b9",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_METACOGNITIVE_HANDOFF.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "action_readiness=no_action; recommended_human_decision=none",
+      "upstream_artifacts": [
+        "readiness_trace",
+        "baseline_lifecycle",
+        "protocol_self_audit",
+        "drift_policy"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "handoff_stress_matrix",
+      "authority": "non-authoritative; advisory handoff stress matrix evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "23e1077dfe7ee90a2baa67edecd34bbb997907639d1c691142b6ced3eb11ad22",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_HANDOFF_STRESS_MATRIX.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "scenario_count=5; pass_count=5; fail_count=0",
+      "upstream_artifacts": [
+        "metacognitive_handoff"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "human_decision_taxonomy",
+      "authority": "non-authoritative; advisory human decision taxonomy evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "5f9e12611e44319c3260cbdd27523af58bd7313cc743efcd22e42a69fba5640f",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_HUMAN_DECISION_TAXONOMY.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "no indexed summary fields",
+      "upstream_artifacts": [
+        "handoff_stress_matrix"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "decision_taxonomy_conformance",
+      "authority": "non-authoritative; advisory decision taxonomy conformance evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "a3c4bb7a1b12a419bac9f32338805c43b76c448dc9797436f2017c8be00a02dc",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_DECISION_TAXONOMY_CONFORMANCE.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "pass_count=5; fail_count=0",
+      "upstream_artifacts": [
+        "human_decision_taxonomy",
+        "handoff_stress_matrix"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "operator_decision_packet",
+      "authority": "non-authoritative; advisory operator decision packet evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "bfaa93d5629776be99f6a216e0bb2515c2644c3e52bc92c1bdc1ae87b6d291a9",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_DECISION_PACKET.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "action_readiness=no_action; recommended_human_decision=none; blocker_count=0",
+      "upstream_artifacts": [
+        "metacognitive_handoff",
+        "decision_taxonomy_conformance",
+        "drift_policy",
+        "baseline_lifecycle"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "operator_packet_stress_matrix",
+      "authority": "non-authoritative; advisory operator packet stress matrix evidence only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "9554ce0a1e67e24923439cadc3e3f5cbbc25a3141841dd9becff78fa87a6a543",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_PACKET_STRESS_MATRIX.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "scenario_count=6; pass_count=6; fail_count=0; all_scenarios_passed=true",
+      "upstream_artifacts": [
+        "operator_decision_packet"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "operator_evidence_bundle",
+      "authority": "non-authoritative; advisory operator evidence bundle only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "ab330ddb47036cd50bbbdff8f43be5b5f354d6bd76b99fe3ce4bc2ba0957b29b",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_BUNDLE.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "input_count=6; source_artifact_count=4; boundary_error_count=1",
+      "upstream_artifacts": [
+        "operator_decision_packet",
+        "operator_packet_stress_matrix",
+        "baseline_lifecycle",
+        "decision_taxonomy_conformance",
+        "drift_policy",
+        "metacognitive_handoff"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "operator_evidence_bundle_stress_matrix",
+      "authority": "non-authoritative; advisory operator evidence bundle stress matrix only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "2acd71d0eac68d65d73c990e87eea8a6c7885efe4a9b6844534ea40fcf42e808",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_BUNDLE_STRESS_MATRIX.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "blocker_count=6; scenario_count=7; pass_count=7; fail_count=0; all_scenarios_passed=true; boundary_error_count=6",
+      "upstream_artifacts": [
+        "operator_evidence_bundle"
+      ]
+    },
+    {
+      "artifact_format": "toml",
+      "artifact_id": "operator_evidence_intake_manifest",
+      "authority": "non-authoritative; advisory operator evidence intake manifest only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "404d07e4a6fa5ab444499b9be5279cacc1b2159a41b20202c45486e4cada192b",
+      "exists": true,
+      "parse_status": "parsed_toml",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_INTAKE_MANIFEST.toml",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "no indexed summary fields",
+      "upstream_artifacts": [
+        "operator_evidence_bundle"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "operator_evidence_intake_report",
+      "authority": "non-authoritative; advisory operator evidence intake report only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "eb3c2a168b94736737133d56c57410fb180c5e9def567694b1c5c54466a599c9",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_INTAKE_REPORT.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "action_readiness=advisory_report_allowed; recommended_human_decision=none; blocked=false; blocker_count=0; input_count=6; source_artifact_count=4",
+      "upstream_artifacts": [
+        "operator_evidence_intake_manifest",
+        "operator_evidence_bundle"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "operator_evidence_intake_stress_matrix",
+      "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "05e3e070d0386e31e7402bbb707c25f63aa326501315ff6f5cc94a9162b8c0a4",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_INTAKE_STRESS_MATRIX.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "blocker_count=7; scenario_count=8; pass_count=8; fail_count=0; all_scenarios_passed=true; boundary_error_count=7",
+      "upstream_artifacts": [
+        "operator_evidence_intake_report"
+      ]
+    },
+    {
+      "artifact_format": "json",
+      "artifact_id": "operator_evidence_intake_reproducibility_check",
+      "authority": "non-authoritative; advisory operator evidence intake reproducibility check only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "f6f09e900640dbe5b3a9d980218cab765aa0b5808a0468973705dfe54d49c053",
+      "exists": true,
+      "parse_status": "parsed_json",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_INTAKE_REPRODUCIBILITY_CHECK.json",
+      "role": "operator-facing advisory evidence artifact",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": "action_readiness=advisory_report_allowed; recommended_human_decision=none; reproducibility_status=reproducible; blocked=false; blocker_count=0; mismatch_count=0; digest_match=true",
+      "upstream_artifacts": [
+        "operator_evidence_intake_manifest",
+        "operator_evidence_intake_report"
+      ]
+    }
+  ],
+  "authority": "non-authoritative; advisory operator evidence provenance index only",
+  "blockers": [],
+  "boundary": {
+    "may_suggest": [
+      "show checked-in advisory evidence artifacts",
+      "show evidence artifact digests",
+      "show declared upstream advisory dependencies",
+      "surface missing artifacts as blockers",
+      "surface malformed artifacts as blockers",
+      "surface mutating artifacts as blockers",
+      "surface dependency gaps as blockers",
+      "make operator review cheaper",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "refresh artifacts automatically",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "create canonical evidence graph",
+      "promote or demote authority",
+      "treat provenance as permission",
+      "treat digests as truth",
+      "hide blockers",
+      "infer negative evidence from silence"
+    ]
+  },
+  "guardrails": {
+    "dependency_map_is_not_canonical_graph": true,
+    "digest_is_not_truth": true,
+    "provenance_index_is_not_authority": true,
+    "provenance_index_is_not_claim_graph": true,
+    "provenance_index_is_not_memory": true,
+    "provenance_index_is_not_permission": true,
+    "provenance_index_is_not_runtime_gate": true,
+    "provenance_index_is_not_source_registry": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "index_role": "advisory evidence provenance index, not a canonical graph",
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "action_readiness": "advisory_report_allowed",
+    "artifact_blocker_count": 0,
+    "artifact_count": 20,
+    "blocked": false,
+    "blocker_count": 0,
+    "dependency_edge_count": 39,
+    "digest_manifest": "d254a139135ddb7f46f29c8e28e3f8252894244ecb6bb2b74aee6eb9b99f4ef8",
+    "present_count": 20,
+    "recommended_human_decision": "none"
+  }
+}

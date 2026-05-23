@@ -1,0 +1,8 @@
+# Operational Insufficiency Signals
+#
+# This registry is experimental, derived, non-authoritative, opt-in,
+# and observability-only. It is not canonical runtime state, must not
+# be read or written by `core/`, and must never be treated as project
+# truth or as a decision gate.
+
+schema_version = "1"

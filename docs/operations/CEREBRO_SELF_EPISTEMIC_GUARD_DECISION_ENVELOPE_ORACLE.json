@@ -1,0 +1,398 @@
+{
+  "authority": "non-authoritative; advisory decision envelope only",
+  "envelopes": [
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "none",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "04_DIAGNOSTICO_INICIAL_ATUAL.md",
+          "04_MEMORIA_CONTINUIDADE_ATUAL.md"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [],
+        "zone": "ZONE_1"
+      },
+      "action_readiness": "human_approval_required",
+      "approval_status": "not_required",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [],
+      "claim_summary": [
+        "claim-new-next: next_action is implement_edge_functions [continuity]",
+        "claim-old-next: next_action is create_schema [diagnostic]",
+        "claim-schema: schema exists true [continuity]"
+      ],
+      "conflicts": [
+        "next_action:is has conflicting values across claim-new-next, claim-old-next"
+      ],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Decide whether the next project step is to create schema or implement Edge Functions.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "not_applicable",
+      "read_set": [
+        "04_DIAGNOSTICO_INICIAL_ATUAL.md",
+        "04_MEMORIA_CONTINUIDADE_ATUAL.md"
+      ],
+      "recommended_human_decision": "adjudicate_conflict",
+      "scenario_id": "stale_next_action",
+      "stale_claims": [
+        "claim-old-next: source_stale"
+      ],
+      "state_change": "none",
+      "sufficiency": "insufficient",
+      "warnings": []
+    },
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "none",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "04_DIAGNOSTICO_INICIAL_ATUAL.md"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [],
+        "zone": "ZONE_0"
+      },
+      "action_readiness": "human_approval_required",
+      "approval_status": "not_required",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [],
+      "claim_summary": [
+        "claim-omission: diagnostic does_not_declare schema_status [diagnostic]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Decide whether schema is absent because a diagnostic source did not mention it.",
+      "missing_evidence": [
+        "req-schema-status: missing explicit schema existence evidence for schema-dependent action"
+      ],
+      "prewrite_guard_status": "not_applicable",
+      "read_set": [
+        "04_DIAGNOSTICO_INICIAL_ATUAL.md"
+      ],
+      "recommended_human_decision": "provide_missing_evidence",
+      "scenario_id": "silence_is_not_negative_evidence",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "partial",
+      "warnings": []
+    },
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "advisory",
+        "existing_state_policy": "ambiguous",
+        "reads": [
+          "target/.cerebro/state.json"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [],
+        "zone": "ZONE_1"
+      },
+      "action_readiness": "blocked",
+      "approval_status": "not_required",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [
+        "existing_state_ambiguity"
+      ],
+      "claim_summary": [
+        "claim-prior-state: target_cerebro_state exists true [state-observation]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Start a third-party pilot where a prior .cerebro/state.json already exists.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "not_applicable",
+      "read_set": [
+        "target/.cerebro/state.json"
+      ],
+      "recommended_human_decision": "adjudicate_conflict",
+      "scenario_id": "existing_state_ambiguity",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "blocked",
+      "warnings": []
+    },
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "canonical",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "core/state_store.py"
+        ],
+        "reversibility": "medium",
+        "runtime_impact": "direct",
+        "writes": [
+          "core/state_store.py"
+        ],
+        "zone": "ZONE_3"
+      },
+      "action_readiness": "canonical_change_requires_trigger",
+      "approval_status": "missing_for_authority_impact",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [
+        "human_approval_missing_for_authority_impact",
+        "missing_active_trigger_for_runtime_or_canonical_change"
+      ],
+      "claim_summary": [
+        "claim-runtime-touch: core_runtime would_change true [runtime-file]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Edit core runtime behavior without an active formal trigger.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "passed",
+      "read_set": [
+        "core/state_store.py"
+      ],
+      "recommended_human_decision": "review_blockers",
+      "scenario_id": "missing_trigger_for_runtime_mutation",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "blocked",
+      "warnings": []
+    },
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "advisory",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "A.md",
+          "B.md"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [
+          "report.md"
+        ],
+        "zone": "ZONE_2"
+      },
+      "action_readiness": "blocked",
+      "approval_status": "expired_by_source_set_change",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [
+        "approval_expired_by_source_set_change"
+      ],
+      "claim_summary": [
+        "claim-plan: plan is_ready true [a]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Apply a plan after a new decisive source entered the read set.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "passed",
+      "read_set": [
+        "A.md",
+        "B.md"
+      ],
+      "recommended_human_decision": "review_blockers",
+      "scenario_id": "approval_expired_by_source_set_change",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "blocked",
+      "warnings": []
+    },
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "advisory",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "SYSTEM_STATE.md"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [
+          "derived-report.md"
+        ],
+        "zone": "ZONE_2"
+      },
+      "action_readiness": "blocked",
+      "approval_status": "approved_current",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [
+        "read_write_drift:SYSTEM_STATE.md"
+      ],
+      "claim_summary": [
+        "claim-snapshot: system_snapshot supports report [system-state]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Write a report based on a file whose digest changed after read.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "blocked_read_write_drift",
+      "read_set": [
+        "SYSTEM_STATE.md"
+      ],
+      "recommended_human_decision": "review_blockers",
+      "scenario_id": "read_write_drift",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "blocked",
+      "warnings": []
+    },
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "none",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "03_HIERARQUIA_DE_FONTES.md",
+          "04_DIAGNOSTICO_INICIAL_ATUAL.md"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [],
+        "zone": "ZONE_1"
+      },
+      "action_readiness": "human_approval_required",
+      "approval_status": "not_required",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [],
+      "claim_summary": [
+        "claim-continuity-next: next_action is implement_edge_functions [continuity]",
+        "claim-diagnostic-next: next_action is create_schema [diagnostic]",
+        "claim-route: protocol_route prefers diagnostic [protocol]"
+      ],
+      "conflicts": [
+        "next_action:is has conflicting values across claim-continuity-next, claim-diagnostic-next"
+      ],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Follow a protocol route that prioritizes a stale diagnostic over current continuity.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "not_applicable",
+      "read_set": [
+        "03_HIERARQUIA_DE_FONTES.md",
+        "04_DIAGNOSTICO_INICIAL_ATUAL.md"
+      ],
+      "recommended_human_decision": "adjudicate_conflict",
+      "scenario_id": "protocol_induced_stale_source_route",
+      "stale_claims": [
+        "claim-diagnostic-next: source_stale"
+      ],
+      "state_change": "none",
+      "sufficiency": "insufficient",
+      "warnings": [
+        "protocol_route_correlates_with_stale_source"
+      ]
+    },
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "none",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "SYSTEM_STATE.md",
+          "OPPORTUNITY_MAP.md"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [],
+        "zone": "ZONE_1"
+      },
+      "action_readiness": "advisory_report_allowed",
+      "approval_status": "not_required",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [],
+      "claim_summary": [
+        "claim-current-boundary: runtime_boundary is closed [system]",
+        "claim-next: next_action is applied_decision_oracle [opportunity]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Produce a read-only advisory report from current bounded evidence.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "not_applicable",
+      "read_set": [
+        "OPPORTUNITY_MAP.md",
+        "SYSTEM_STATE.md"
+      ],
+      "recommended_human_decision": "none",
+      "scenario_id": "clean_advisory_report",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "sufficient",
+      "warnings": []
+    }
+  ],
+  "state_change": "none"
+}

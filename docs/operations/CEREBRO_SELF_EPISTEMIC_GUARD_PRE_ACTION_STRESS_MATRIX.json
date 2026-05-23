@@ -1,0 +1,93 @@
+{
+  "all_cases_passed": true,
+  "authority": "non-authoritative; advisory pre-action stress matrix only",
+  "blocked_or_human_count": 5,
+  "blocker_count": 6,
+  "boundary_error_count": 2,
+  "case_count": 6,
+  "cases": [
+    {
+      "actual_action_readiness": "advisory_report_allowed",
+      "actual_error": "",
+      "actual_human_decision": "none",
+      "blocker_count": 0,
+      "boundary_error": false,
+      "case_id": "clean_pre_action_report",
+      "description": "Clean declared advisory action remains allowed only as an advisory report.",
+      "expected_action_readiness": "advisory_report_allowed",
+      "expected_error_contains": "",
+      "expected_human_decision": "none",
+      "passed": true
+    },
+    {
+      "actual_action_readiness": "blocked",
+      "actual_error": "pre-action manifest requires [proposed_action]",
+      "actual_human_decision": "review_blockers",
+      "blocker_count": 1,
+      "boundary_error": true,
+      "case_id": "missing_proposed_action",
+      "description": "A pre-action manifest without [proposed_action] fails closed.",
+      "expected_action_readiness": "blocked",
+      "expected_error_contains": "proposed_action",
+      "expected_human_decision": "review_blockers",
+      "passed": true
+    },
+    {
+      "actual_action_readiness": "blocked",
+      "actual_error": "pre-action reports must declare expected_state_change = 'none'",
+      "actual_human_decision": "review_blockers",
+      "blocker_count": 1,
+      "boundary_error": true,
+      "case_id": "mutating_expected_state",
+      "description": "A pre-action manifest that expects state mutation fails closed.",
+      "expected_action_readiness": "blocked",
+      "expected_error_contains": "expected_state_change",
+      "expected_human_decision": "review_blockers",
+      "passed": true
+    },
+    {
+      "actual_action_readiness": "canonical_change_requires_trigger",
+      "actual_error": "",
+      "actual_human_decision": "review_blockers",
+      "blocker_count": 2,
+      "boundary_error": false,
+      "case_id": "runtime_promotion_without_trigger",
+      "description": "Runtime/canonical promotion without an active trigger remains blocked.",
+      "expected_action_readiness": "canonical_change_requires_trigger",
+      "expected_error_contains": "",
+      "expected_human_decision": "review_blockers",
+      "passed": true
+    },
+    {
+      "actual_action_readiness": "blocked",
+      "actual_error": "",
+      "actual_human_decision": "review_blockers",
+      "blocker_count": 1,
+      "boundary_error": false,
+      "case_id": "stale_approval",
+      "description": "Approval whose read set changed remains blocked.",
+      "expected_action_readiness": "blocked",
+      "expected_error_contains": "",
+      "expected_human_decision": "review_blockers",
+      "passed": true
+    },
+    {
+      "actual_action_readiness": "blocked",
+      "actual_error": "",
+      "actual_human_decision": "review_blockers",
+      "blocker_count": 1,
+      "boundary_error": false,
+      "case_id": "read_write_drift",
+      "description": "Read/write drift remains blocked by the prewrite guard.",
+      "expected_action_readiness": "blocked",
+      "expected_error_contains": "",
+      "expected_human_decision": "review_blockers",
+      "passed": true
+    }
+  ],
+  "fail_count": 0,
+  "must_not_execute_automatically": true,
+  "pass_count": 6,
+  "state_change": "none",
+  "stress_pass_is_not_permission": true
+}
