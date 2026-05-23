@@ -1,8 +1,8 @@
 [center]
 version = 1
-updated_at = "2026-05-09T18:00:00-03:00"
+updated_at = "2026-05-23T00:00:00-04:00"
 queue_authority = "machine-primary"
-projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
+projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue. observation_center.toml is the bootstrap/import source until SQLite promotion, then legacy export/bootstrap compatibility only."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
 selection_contract = "Select the highest-priority observation whose status is open, whose boundary is authorized, whose trigger requirements are satisfied, and whose dependencies are already resolved."
 selection_order = "status=open first, then priority, then the current checked-in order unless a later docs-only reconciliation records a different stable tie-break."
@@ -35,16 +35,16 @@ trigger_docs = "Keep any active trigger aligned with the current open slice and 
 [[observations]]
 id = "observation-center-sqlite-ledger"
 title = "Promote the local observation center from TOML to SQLite"
-status = "blocked"
-kind = "blocker"
-priority = "medium"
-boundary = "new formal resume trigger required before any runtime, tooling, or migration work outside docs/"
-trigger = "not open"
-source_plan = "none yet"
-source_snapshot = "research conclusion recorded on 2026-04-23"
+status = "open"
+kind = "slice"
+priority = "high"
+boundary = "operator explicitly authorized the local SQLite observation-center promotion on 2026-05-23; scope is docs reconciliation, UX clarity, MCP CI, navigation, schema v16 promotion/export, and contract updates only"
+trigger = "FORMAL_RESUME_TRIGGER_OBSERVATION_CENTER_SQLITE_LEDGER_2026-05-23"
+source_plan = "Plano: Executar Os 5 Pontos Com Migracao SQLite Controlada"
+source_snapshot = "post-merge main at 71d8be3f, official base gate green, runtime-manager synced"
 auto_continuation = false
 dependencies = ["validation-slice-4-command-registry", "validation-slice-12-manual-checkpoint"]
-dependencies_satisfied = false
-next_action = "If the hardened TOML center proves insufficient, open a new docs-only decision/trigger for a local SQLite ledger with observations, observation_dependencies, round_runs, round_events, leases, and projections."
-done_when = "A later trigger authorizes and closes a local-first ledger migration."
-halt_if = "The current docs-only/TOML center remains sufficient, or a higher-priority open observation still dominates."
+dependencies_satisfied = true
+next_action = "Implement the five scoped points in layered commits: post-merge docs, blocked/stale UX, separate MCP CI, operational index, and schema v16 SQLite authority promotion with TOML export/bootstrap compatibility."
+done_when = "runtime.db is the primary local authority for observations, dependencies, and center metadata; TOML is documented as bootstrap/export compatibility; base gate, MCP gate, status, integrity, and diff hygiene pass."
+halt_if = "The official base gate fails, the migration would require external transport/scheduler/cloud/target mutation, or repeated promotion cannot fail closed."

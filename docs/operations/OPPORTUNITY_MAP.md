@@ -1,10 +1,12 @@
 # Opportunity Map
 
-## Current Snapshot — 2026-05-09
+## Current Snapshot — 2026-05-23
 
-- Phase 11 (agent-agnostic bootstrap) complete on 2026-05-09: walk-up root detection, cerebro init scaffold (AGENTS.md universal, never CLAUDE.md), --repair-scaffold idempotent, --project-root sovereign, 28 new tests. Any LLM can operate cerebro. Next: observation-center-sqlite-ledger (blocked; requires new trigger).
+- Publication follow-up opened on 2026-05-23: PR #1 is merged into `main` as `71d8be3f`, local `main` is aligned, and the official Windows base gate is green. Before this operator request, the queue had no eligible work because `observation-center-sqlite-ledger` was blocked. The current request is the formal trigger `FORMAL_RESUME_TRIGGER_OBSERVATION_CENTER_SQLITE_LEDGER_2026-05-23`, authorizing the five scoped follow-up points: docs reconciliation, blocked/stale UX clarity, separate MCP CI validation, operational navigation, and controlled SQLite observation-center promotion.
 
-- Runtime Manager Phases 7–10 complete on 2026-05-09 (schema v15 unchanged, gate 2418/0/6). Ph7: STDIO MCP server 12 tools, PersistentRateLimiter, eval_mcp_safety.py. Ph8: classify_action() L0–L4, schema v15, L4 blocked, CLI policy classify/explain-levels, eval_autonomy_levels.py. Ph9: per-op token re-auth _require_current_token_factory, RuntimeManagerStoreError.code, BEGIN IMMEDIATE rate limit, 19 cross-process tests, THREAT_MODEL T16–T19. Ph10 (local hardening): experiments/runtime_manager_stress_lab/ 8 scenarios (stress_pass_is_not_permission=True); RuntimeIntegrityReport + check_integrity() + CLI integrity check; removed _max_level dead code; mcp_level_blocked counter in factory for all tools; stable error codes (autonomy_level_blocked, rate_limited, replay_path_out_of_scope); adapters in pyproject.toml; 8 arch tests; eval_phase10_hardening.py 8 evals. T20–T22 open for future external-transport phase. Next: observation-center-sqlite-ledger (blocked; requires new trigger).
+- Phase 11 (agent-agnostic bootstrap) complete on 2026-05-09: walk-up root detection, cerebro init scaffold (AGENTS.md universal, never CLAUDE.md), --repair-scaffold idempotent, --project-root sovereign, 28 new tests. Any LLM can operate cerebro. Next: observation-center-sqlite-ledger (open under the 2026-05-23 formal trigger).
+
+- Runtime Manager Phases 7–10 complete on 2026-05-09 (schema v15 unchanged before this round, gate 2418/0/6). Ph7: STDIO MCP server 12 tools, PersistentRateLimiter, eval_mcp_safety.py. Ph8: classify_action() L0–L4, schema v15, L4 blocked, CLI policy classify/explain-levels, eval_autonomy_levels.py. Ph9: per-op token re-auth _require_current_token_factory, RuntimeManagerStoreError.code, BEGIN IMMEDIATE rate limit, 19 cross-process tests, THREAT_MODEL T16–T19. Ph10 (local hardening): experiments/runtime_manager_stress_lab/ 8 scenarios (stress_pass_is_not_permission=True); RuntimeIntegrityReport + check_integrity() + CLI integrity check; removed _max_level dead code; mcp_level_blocked counter in factory for all tools; stable error codes (autonomy_level_blocked, rate_limited, replay_path_out_of_scope); adapters in pyproject.toml; 8 arch tests; eval_phase10_hardening.py 8 evals. T20–T22 remain open for a future external-transport phase, not this local SQLite promotion.
 
 - Control-plane loop-stop and cross-review consistency fronts advanced on 2026-05-08. Both remain advisory only.
 
@@ -165,10 +167,10 @@ The snapshot above is the only live operational reference. Everything below is h
 
 ```text
 NEXT_ACTION
-- next_required_step: implement_runtime_manager_validation_stop_condition_tables
-- observation_center_head: runtime-manager-phase-1 is open; observation-center-sqlite-ledger remains blocked as a narrower legacy follow-on under the new Phase 1 direction
+- next_required_step: implement_authorized_observation_center_sqlite_promotion
+- observation_center_head: observation-center-sqlite-ledger is open under FORMAL_RESUME_TRIGGER_OBSERVATION_CENTER_SQLITE_LEDGER_2026-05-23
 - active_renewal_debt: none while the canonical gate stays green
-- highest_priority_hypothesis: the advisory Control Plane stack is mature enough to support a formal local runtime-manager Phase 1. The next value is not more advisory review; it is one canonical SQLite-backed local store plus read-only scheduler/status semantics, while keeping execution and external adapters deferred.
+- highest_priority_hypothesis: the TOML center has served as a bootstrap bridge; the next value is making runtime.db the local primary authority for observations and dependencies while keeping TOML export/import compatibility and avoiding any external scheduler or execution loop.
 ```
 
 ## Historical Documentary Queue
