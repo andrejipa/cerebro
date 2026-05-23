@@ -1,0 +1,23 @@
+{
+  "scenario_id": "basic-run-trace-and-metric",
+  "description": "Verifies that a successful run produces a trace and increments runs_total.",
+  "checks": [
+    {
+      "id": "run-trace-exists",
+      "type": "trace_exists",
+      "operation": "run"
+    },
+    {
+      "id": "runs-total-at-least-1",
+      "type": "metric_at_least",
+      "metric": "runs_total",
+      "min": 1
+    },
+    {
+      "id": "runs-passed-at-least-1",
+      "type": "metric_at_least",
+      "metric": "runs_passed",
+      "min": 1
+    }
+  ]
+}
