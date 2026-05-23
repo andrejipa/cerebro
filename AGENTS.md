@@ -11,7 +11,8 @@
 | O quê | Onde |
 |---|---|
 | Postura atual | Freeze deliberado — ver `docs/operations/FREEZE_POLICY.md` |
-| Fila ativa | `docs/operations/observation_center.toml` |
+| Mapa operacional | `docs/operations/OPERATIONS_INDEX.md` |
+| Fila ativa | `python -m cli.main runtime-manager status` / `next`; `observation_center.toml` e export/bootstrap legado após promoção SQLite |
 | Estado do sistema | `docs/operations/SYSTEM_STATE.md` (Current Snapshot) |
 | Próxima revisão obrigatória | `docs/operations/freeze_review.toml` → `next_review_due` |
 | Bugs abertos | `docs/operations/BUG_REPORT.md` (Current Snapshot) |
@@ -48,23 +49,33 @@ A memória persiste via arquivos — não via contexto.
 
 Leia sempre antes de começar:
 1. triggers formais ativos em `docs/operations/` — boundary vivo e stop conditions
-2. `docs/operations/observation_center.toml` — fila estruturada de observações ainda resolvíveis
-3. `docs/operations/SYSTEM_STATE.md` — estado atual
-4. `docs/operations/OPPORTUNITY_MAP.md` — projeção humana do próximo passo
-5. planos vivos específicos do trabalho corrente
-6. `docs/operations/BUG_REPORT.md` — problemas abertos
-7. `docs/operations/PHASE_CLOSURE.md` — o que já foi encerrado
-8. `docs/operations/FREEZE_POLICY.md` — o que está bloqueado
+2. `python -m cli.main runtime-manager status` e `next` — leitura oficial da fila quando o SQLite estiver promovido
+3. `docs/operations/observation_center.toml` — bootstrap/export legado; fonte de importação apenas antes da promoção SQLite
+4. `docs/operations/SYSTEM_STATE.md` — estado atual
+5. `docs/operations/OPPORTUNITY_MAP.md` — projeção humana do próximo passo
+6. planos vivos específicos do trabalho corrente
+7. `docs/operations/BUG_REPORT.md` — problemas abertos
+8. `docs/operations/PHASE_CLOSURE.md` — o que já foi encerrado
+9. `docs/operations/FREEZE_POLICY.md` — o que está bloqueado
 
 Se `OPPORTUNITY_MAP.md` não existe: execute Modo Bootstrap abaixo.
 
-Use `docs/operations/observation_center.toml` como fila canônica legível por
-máquina. `SYSTEM_STATE.md` e `OPPORTUNITY_MAP.md` continuam sendo projeções
-humanas do estado vivo. Um trigger formal ativo pode estreitar ou reabrir um
-boundary específico dentro do freeze; quando trigger, centro e projeções
-divergirem, a iteração vira reconciliação-first e nenhum novo slice começa
-antes desse fechamento. Sempre que surgir um item ainda resolvível, registre ou
-atualize esse item no centro antes de resumi-lo nos snapshots narrativos.
+Use `runtime-manager status/next` como leitura oficial da fila quando
+`center_authority_mode=sqlite_primary`. `observation_center.toml` continua
+servindo como bootstrap/export legado, mas nao deve ser editado como autoridade
+viva depois da promocao SQLite. `SYSTEM_STATE.md` e `OPPORTUNITY_MAP.md`
+continuam sendo projeções humanas do estado vivo. Um trigger formal ativo pode
+estreitar ou reabrir um boundary específico dentro do freeze; quando trigger,
+centro e projeções divergirem, a iteração vira reconciliação-first e nenhum novo
+slice começa antes desse fechamento. Sempre que surgir um item ainda resolvível,
+registre ou atualize esse item no centro antes de resumi-lo nos snapshots
+narrativos.
+
+Se `runtime-manager status` falhar porque `.cerebro/runtime.db` ainda nao existe
+em um checkout local, execute `python -m cli.main runtime-manager sync`. Quando
+o bootstrap TOML representar o estado publicado e a promocao SQLite ainda nao
+tiver sido aplicada nesse workspace, execute
+`python -m cli.main runtime-manager center promote` uma unica vez.
 
 ## Arquitetura — nunca viole estas fronteiras
 
@@ -210,13 +221,13 @@ Descoberto nos rounds 8-9. Use sempre:
 ```
 TODA ITERAÇÃO:
 1. Localize triggers formais ativos
-2. Leia `docs/operations/observation_center.toml`
+2. Leia `runtime-manager status/next`; use `observation_center.toml` apenas como bootstrap/export se o centro ainda nao estiver promovido
 3. Leia `SYSTEM_STATE.md`, `OPPORTUNITY_MAP.md` e os planos vivos relevantes
 4. Se trigger, centro e projeções divergirem, faça reconciliação first
 5. Confirme suíte verde quando um slice real sobreviver à triagem
 6. Declare o único slice desta iteração (seja específico)
 7. Execute com o nível de esforço correto
-8. Atualize `observation_center.toml` e `OPPORTUNITY_MAP.md` com resultado
+8. Atualize o centro via comandos oficiais quando disponiveis; exporte TOML apenas como compatibilidade; atualize `OPPORTUNITY_MAP.md` com resultado
 9. Confirme suíte verde novamente
 10. Atualize `SYSTEM_STATE.md`
 11. Encerre limpo

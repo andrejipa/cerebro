@@ -2,10 +2,10 @@
 
 ## Status
 
-- status: phase-8 contract (supersedes phase-4)
-- authority: subordinate to `FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_8.md`
-- canonical store: `runtime.db` (schema v15, production)
-- bridge: `observation_center.toml` remains the TOML import source; `managed_*` tables hold runtime-owned state
+- status: phase-11+v16 contract (supersedes phase-8 for observation-center authority)
+- authority: subordinate to `FORMAL_RESUME_TRIGGER_OBSERVATION_CENTER_SQLITE_LEDGER_2026-05-23.md`
+- canonical store: `runtime.db` (schema v16, production)
+- bridge: `observation_center.toml` is bootstrap/import input before promotion and deterministic export/bootstrap compatibility after promotion; SQLite is the live authority when `center_authority_mode=sqlite_primary`
 - autonomy policy: `core/runtime_manager_policy.py` encodes L0–L4 classification (pure, no I/O)
 - MCP adapter: `adapters/runtime_manager_mcp_stdio/` enforces `max_autonomy_level` per token
 
@@ -31,20 +31,24 @@ The runtime manager is not:
 
 Canonical authority must be singular.
 
-Phase 4 authority order:
+Runtime authority order:
 
 ```text
 AGENTS.md
 -> active formal trigger
--> observation_center.toml   (TOML import source)
+-> runtime.db center authority (SQLite primary after promotion)
+-> observation_center.toml   (bootstrap/export compatibility)
 -> this contract
 -> core-owned runtime.db APIs (production since schema v9)
 -> Markdown projections
 ```
 
-`core/` owns runtime-manager state. `observation_center.toml` is the TOML
-import source; `runtime.db` is the live operational store. Markdown, TOML, and
-JSON outputs are projections, config, fixtures, exports, or replay artifacts.
+`core/` owns runtime-manager state. Before promotion, `observation_center.toml`
+can be imported into `runtime.db`. After explicit promotion, `runtime.db` is the
+live authority for observations, dependencies, and center metadata; TOML is only
+bootstrap/export compatibility. Markdown, TOML, and JSON outputs are
+projections, config, fixtures, exports, or replay artifacts unless the core API
+explicitly says otherwise.
 
 ## Canonical Runtime States
 
@@ -759,6 +763,26 @@ table is required. `list_rollback_runs(forward_command_id, limit)` queries
 
 - `read_metrics()` derives `actions_by_level` (L0–L4 counts from evidence).
 - `mcp_level_blocked` counter in `policy_counters`.
+
+### Schema v16 Changes
+
+- `SCHEMA_VERSION = 16`.
+- `metadata.center_authority_mode` is either `toml_import` or `sqlite_primary`.
+- Promotion records `center_revision`, `center_promoted_at`,
+  `center_promoted_from_path`, `center_promoted_from_sha256`, and
+  `center_snapshot_sha256`.
+- `center_authority_events` records authority-mode transitions.
+- `observation_dependencies.source_index` preserves declared dependency order
+  for SQLite reads and deterministic TOML export.
+- `runtime-manager center promote` imports the current TOML once, then makes
+  `runtime.db` the primary local observation-center authority.
+- `runtime-manager center export` renders a deterministic TOML compatibility
+  snapshot from SQLite.
+- Once promoted, `runtime-manager sync` is a no-op compatibility command and
+  status checks no longer compare the live TOML digest.
+- Because `runtime.db` is local and ignored, a fresh workspace bootstraps by
+  running `runtime-manager sync`; if the published TOML/export should become
+  SQLite-primary in that workspace, run `runtime-manager center promote` once.
 
 ### Phase 8 Closing
 

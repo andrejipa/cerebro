@@ -5,6 +5,7 @@ import json
 import sqlite3
 import sys
 import tempfile
+import tomllib
 import unittest
 from contextlib import closing
 from pathlib import Path
@@ -115,14 +116,21 @@ class RuntimeManagerStoreTests(unittest.TestCase):
             self.assertIn("validation_records", tables)
             self.assertIn("stop_conditions", tables)
             self.assertIn("events", tables)
+            self.assertIn("center_authority_events", tables)
             with closing(sqlite3.connect(root / ".cerebro" / "runtime.db")) as connection:
                 metadata = dict(connection.execute("SELECT key, value FROM metadata").fetchall())
                 validation_columns = {
                     row[1]
                     for row in connection.execute("PRAGMA table_info(validation_records)")
                 }
-            self.assertEqual(metadata["schema_version"], "15")
+                dependency_columns = {
+                    row[1]
+                    for row in connection.execute("PRAGMA table_info(observation_dependencies)")
+                }
+            self.assertEqual(metadata["schema_version"], "16")
+            self.assertEqual(metadata["center_authority_mode"], "toml_import")
             self.assertIn("fresh_until", validation_columns)
+            self.assertIn("source_index", dependency_columns)
 
     def test_sync_imports_observation_center_with_source_authority_and_digest(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -134,6 +142,7 @@ class RuntimeManagerStoreTests(unittest.TestCase):
 
             self.assertEqual(status.state, "ready")
             self.assertEqual(status.selected_id, "runtime-manager-phase-1")
+            self.assertEqual(status.center_authority_mode, "toml_import")
             self.assertEqual(status.source_authority, "observation_center.toml")
             self.assertEqual(status.source_path, "docs/operations/observation_center.toml")
             self.assertFalse(status.stale_source)
@@ -767,6 +776,126 @@ reason = "fixture global stop"
             self.assertEqual(status.selection_audit.decision, "global_blocked")
             self.assertEqual(status.selection_audit.global_blockers, ("stale_source",))
             self.assertEqual(status.selection_audit.eligible_ids, ())
+
+    def test_promote_observation_center_to_sqlite_primary_ignores_toml_staleness(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            observations = (
+                _observation("first-item", priority="critical").replace(
+                    'dependencies = ["dep-a"]',
+                    'dependencies = ["dep-b", "dep-a"]',
+                )
+                + _observation("second-item", priority="low").replace(
+                    'dependencies = ["dep-a"]',
+                    'dependencies = ["dep-c"]',
+                )
+            )
+            source = _write_observation_center(root, observations)
+            store = RuntimeManagerStore(root)
+            store.initialize_schema()
+
+            promoted = store.promote_observation_center(source)
+            source.write_text(source.read_text(encoding="utf-8") + "\n# drift after promotion\n", encoding="utf-8")
+            status = store.read_status(observation_center_path=source)
+            selected = store.read_next(observation_center_path=source)
+
+            self.assertEqual(promoted.center_authority_mode, "sqlite_primary")
+            self.assertEqual(promoted.source_authority, "runtime.db")
+            self.assertEqual(promoted.source_path, ".cerebro/runtime.db")
+            self.assertEqual(status.center_authority_mode, "sqlite_primary")
+            self.assertFalse(status.stale_source)
+            self.assertEqual(status.state, "ready")
+            self.assertEqual(status.selected_id, "first-item")
+            self.assertIsNotNone(selected)
+            self.assertEqual(selected.dependencies, ("dep-b", "dep-a"))
+            self.assertEqual(len(status.source_sha256), 64)
+
+    def test_export_promoted_observation_center_toml_is_deterministic(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            observations = (
+                _observation("first-item", priority="critical").replace(
+                    'dependencies = ["dep-a"]',
+                    'dependencies = ["dep-b", "dep-a"]',
+                )
+                + _observation("second-item", priority="low")
+            )
+            source = _write_observation_center(root, observations)
+            store = RuntimeManagerStore(root)
+            store.initialize_schema()
+            store.promote_observation_center(source)
+
+            first_export = store.export_observation_center_toml()
+            second_export = store.export_observation_center_toml()
+            payload = tomllib.loads(first_export)
+
+            self.assertEqual(first_export, second_export)
+            self.assertEqual(payload["center"]["queue_authority"], "machine-primary")
+            self.assertEqual(payload["observations"][0]["id"], "first-item")
+            self.assertEqual(payload["observations"][0]["dependencies"], ["dep-b", "dep-a"])
+            self.assertEqual(payload["observations"][1]["id"], "second-item")
+
+    def test_promote_observation_center_fails_closed_when_repeated_or_db_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            source = _write_observation_center(root, _observation("runtime-manager-phase-1"))
+            store = RuntimeManagerStore(root)
+
+            with self.assertRaises(RuntimeManagerStoreError) as missing:
+                store.promote_observation_center(source)
+            self.assertEqual(missing.exception.code, "center_database_missing")
+
+            store.initialize_schema()
+            store.promote_observation_center(source)
+            with self.assertRaises(RuntimeManagerStoreError) as repeated:
+                store.promote_observation_center(source)
+            self.assertEqual(repeated.exception.code, "center_already_promoted")
+
+    def test_schema_v15_to_v16_migration_preserves_managed_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            source = _write_observation_center(root, _observation("runtime-manager-phase-1"))
+            store = RuntimeManagerStore(root)
+            store.sync_observation_center(source)
+            store.acquire_lease("runtime-manager-phase-1", owner="tester", ttl_seconds=60)
+
+            with closing(sqlite3.connect(root / ".cerebro" / "runtime.db")) as connection:
+                connection.execute("ALTER TABLE observation_dependencies RENAME TO observation_dependencies_v16")
+                connection.execute(
+                    """CREATE TABLE observation_dependencies (
+                        observation_id TEXT NOT NULL,
+                        dependency_id TEXT NOT NULL,
+                        PRIMARY KEY (observation_id, dependency_id),
+                        FOREIGN KEY (observation_id) REFERENCES observations(id) ON DELETE CASCADE
+                    )"""
+                )
+                connection.execute(
+                    """INSERT INTO observation_dependencies(observation_id, dependency_id)
+                       SELECT observation_id, dependency_id FROM observation_dependencies_v16"""
+                )
+                connection.execute("DROP TABLE observation_dependencies_v16")
+                connection.execute("DROP TABLE center_authority_events")
+                connection.execute("UPDATE metadata SET value = '15' WHERE key = 'schema_version'")
+                connection.commit()
+
+            store.initialize_schema()
+
+            with closing(sqlite3.connect(root / ".cerebro" / "runtime.db")) as connection:
+                metadata = dict(connection.execute("SELECT key, value FROM metadata").fetchall())
+                dependency_columns = {
+                    row[1]
+                    for row in connection.execute("PRAGMA table_info(observation_dependencies)")
+                }
+                tables = {
+                    row[0]
+                    for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+                }
+                managed_lease_count = connection.execute("SELECT COUNT(*) FROM managed_leases").fetchone()[0]
+
+            self.assertEqual(metadata["schema_version"], "16")
+            self.assertIn("source_index", dependency_columns)
+            self.assertIn("center_authority_events", tables)
+            self.assertEqual(managed_lease_count, 1)
 
     def test_repeated_sync_replaces_rows_but_keeps_events_append_only(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

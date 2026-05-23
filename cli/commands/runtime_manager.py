@@ -41,9 +41,15 @@ def run_runtime_manager(root: Path, args) -> int:
             if output_format == "json":
                 print(json.dumps(_status_payload(status), indent=2))
             else:
+                sync_message = (
+                    "runtime_manager_sync_skipped: observation center authority is runtime.db"
+                    if status.center_authority_mode == "sqlite_primary"
+                    else "runtime_manager_synced: observation center imported into runtime.db"
+                )
                 print_ok(
                     [
-                        "runtime_manager_synced: observation center imported into runtime.db",
+                        sync_message,
+                        f"center_authority_mode: {status.center_authority_mode}",
                         f"state: {status.state}",
                         f"selected_id: {status.selected_id or '<none>'}",
                         f"source_sha256: {status.source_sha256}",
@@ -79,6 +85,35 @@ def run_runtime_manager(root: Path, args) -> int:
             else:
                 print(content, end="")
             return 0 if next_item is not None else 1
+
+        if command == "center":
+            center_command = getattr(args, "center_command", "")
+            if center_command == "promote":
+                status = store.promote_observation_center(root / "docs" / "operations" / "observation_center.toml")
+                if output_format == "json":
+                    print(json.dumps(_status_payload(status), indent=2))
+                else:
+                    print_ok(
+                        [
+                            "runtime_manager_center_promoted: observation center authority is now runtime.db",
+                            f"center_authority_mode: {status.center_authority_mode}",
+                            f"state: {status.state}",
+                            f"selected_id: {status.selected_id or '<none>'}",
+                            f"source_sha256: {status.source_sha256}",
+                        ]
+                    )
+                return 0
+            if center_command == "export":
+                content = store.export_observation_center_toml()
+                output_path = getattr(args, "out", None)
+                if output_path:
+                    target = _write_center_export(root, output_path, content)
+                    print_ok(["runtime_manager_center_export_written: observation center TOML exported", f"output: {target}"])
+                else:
+                    print(content, end="")
+                return 0
+            print_fail([user_error("runtime_manager_center_subcommand_missing", "runtime-manager center requires a subcommand: promote | export")])
+            return 1
 
         if command == "check":
             command_id_arg = getattr(args, "command_id", "")
@@ -531,6 +566,7 @@ def _status_payload(status: RuntimeManagerStatus) -> dict[str, object]:
                 for item in status.selection_audit.entries
             ],
         },
+        "center_authority_mode": status.center_authority_mode,
         "source_authority": status.source_authority,
         "source_path": status.source_path,
         "source_sha256": status.source_sha256,
@@ -758,6 +794,7 @@ def _render_status_text(status: RuntimeManagerStatus) -> str:
         f"selection_audit_global_blockers: {', '.join(status.selection_audit.global_blockers) or '<none>'}",
         f"selection_audit_eligible_ids: {', '.join(status.selection_audit.eligible_ids) or '<none>'}",
         f"selection_audit_entries_total: {len(status.selection_audit.entries)}",
+        f"center_authority_mode: {status.center_authority_mode}",
         f"source_authority: {status.source_authority}",
         f"source_path: {status.source_path}",
         f"source_sha256: {status.source_sha256}",
@@ -850,6 +887,27 @@ def _write_projection(root: Path, output_path: str | Path, content: str, status:
         os.replace(tmp_path, target)
     except OSError as exc:
         raise RuntimeManagerStoreError(f"failed to write projection file: {target}") from exc
+    finally:
+        try:
+            if tmp_path.exists():
+                tmp_path.unlink()
+        except OSError:
+            pass
+    return target
+
+
+def _write_center_export(root: Path, output_path: str | Path, content: str) -> Path:
+    target = _resolve_projection_target(root, output_path)
+    store = StateStore(root)
+    if store.is_runtime_path(target):
+        raise RuntimeManagerStoreError(f"center export path is reserved for runtime files: {target}")
+    tmp_path = target.with_suffix(f"{target.suffix}.tmp")
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path.write_text(content, encoding="utf-8", newline="\n")
+        os.replace(tmp_path, target)
+    except OSError as exc:
+        raise RuntimeManagerStoreError(f"failed to write center export file: {target}") from exc
     finally:
         try:
             if tmp_path.exists():

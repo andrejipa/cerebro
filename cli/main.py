@@ -566,6 +566,35 @@ def build_parser() -> argparse.ArgumentParser:
     )
     runtime_manager_next_parser.add_argument("--out", help="explicit projection output file; prints to stdout when omitted")
     runtime_manager_next_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_center_parser = runtime_manager_subparsers.add_parser(
+        "center",
+        help="manage observation-center authority",
+        description="Promote or export the observation center through the core-owned runtime.db boundary.",
+    )
+    runtime_manager_center_subparsers = runtime_manager_center_parser.add_subparsers(
+        dest="center_command",
+        required=True,
+    )
+    runtime_manager_center_promote_parser = runtime_manager_center_subparsers.add_parser(
+        "promote",
+        help="promote runtime.db as the primary observation-center authority",
+        description="Import the current TOML center, then mark runtime.db as the primary local authority.",
+    )
+    runtime_manager_center_promote_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format; defaults to text",
+    )
+    runtime_manager_center_promote_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_center_export_parser = runtime_manager_center_subparsers.add_parser(
+        "export",
+        help="export a deterministic TOML snapshot from runtime.db",
+        description="Render TOML compatibility output from the SQLite observation-center authority.",
+    )
+    runtime_manager_center_export_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
+    runtime_manager_center_export_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_center_parser.set_defaults(handler=run_runtime_manager)
     runtime_manager_check_parser = runtime_manager_subparsers.add_parser(
         "check",
         help="check whether a registered command is eligible to run",
