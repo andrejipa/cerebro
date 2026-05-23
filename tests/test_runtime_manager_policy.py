@@ -1,7 +1,7 @@
 """Tests for core/runtime_manager_policy.py — Phase 8."""
 from __future__ import annotations
 
-import pytest
+import unittest
 
 from core.runtime_manager_policy import (
     ActionClassification,
@@ -24,7 +24,7 @@ def _classify(**kwargs) -> ActionClassification:
 # L0 — read-only
 # ---------------------------------------------------------------------------
 
-class TestL0Observe:
+class TestL0Observe(unittest.TestCase):
     def test_read_only_is_l0(self):
         result = _classify(side_effect_class="read-only")
         assert result.autonomy_level == "L0_observe"
@@ -43,11 +43,12 @@ class TestL0Observe:
 # L1 — derived write
 # ---------------------------------------------------------------------------
 
-class TestL1Derived:
-    @pytest.mark.parametrize("sec", ["derived-write", "docs-write"])
-    def test_l1_side_effects(self, sec):
-        result = _classify(side_effect_class=sec)
-        assert result.autonomy_level == "L1_derived"
+class TestL1Derived(unittest.TestCase):
+    def test_l1_side_effects(self):
+        for sec in ("derived-write", "docs-write"):
+            with self.subTest(side_effect_class=sec):
+                result = _classify(side_effect_class=sec)
+                assert result.autonomy_level == "L1_derived"
 
     def test_l1_friction_budget_one(self):
         assert _classify(side_effect_class="derived-write").friction_budget == 1
@@ -65,11 +66,12 @@ class TestL1Derived:
 # L2 — local code
 # ---------------------------------------------------------------------------
 
-class TestL2LocalCode:
-    @pytest.mark.parametrize("sec", ["local-mutation", "test-run"])
-    def test_l2_side_effects(self, sec):
-        result = _classify(side_effect_class=sec)
-        assert result.autonomy_level == "L2_local_code"
+class TestL2LocalCode(unittest.TestCase):
+    def test_l2_side_effects(self):
+        for sec in ("local-mutation", "test-run"):
+            with self.subTest(side_effect_class=sec):
+                result = _classify(side_effect_class=sec)
+                assert result.autonomy_level == "L2_local_code"
 
     def test_l2_friction_budget_two(self):
         assert _classify(side_effect_class="local-mutation").friction_budget == 2
@@ -92,11 +94,12 @@ class TestL2LocalCode:
 # L3 — runtime mutation
 # ---------------------------------------------------------------------------
 
-class TestL3RuntimeMutation:
-    @pytest.mark.parametrize("sec", ["runtime-mutation", "system-mutation", "destructive"])
-    def test_l3_side_effects(self, sec):
-        result = _classify(side_effect_class=sec)
-        assert result.autonomy_level == "L3_runtime_mutation"
+class TestL3RuntimeMutation(unittest.TestCase):
+    def test_l3_side_effects(self):
+        for sec in ("runtime-mutation", "system-mutation", "destructive"):
+            with self.subTest(side_effect_class=sec):
+                result = _classify(side_effect_class=sec)
+                assert result.autonomy_level == "L3_runtime_mutation"
 
     def test_l3_friction_budget_four(self):
         assert _classify(side_effect_class="runtime-mutation").friction_budget == 4
@@ -119,7 +122,7 @@ class TestL3RuntimeMutation:
 # L4 — external high risk elevators
 # ---------------------------------------------------------------------------
 
-class TestL4ExternalHighRisk:
+class TestL4ExternalHighRisk(unittest.TestCase):
     def test_l4_external_side_effect(self):
         result = _classify(side_effect_class="external")
         assert result.autonomy_level == "L4_external_high_risk"
@@ -140,10 +143,11 @@ class TestL4ExternalHighRisk:
         result = _classify(side_effect_class="read-only", requires_human_decision=True)
         assert result.autonomy_level == "L4_external_high_risk"
 
-    @pytest.mark.parametrize("scope", ["external", "cloud", "production", "release", "remote"])
-    def test_l4_target_scope_external(self, scope):
-        result = _classify(side_effect_class="read-only", target_scope=scope)
-        assert result.autonomy_level == "L4_external_high_risk"
+    def test_l4_target_scope_external(self):
+        for scope in ("external", "cloud", "production", "release", "remote"):
+            with self.subTest(target_scope=scope):
+                result = _classify(side_effect_class="read-only", target_scope=scope)
+                assert result.autonomy_level == "L4_external_high_risk"
 
     def test_l4_friction_budget_nine(self):
         result = _classify(side_effect_class="external")
@@ -162,7 +166,7 @@ class TestL4ExternalHighRisk:
 # Override only raises
 # ---------------------------------------------------------------------------
 
-class TestRiskLevelOverride:
+class TestRiskLevelOverride(unittest.TestCase):
     def test_override_raises_level(self):
         result = _classify(side_effect_class="read-only", risk_level_override="L2_local_code")
         assert result.autonomy_level == "L2_local_code"
@@ -184,20 +188,19 @@ class TestRiskLevelOverride:
 # classification_is_not_permission invariant
 # ---------------------------------------------------------------------------
 
-class TestClassificationIsNotPermission:
-    @pytest.mark.parametrize("sec", [
-        "read-only", "derived-write", "local-mutation", "runtime-mutation", "external"
-    ])
-    def test_always_true(self, sec):
-        result = _classify(side_effect_class=sec)
-        assert result.classification_is_not_permission is True
+class TestClassificationIsNotPermission(unittest.TestCase):
+    def test_always_true(self):
+        for sec in ("read-only", "derived-write", "local-mutation", "runtime-mutation", "external"):
+            with self.subTest(side_effect_class=sec):
+                result = _classify(side_effect_class=sec)
+                assert result.classification_is_not_permission is True
 
 
 # ---------------------------------------------------------------------------
 # Unknown side_effect_class defaults to L3
 # ---------------------------------------------------------------------------
 
-class TestUnknownSideEffectClass:
+class TestUnknownSideEffectClass(unittest.TestCase):
     def test_unknown_defaults_to_l3(self):
         result = _classify(side_effect_class="totally-unknown")
         assert result.autonomy_level == "L3_runtime_mutation"
@@ -207,7 +210,7 @@ class TestUnknownSideEffectClass:
 # explain_levels
 # ---------------------------------------------------------------------------
 
-class TestExplainLevels:
+class TestExplainLevels(unittest.TestCase):
     def test_all_levels_present(self):
         levels = explain_levels()
         names = [lv["level"] for lv in levels]

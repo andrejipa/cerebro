@@ -383,15 +383,17 @@ class DoctorCommandTests(unittest.TestCase):
             self.assertIn("points at this repo", result["message"])
 
     def test_cerebro_executable_check_reports_stale_path_execution_failure(self) -> None:
-        stale_executable = r"C:\stale\cerebro.exe"
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            scripts_dir = Path(tmp_dir).resolve()
+            stale_executable = scripts_dir / "cerebro"
 
-        with mock.patch.object(doctor_module.shutil, "which", return_value=stale_executable):
-            with mock.patch.object(
-                doctor_module,
-                "_scripts_dir_for_current_interpreter",
-                return_value=Path(r"C:\stale"),
-            ), mock.patch.object(doctor_module.subprocess, "run", side_effect=OSError("not runnable")):
-                result = doctor_module._run_cerebro_executable_check()
+            with mock.patch.object(doctor_module.shutil, "which", return_value=str(stale_executable)):
+                with mock.patch.object(
+                    doctor_module,
+                    "_scripts_dir_for_current_interpreter",
+                    return_value=scripts_dir,
+                ), mock.patch.object(doctor_module.subprocess, "run", side_effect=OSError("not runnable")):
+                    result = doctor_module._run_cerebro_executable_check()
 
         self.assertEqual(result["status"], doctor_module.STATUS_CRITICAL)
         self.assertIn("could not be started from PATH", result["message"])
@@ -411,21 +413,23 @@ class DoctorCommandTests(unittest.TestCase):
         self.assertIn("different Python environment", result["message"])
 
     def test_cerebro_executable_check_reports_nonzero_help_exit(self) -> None:
-        executable = r"C:\current-python\Scripts\cerebro.exe"
-        completed = subprocess.CompletedProcess(
-            args=[executable, "--help"],
-            returncode=1,
-            stdout="",
-            stderr="broken entrypoint",
-        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            scripts_dir = Path(tmp_dir).resolve()
+            executable = scripts_dir / "cerebro"
+            completed = subprocess.CompletedProcess(
+                args=[str(executable), "--help"],
+                returncode=1,
+                stdout="",
+                stderr="broken entrypoint",
+            )
 
-        with mock.patch.object(doctor_module.shutil, "which", return_value=executable):
-            with mock.patch.object(
-                doctor_module,
-                "_scripts_dir_for_current_interpreter",
-                return_value=Path(r"C:\current-python\Scripts"),
-            ), mock.patch.object(doctor_module.subprocess, "run", return_value=completed):
-                result = doctor_module._run_cerebro_executable_check()
+            with mock.patch.object(doctor_module.shutil, "which", return_value=str(executable)):
+                with mock.patch.object(
+                    doctor_module,
+                    "_scripts_dir_for_current_interpreter",
+                    return_value=scripts_dir,
+                ), mock.patch.object(doctor_module.subprocess, "run", return_value=completed):
+                    result = doctor_module._run_cerebro_executable_check()
 
         self.assertEqual(result["status"], doctor_module.STATUS_CRITICAL)
         self.assertIn("broken entrypoint", result["message"])
