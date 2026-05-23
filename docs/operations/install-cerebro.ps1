@@ -60,6 +60,58 @@ function Invoke-Step([string]$Label, [string]$Exe, [string[]]$Arguments, [switch
     }
 }
 
+function Test-CerebroPathCommand([string]$ExpectedCliPath) {
+    $commands = @(Get-Command cerebro -All -ErrorAction SilentlyContinue)
+    if ($commands.Count -eq 0) {
+        Write-Warning "No cerebro command is currently visible on PATH. Use the venv CLI path printed below."
+        return
+    }
+
+    $firstCommand = $commands[0]
+    if ($firstCommand.CommandType -ne "Application") {
+        Write-Warning "First cerebro command on PATH is not an application: $($firstCommand.Source)"
+        return
+    }
+
+    $firstPath = [System.IO.Path]::GetFullPath($firstCommand.Source)
+    $expectedPath = [System.IO.Path]::GetFullPath($ExpectedCliPath)
+    if ([string]::Equals($firstPath, $expectedPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return
+    }
+
+    $stdoutPath = [System.IO.Path]::GetTempFileName()
+    $stderrPath = [System.IO.Path]::GetTempFileName()
+    try {
+        try {
+            $process = Start-Process -FilePath $firstPath -ArgumentList @("--help") -Wait -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+        } catch {
+            Write-Warning "The first cerebro command on PATH is not this venv and could not be started: $firstPath"
+            Write-Warning $_.Exception.Message
+            Write-Warning "Prefer calling $expectedPath directly or put its directory before the stale command on PATH."
+            return
+        }
+        $output = @(
+            Get-Content -LiteralPath $stdoutPath -Raw -ErrorAction SilentlyContinue
+            Get-Content -LiteralPath $stderrPath -Raw -ErrorAction SilentlyContinue
+        ) -join "`n"
+        $exitCode = $process.ExitCode
+    } finally {
+        Remove-Item -LiteralPath $stdoutPath, $stderrPath -Force -ErrorAction SilentlyContinue
+    }
+    if ($exitCode -ne 0) {
+        $trimmed = $output.Trim()
+        Write-Warning "The first cerebro command on PATH is not this venv and failed: $firstPath"
+        if ($trimmed) {
+            Write-Warning $trimmed
+        }
+        Write-Warning "Prefer calling $expectedPath directly or put its directory before the stale command on PATH."
+        return
+    }
+
+    Write-Warning "The first cerebro command on PATH is not this venv: $firstPath"
+    Write-Warning "This install validated $expectedPath; use that path if command resolution is ambiguous."
+}
+
 if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
     $RepoRoot = Join-Path $PSScriptRoot "..\.."
 }
@@ -103,6 +155,7 @@ if (-not (Test-Path -LiteralPath $venvCerebro)) {
 }
 
 Invoke-Step -Label "Validating Cerebro CLI" -Exe $venvCerebro -Arguments @("--help") -QuietSuccess
+Test-CerebroPathCommand -ExpectedCliPath $venvCerebro
 
 Write-Host ""
 Write-Host "Install complete."

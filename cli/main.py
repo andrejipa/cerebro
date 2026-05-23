@@ -25,6 +25,7 @@ from cli.commands.residuals_view import run_residuals_view
 from cli.commands.return_map_export import run_return_map_export
 from cli.commands.resume import run_resume
 from cli.commands.rollback import run_rollback
+from cli.commands.runtime_manager import run_runtime_manager
 from cli.commands.session_discard import run_session_discard
 from cli.commands.sources_export import run_sources_export
 from cli.commands.status_export import run_status_export
@@ -33,6 +34,7 @@ from cli.commands.verify import run_verify
 from cli.commands.validation_export import run_validation_export
 from cli.commands.worktree import run_worktree
 from cli.output import print_fail, user_error
+from cli.project_root import find_project_root
 
 
 def _read_interactive_input(prompt: str, *, code: str, message: str) -> str | None:
@@ -163,7 +165,17 @@ def build_parser() -> argparse.ArgumentParser:
     init_parser = add_command_parser(
         "init",
         help="create a new local checkpoint instance",
-        description="Create the local checkpoint directory and initial state.",
+        description=(
+            "Bootstrap a project: state.json, runtime.db, AGENTS.md (universal, never CLAUDE.md), "
+            "and docs/operations scaffold. Use --repair-scaffold to add only missing artefacts."
+        ),
+    )
+    init_parser.add_argument(
+        "--repair-scaffold",
+        action="store_true",
+        default=False,
+        dest="repair_scaffold",
+        help="create only missing scaffold artefacts without modifying existing files",
     )
     init_parser.set_defaults(handler=run_init)
 
@@ -504,6 +516,362 @@ def build_parser() -> argparse.ArgumentParser:
     residuals_view_parser.add_argument("--out", help="explicit output file; prints to stdout when omitted")
     residuals_view_parser.set_defaults(handler=run_residuals_view)
 
+    runtime_manager_parser = add_command_parser(
+        "runtime-manager",
+        help="inspect the local runtime-manager read model",
+        description=(
+            "Synchronize or inspect the local runtime-manager SQLite read model. "
+            "The CLI delegates to core.runtime_manager_store and does not parse TOML, SQLite, or Markdown directly."
+        ),
+    )
+    runtime_manager_subparsers = runtime_manager_parser.add_subparsers(
+        dest="runtime_manager_command",
+        required=True,
+    )
+    runtime_manager_sync_parser = runtime_manager_subparsers.add_parser(
+        "sync",
+        help="import the observation center into runtime.db",
+        description="Import docs/operations/observation_center.toml into the core-owned runtime.db read model.",
+    )
+    runtime_manager_sync_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format; defaults to text",
+    )
+    runtime_manager_sync_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_status_parser = runtime_manager_subparsers.add_parser(
+        "status",
+        help="show read-only runtime-manager status",
+        description="Show read-only status from runtime.db and fail closed when the imported source digest is stale.",
+    )
+    runtime_manager_status_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format; defaults to text",
+    )
+    runtime_manager_status_parser.add_argument("--out", help="explicit projection output file; prints to stdout when omitted")
+    runtime_manager_status_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_next_parser = runtime_manager_subparsers.add_parser(
+        "next",
+        help="show the selected eligible work item",
+        description="Show the read-only next eligible runtime-manager item from the core-owned read model.",
+    )
+    runtime_manager_next_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format; defaults to text",
+    )
+    runtime_manager_next_parser.add_argument("--out", help="explicit projection output file; prints to stdout when omitted")
+    runtime_manager_next_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_check_parser = runtime_manager_subparsers.add_parser(
+        "check",
+        help="check whether a registered command is eligible to run",
+        description="Read-only enforcement gate: verify a command_id is registered, enabled, and all Phase 1 gates are satisfied.",
+    )
+    runtime_manager_check_parser.add_argument("command_id", help="command_id to check eligibility for")
+    runtime_manager_check_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format; defaults to text",
+    )
+    runtime_manager_check_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_run_parser = runtime_manager_subparsers.add_parser(
+        "run",
+        help="execute a registered command through the full enforcement chain",
+        description=(
+            "Constrained subprocess executor: eligibility gate, path scope, timeout, output budget, approval check. "
+            "Executes exactly the argv_prefix registered for command_id — no extra arguments are accepted so that "
+            "the approval fingerprint covers the full execution unit."
+        ),
+    )
+    runtime_manager_run_parser.add_argument("command_id", help="command_id to execute")
+    runtime_manager_run_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format; defaults to text",
+    )
+    runtime_manager_run_parser.set_defaults(handler=run_runtime_manager)
+
+    runtime_manager_trace_parser = runtime_manager_subparsers.add_parser(
+        "trace",
+        help="inspect sanitized Runtime Manager traces",
+        description="Read or export runtime_traces and runtime_trace_events. Projection-only; trace output is not permission.",
+    )
+    runtime_manager_trace_subparsers = runtime_manager_trace_parser.add_subparsers(
+        dest="trace_command",
+        required=True,
+    )
+    trace_list_parser = runtime_manager_trace_subparsers.add_parser("list", help="list Runtime Manager traces")
+    trace_list_parser.add_argument("--operation", default=None, help="filter by operation")
+    trace_list_parser.add_argument("--subject-id", dest="subject_id", default=None, help="filter by subject id")
+    trace_list_parser.add_argument("--limit", type=int, default=50, help="max rows (default 50; 0=all)")
+    trace_list_parser.add_argument("--format", choices=("text", "json"), default="text")
+    trace_list_parser.set_defaults(handler=run_runtime_manager)
+    trace_show_parser = runtime_manager_trace_subparsers.add_parser("show", help="show a Runtime Manager trace")
+    trace_show_parser.add_argument("trace_id", help="trace_id to inspect")
+    trace_show_parser.add_argument("--format", choices=("text", "json"), default="text")
+    trace_show_parser.set_defaults(handler=run_runtime_manager)
+    trace_export_parser = runtime_manager_trace_subparsers.add_parser("export", help="export a Runtime Manager trace")
+    trace_export_parser.add_argument("trace_id", help="trace_id to export")
+    trace_export_parser.add_argument("--format", dest="export_format", choices=("json", "jsonl", "otel-json"), default="json")
+    trace_export_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_trace_parser.set_defaults(handler=run_runtime_manager)
+
+    runtime_manager_metrics_parser = runtime_manager_subparsers.add_parser(
+        "metrics",
+        help="show local Runtime Manager health counters",
+        description="Read local Runtime Manager metrics from runtime.db. Projection-only; metrics are not authority.",
+    )
+    runtime_manager_metrics_parser.add_argument("--format", choices=("text", "json"), default="text")
+    runtime_manager_metrics_parser.set_defaults(handler=run_runtime_manager)
+
+    runtime_manager_replay_parser = runtime_manager_subparsers.add_parser(
+        "replay",
+        help="run a deterministic Runtime Manager replay scenario",
+        description="Evaluate a local replay scenario JSON file against runtime.db. Replay evidence is not permission.",
+    )
+    runtime_manager_replay_parser.add_argument("--scenario", required=True, help="path to replay scenario JSON")
+    runtime_manager_replay_parser.add_argument("--format", choices=("text", "json"), default="text")
+    runtime_manager_replay_parser.set_defaults(handler=run_runtime_manager)
+
+    runtime_manager_evidence_parser = runtime_manager_subparsers.add_parser(
+        "evidence",
+        help="inspect execution evidence records",
+        description="Read execution_evidence rows captured by run_command(). Read-only — does not execute anything.",
+    )
+    runtime_manager_evidence_subparsers = runtime_manager_evidence_parser.add_subparsers(
+        dest="evidence_command",
+        required=True,
+    )
+    runtime_manager_evidence_show_parser = runtime_manager_evidence_subparsers.add_parser(
+        "show",
+        help="show a single evidence record by id",
+        description="Display all fields of a single execution_evidence row.",
+    )
+    runtime_manager_evidence_show_parser.add_argument("evidence_id", help="integer primary key of the evidence record")
+    runtime_manager_evidence_show_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format; defaults to text",
+    )
+    runtime_manager_evidence_show_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_evidence_list_parser = runtime_manager_evidence_subparsers.add_parser(
+        "list",
+        help="list recent evidence records, newest first",
+        description="List execution_evidence rows, newest first. Optionally filter by observation_id.",
+    )
+    runtime_manager_evidence_list_parser.add_argument(
+        "--observation-id",
+        dest="observation_id",
+        default=None,
+        help="filter to a specific observation_id",
+    )
+    runtime_manager_evidence_list_parser.add_argument(
+        "--limit",
+        type=int,
+        default=50,
+        help="maximum rows to return (default 50; 0 = all)",
+    )
+    runtime_manager_evidence_list_parser.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="output format; defaults to text",
+    )
+    runtime_manager_evidence_list_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_evidence_parser.set_defaults(handler=run_runtime_manager)
+
+    # lease subcommand
+    runtime_manager_lease_parser = runtime_manager_subparsers.add_parser(
+        "lease",
+        help="manage write-API leases (acquire, release, heartbeat, list)",
+        description="Manage runtime-owned managed_leases: acquire single-flight ownership, renew, release, or list.",
+    )
+    runtime_manager_lease_subparsers = runtime_manager_lease_parser.add_subparsers(
+        dest="lease_command", required=True
+    )
+    lease_acquire_parser = runtime_manager_lease_subparsers.add_parser("acquire", help="acquire a managed lease")
+    lease_acquire_parser.add_argument("observation_id", help="observation id to lease")
+    lease_acquire_parser.add_argument("--owner", default="cli", help="owner identifier (default: cli)")
+    lease_acquire_parser.add_argument("--ttl-seconds", dest="ttl_seconds", type=int, default=300, help="lease TTL in seconds (default 300)")
+    lease_acquire_parser.add_argument("--reason", default="", help="optional reason text")
+    lease_acquire_parser.add_argument("--format", choices=("text", "json"), default="text")
+    lease_acquire_parser.set_defaults(handler=run_runtime_manager)
+    lease_release_parser = runtime_manager_lease_subparsers.add_parser("release", help="release an active managed lease")
+    lease_release_parser.add_argument("lease_id", help="lease_id to release")
+    lease_release_parser.add_argument("--owner", required=True, help="owner identifier (must match the acquiring owner)")
+    lease_release_parser.add_argument("--format", choices=("text", "json"), default="text")
+    lease_release_parser.set_defaults(handler=run_runtime_manager)
+    lease_heartbeat_parser = runtime_manager_lease_subparsers.add_parser("heartbeat", help="renew an active managed lease")
+    lease_heartbeat_parser.add_argument("lease_id", help="lease_id to renew")
+    lease_heartbeat_parser.add_argument("--owner", required=True, help="owner identifier")
+    lease_heartbeat_parser.add_argument("--ttl-seconds", dest="ttl_seconds", type=int, default=300, help="new TTL in seconds (default 300)")
+    lease_heartbeat_parser.add_argument("--format", choices=("text", "json"), default="text")
+    lease_heartbeat_parser.set_defaults(handler=run_runtime_manager)
+    lease_list_parser = runtime_manager_lease_subparsers.add_parser("list", help="list managed leases")
+    lease_list_parser.add_argument("--observation-id", dest="observation_id", default=None, help="filter by observation_id")
+    lease_list_parser.add_argument("--limit", type=int, default=50, help="max rows (default 50; 0=all)")
+    lease_list_parser.add_argument("--format", choices=("text", "json"), default="text")
+    lease_list_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_lease_parser.set_defaults(handler=run_runtime_manager)
+
+    # stop subcommand
+    runtime_manager_stop_parser = runtime_manager_subparsers.add_parser(
+        "stop",
+        help="manage write-API stop conditions (raise, resolve, list)",
+        description="Manage runtime-owned stop conditions. A raised stop blocks observation selection until resolved.",
+    )
+    runtime_manager_stop_subparsers = runtime_manager_stop_parser.add_subparsers(
+        dest="stop_command", required=True
+    )
+    stop_raise_parser = runtime_manager_stop_subparsers.add_parser("raise", help="raise a stop condition")
+    stop_raise_parser.add_argument("subject_id", help="observation_id, 'runtime-manager', or '*' (global)")
+    stop_raise_parser.add_argument("--reason", default="", help="human-readable reason")
+    stop_raise_parser.add_argument("--severity", default="blocking", choices=("blocking", "informational"), help="severity (default blocking)")
+    stop_raise_parser.add_argument("--format", choices=("text", "json"), default="text")
+    stop_raise_parser.set_defaults(handler=run_runtime_manager)
+    stop_resolve_parser = runtime_manager_stop_subparsers.add_parser("resolve", help="resolve a stop condition")
+    stop_resolve_parser.add_argument("stop_condition_id", help="stop_condition_id to resolve")
+    stop_resolve_parser.add_argument("--format", choices=("text", "json"), default="text")
+    stop_resolve_parser.set_defaults(handler=run_runtime_manager)
+    stop_list_parser = runtime_manager_stop_subparsers.add_parser("list", help="list managed stop conditions")
+    stop_list_parser.add_argument("--subject-id", dest="subject_id", default=None, help="filter by subject_id")
+    stop_list_parser.add_argument("--limit", type=int, default=50, help="max rows (default 50; 0=all)")
+    stop_list_parser.add_argument("--format", choices=("text", "json"), default="text")
+    stop_list_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_stop_parser.set_defaults(handler=run_runtime_manager)
+
+    # validation subcommand
+    runtime_manager_validation_parser = runtime_manager_subparsers.add_parser(
+        "validation",
+        help="manage write-API validations (record, show)",
+        description="Record or inspect runtime-owned validation records. A green record with valid fresh_until satisfies a validation gate.",
+    )
+    runtime_manager_validation_subparsers = runtime_manager_validation_parser.add_subparsers(
+        dest="validation_command", required=True
+    )
+    validation_record_parser = runtime_manager_validation_subparsers.add_parser("record", help="record a validation result")
+    validation_record_parser.add_argument("validation_id", help="validation gate id")
+    validation_record_parser.add_argument("subject_id", help="observation_id this validation applies to")
+    validation_record_parser.add_argument("--status", default="green", choices=("green", "red", "stale"), help="validation status (default green)")
+    validation_record_parser.add_argument("--ttl-seconds", dest="ttl_seconds", type=int, default=0, help="freshness TTL; 0=no expiry")
+    validation_record_parser.add_argument("--reason", default="", help="optional reason text")
+    validation_record_parser.add_argument("--command-id", dest="command_id", default="", help="optional associated command_id")
+    validation_record_parser.add_argument("--format", choices=("text", "json"), default="text")
+    validation_record_parser.set_defaults(handler=run_runtime_manager)
+    validation_show_parser = runtime_manager_validation_subparsers.add_parser("show", help="show a managed validation record")
+    validation_show_parser.add_argument("validation_id", help="validation gate id to look up")
+    validation_show_parser.add_argument("--format", choices=("text", "json"), default="text")
+    validation_show_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_validation_parser.set_defaults(handler=run_runtime_manager)
+
+    # approval subcommand
+    runtime_manager_approval_parser = runtime_manager_subparsers.add_parser(
+        "approval",
+        help="manage write-API approvals (record, revoke, list)",
+        description="Record or revoke runtime-owned approval records. Core computes the action fingerprint from the command registry.",
+    )
+    runtime_manager_approval_subparsers = runtime_manager_approval_parser.add_subparsers(
+        dest="approval_command", required=True
+    )
+    approval_record_parser = runtime_manager_approval_subparsers.add_parser("record", help="record an approval")
+    approval_record_parser.add_argument("command_id", help="registered command_id to approve")
+    approval_record_parser.add_argument("subject_id", help="observation_id this approval applies to")
+    approval_record_parser.add_argument("--actor", default="cli", help="actor granting the approval (default: cli)")
+    approval_record_parser.add_argument("--scope", default="single-use", help="approval scope (default: single-use)")
+    approval_record_parser.add_argument("--expires-at", dest="expires_at", default="", help="optional ISO-8601 expiry timestamp")
+    approval_record_parser.add_argument("--format", choices=("text", "json"), default="text")
+    approval_record_parser.set_defaults(handler=run_runtime_manager)
+    approval_revoke_parser = runtime_manager_approval_subparsers.add_parser("revoke", help="revoke an approval")
+    approval_revoke_parser.add_argument("approval_id", help="approval_id to revoke")
+    approval_revoke_parser.add_argument("--format", choices=("text", "json"), default="text")
+    approval_revoke_parser.set_defaults(handler=run_runtime_manager)
+    approval_list_parser = runtime_manager_approval_subparsers.add_parser("list", help="list managed approvals")
+    approval_list_parser.add_argument("--subject-id", dest="subject_id", default=None, help="filter by subject_id")
+    approval_list_parser.add_argument("--command-id", dest="command_id", default=None, help="filter by command_id")
+    approval_list_parser.add_argument("--limit", type=int, default=50, help="max rows (default 50; 0=all)")
+    approval_list_parser.add_argument("--format", choices=("text", "json"), default="text")
+    approval_list_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_approval_parser.set_defaults(handler=run_runtime_manager)
+
+    # rollback subcommand
+    runtime_manager_rollback_parser = runtime_manager_subparsers.add_parser(
+        "rollback",
+        help="execute a registered rollback or list past rollback runs",
+        description="Execute the registered rollback for a forward execution evidence_id, or list past rollback runs.",
+    )
+    runtime_manager_rollback_subparsers = runtime_manager_rollback_parser.add_subparsers(
+        dest="rollback_subcommand", required=False
+    )
+    rollback_list_parser = runtime_manager_rollback_subparsers.add_parser("list", help="list rollback runs")
+    rollback_list_parser.add_argument("--forward-command-id", dest="forward_command_id", default=None, help="filter by forward command_id")
+    rollback_list_parser.add_argument("--limit", type=int, default=50, help="max rows (default 50; 0=all)")
+    rollback_list_parser.add_argument("--format", choices=("text", "json"), default="text")
+    rollback_list_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_rollback_parser.add_argument("--evidence-id", dest="evidence_id", default=None, help="evidence_id of the forward run to roll back")
+    runtime_manager_rollback_parser.add_argument("--format", choices=("text", "json"), default="text")
+    runtime_manager_rollback_parser.set_defaults(handler=run_runtime_manager)
+
+    runtime_manager_mcp_stdio_parser = runtime_manager_subparsers.add_parser(
+        "mcp-stdio",
+        help="start MCP STDIO server (token from env CEREBRO_RUNTIME_MCP_TOKEN)",
+        description=(
+            "Start a FastMCP STDIO server backed by the local runtime-manager store. "
+            "The server authenticates using the CEREBRO_RUNTIME_MCP_TOKEN env var. "
+            "No HTTP, no OAuth server, no TLS."
+        ),
+    )
+    runtime_manager_mcp_stdio_parser.set_defaults(handler=run_runtime_manager)
+
+    # policy subcommand
+    runtime_manager_policy_parser = runtime_manager_subparsers.add_parser(
+        "policy",
+        help="classify or explain autonomy-level policy for registered commands",
+        description="Read-only policy projection: classify a command's autonomy level or explain all levels. Classification is not permission.",
+    )
+    runtime_manager_policy_subparsers = runtime_manager_policy_parser.add_subparsers(
+        dest="policy_subcommand", required=True
+    )
+    policy_classify_parser = runtime_manager_policy_subparsers.add_parser(
+        "classify",
+        help="classify the autonomy level for a registered command_id",
+        description="Look up a command_id in the registry and return its autonomy level, required controls, and friction budget. Classification is not permission.",
+    )
+    policy_classify_parser.add_argument("command_id", help="command_id to classify")
+    policy_classify_parser.add_argument("--format", choices=("text", "json"), default="text")
+    policy_classify_parser.set_defaults(handler=run_runtime_manager)
+    policy_explain_parser = runtime_manager_policy_subparsers.add_parser(
+        "explain-levels",
+        help="explain all autonomy levels (L0–L4) with friction budgets and controls",
+        description="Print a structured description of all five autonomy levels. Classification is not permission.",
+    )
+    policy_explain_parser.add_argument("--format", choices=("text", "json"), default="text")
+    policy_explain_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_policy_parser.set_defaults(handler=run_runtime_manager)
+
+    runtime_manager_integrity_parser = runtime_manager_subparsers.add_parser(
+        "integrity",
+        help="run local integrity checks on runtime.db (advisory only, not a gate)",
+        description="Diagnostic checks: orphan events, stale leases/tokens, missing traces, counter plausibility. Not permission.",
+    )
+    runtime_manager_integrity_subparsers = runtime_manager_integrity_parser.add_subparsers(
+        dest="integrity_subcommand", required=True
+    )
+    integrity_check_parser = runtime_manager_integrity_subparsers.add_parser(
+        "check",
+        help="run all integrity checks and report findings",
+        description="Run all runtime.db integrity checks. Report is diagnostic only — not a runtime gate.",
+    )
+    integrity_check_parser.add_argument("--format", choices=("text", "json"), default="text")
+    integrity_check_parser.set_defaults(handler=run_runtime_manager)
+    runtime_manager_integrity_parser.set_defaults(handler=run_runtime_manager)
+
     status_parser = add_command_parser(
         "status-export",
         help="render a short operational status from the current state",
@@ -544,7 +912,8 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         parser = build_parser()
         args = parser.parse_args(dispatched_argv)
-        root = Path(args.project_root).resolve() if getattr(args, "project_root", None) else Path.cwd()
+        _walk_up = getattr(args, "command", None) != "init"
+        root = find_project_root(explicit=getattr(args, "project_root", None), walk_up=_walk_up).path
         if opened_without_args and args.command == "analyze":
             print(render_open_dashboard(root))
         return args.handler(root, args)

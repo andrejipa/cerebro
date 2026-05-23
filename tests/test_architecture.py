@@ -128,23 +128,23 @@ def string_literals_without_docstrings(tree: ast.AST) -> list[str]:
 class ArchitectureIsolationTests(unittest.TestCase):
     def test_tracked_root_surface_is_minimal_and_docs_are_grouped(self) -> None:
         root_entries = {path.parts[0] for path in tracked_files()}
-        self.assertEqual(
-            root_entries,
-            {
-                ".codex",
-                ".github",
-                ".gitignore",
-                "AGENTS.md",
-                "README.md",
-                "cli",
-                "core",
-                "docs",
-                "experiments",
-                "extensions",
-                "pyproject.toml",
-                "tests",
-            },
-        )
+        required_entries = {
+            ".codex",
+            ".github",
+            ".gitignore",
+            "AGENTS.md",
+            "README.md",
+            "cli",
+            "core",
+            "docs",
+            "experiments",
+            "extensions",
+            "pyproject.toml",
+            "tests",
+        }
+        allowed_entries = required_entries | {"adapters"}
+        self.assertTrue(required_entries <= root_entries)
+        self.assertEqual(root_entries - allowed_entries, set())
 
         docs_children = {path.name for path in (REPO_ROOT / "docs").iterdir() if path.is_dir()}
         self.assertEqual(docs_children, {"adr", "handoffs", "operations", "reference"})
@@ -1138,19 +1138,34 @@ class ArchitectureIsolationTests(unittest.TestCase):
 
         self.assertEqual(offenders, [])
 
-    def test_only_state_store_declares_runtime_state_paths(self) -> None:
+    def test_only_core_stores_declare_runtime_state_paths(self) -> None:
         runtime_files = sorted((REPO_ROOT / "core").glob("*.py")) + sorted((REPO_ROOT / "cli").rglob("*.py"))
         forbidden_patterns = (
             r"['\"]\.cerebro['\"]",
             r"['\"]session\.local\.json['\"]",
             r"['\"]state\.json['\"]",
         )
+        runtime_manager_store = REPO_ROOT / "core" / "runtime_manager_store.py"
         offenders: list[str] = []
+
+        # cli/project_root.py uses ".cerebro" as a walk-up detection marker
+        # (not a storage path declaration), so it is explicitly exempted here.
+        project_root_module = REPO_ROOT / "cli" / "project_root.py"
 
         for path in runtime_files:
             if path == REPO_ROOT / "core" / "state_store.py":
                 continue
+            if path == project_root_module:
+                continue
             content = path.read_text(encoding="utf-8")
+            if path == runtime_manager_store:
+                runtime_state_patterns = (
+                    r"['\"]session\.local\.json['\"]",
+                    r"['\"]state\.json['\"]",
+                )
+                if any(re.search(pattern, content) for pattern in runtime_state_patterns):
+                    offenders.append(str(path.relative_to(REPO_ROOT)))
+                continue
             if any(re.search(pattern, content) for pattern in forbidden_patterns):
                 offenders.append(str(path.relative_to(REPO_ROOT)))
 
@@ -1386,7 +1401,8 @@ class ArchitectureIsolationTests(unittest.TestCase):
         declared = set(pyproject["tool"]["setuptools"]["packages"])
         expected = {"extensions"} | {f"extensions.{path.name}" for path in extension_package_dirs()}
 
-        self.assertEqual(declared, {"cli", "cli.commands", "core", *sorted(expected)})
+        adapter_packages = {"adapters", "adapters.runtime_manager_mcp_stdio", "adapters.runtime_manager_local_agent"}
+        self.assertEqual(declared, {"cli", "cli.commands", "core", *sorted(expected), *adapter_packages})
 
     def test_extension_packages_include_readme(self) -> None:
         missing = [
@@ -1595,6 +1611,7 @@ class ArchitectureIsolationTests(unittest.TestCase):
             "impact-export",
             "sources-export",
             "return-map-export",
+            "runtime-manager",
             "status-export",
             "validation-export",
             "validate",
@@ -1603,3 +1620,218 @@ class ArchitectureIsolationTests(unittest.TestCase):
         }
 
         self.assertEqual(set(subparsers.choices), expected)
+
+    def test_runtime_manager_cli_delegates_to_core_without_direct_store_parsing(self) -> None:
+        path = REPO_ROOT / "cli" / "commands" / "runtime_manager.py"
+        tree = parse_python(path)
+        offenders: list[str] = []
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name in {"sqlite3", "tomllib"}:
+                        offenders.append(f"imports {alias.name}")
+            if isinstance(node, ast.ImportFrom) and node.module in {"sqlite3", "tomllib"}:
+                offenders.append(f"imports from {node.module}")
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+                if node.value.id in {"sqlite3", "tomllib"}:
+                    offenders.append(f"uses {node.value.id}.{node.attr}")
+
+        self.assertEqual(offenders, [])
+
+    # ── Phase 8 governance ──────────────────────────────────────────────────
+
+    def test_phase8_formal_trigger_exists(self) -> None:
+        trigger = OPERATIONS_DOCS / "FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_8.md"
+        self.assertTrue(trigger.exists(), "Phase 8 formal trigger doc must exist")
+
+    def test_phase8_autonomy_levels_doc_exists(self) -> None:
+        doc = OPERATIONS_DOCS / "RUNTIME_MANAGER_AUTONOMY_LEVELS.md"
+        self.assertTrue(doc.exists(), "RUNTIME_MANAGER_AUTONOMY_LEVELS.md must exist")
+
+    def test_phase8_threat_model_updated(self) -> None:
+        threat_model = OPERATIONS_DOCS / "RUNTIME_MANAGER_MCP_THREAT_MODEL.md"
+        self.assertTrue(threat_model.exists())
+        text = threat_model.read_text(encoding="utf-8")
+        self.assertIn("Phase 8", text, "Threat model must document Phase 8 mitigations")
+        self.assertIn("T12", text, "Threat model must include T12 (level escalation)")
+        self.assertIn("T13", text, "Threat model must include T13 (L4 via MCP)")
+
+    def test_phase8_policy_module_is_io_free(self) -> None:
+        policy_path = REPO_ROOT / "core" / "runtime_manager_policy.py"
+        tree = parse_python(policy_path)
+        forbidden = {"sqlite3", "subprocess", "os", "open", "pathlib", "datetime"}
+        offenders: list[str] = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name in forbidden:
+                        offenders.append(f"imports {alias.name}")
+            if isinstance(node, ast.ImportFrom) and (node.module or "") in forbidden:
+                offenders.append(f"imports from {node.module}")
+        self.assertEqual(offenders, [], "policy module must be free of I/O imports")
+
+    def test_phase8_eval_autonomy_levels_exists(self) -> None:
+        eval_path = REPO_ROOT / "experiments" / "runtime_manager_evals" / "eval_autonomy_levels.py"
+        self.assertTrue(eval_path.exists(), "eval_autonomy_levels.py must exist")
+
+    # Phase 10 architecture tests
+
+    def test_phase10_adapters_in_pyproject_packages(self) -> None:
+        """adapters.runtime_manager_mcp_stdio and adapters.runtime_manager_local_agent must be in pyproject.toml packages."""
+        pyproject = REPO_ROOT / "pyproject.toml"
+        with open(pyproject, "rb") as f:
+            config = tomllib.load(f)
+        packages = config["tool"]["setuptools"]["packages"]
+        self.assertIn("adapters.runtime_manager_mcp_stdio", packages,
+                      "adapters.runtime_manager_mcp_stdio must be declared in pyproject.toml packages")
+        self.assertIn("adapters.runtime_manager_local_agent", packages,
+                      "adapters.runtime_manager_local_agent must be declared in pyproject.toml packages")
+
+    def test_phase10_mcp_adapter_no_http_or_socket_listener(self) -> None:
+        """MCP STDIO adapter must not contain HTTP server, socket.bind, or SSE listener."""
+        server_path = REPO_ROOT / "adapters" / "runtime_manager_mcp_stdio" / "server.py"
+        src = server_path.read_text(encoding="utf-8")
+        forbidden = [
+            ("HTTPServer(", "HTTPServer binding"),
+            ('transport="sse"', "SSE transport"),
+            ("socket.bind(", "raw socket.bind"),
+            ("socket.listen(", "raw socket.listen"),
+            ("ssl.wrap_socket", "TLS wrapping"),
+            ("oauth2", "OAuth2 server"),
+        ]
+        for pattern, desc in forbidden:
+            self.assertNotIn(pattern, src, f"MCP STDIO adapter must not contain {desc}")
+
+    def test_phase10_mcp_adapter_no_direct_sqlite(self) -> None:
+        """MCP STDIO adapter must not import sqlite3 or write to SQLite directly."""
+        server_path = REPO_ROOT / "adapters" / "runtime_manager_mcp_stdio" / "server.py"
+        tree = parse_python(server_path)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    self.assertNotEqual(alias.name, "sqlite3",
+                                        "MCP STDIO server must not import sqlite3 directly")
+            if isinstance(node, ast.ImportFrom):
+                self.assertNotEqual(node.module or "", "sqlite3",
+                                    "MCP STDIO server must not import from sqlite3 directly")
+
+    def test_phase10_adapters_use_public_store_api_only(self) -> None:
+        """Adapters must call only public RuntimeManagerStore APIs — no private _methods."""
+        for adapter_mod in ["server.py", "auth.py"]:
+            adapter_path = REPO_ROOT / "adapters" / "runtime_manager_mcp_stdio" / adapter_mod
+            if not adapter_path.exists():
+                continue
+            src = adapter_path.read_text(encoding="utf-8")
+            # Private methods that adapters must not call directly
+            forbidden_privates = ["store._connect", "store._create_schema", "store._migrate_schema",
+                                  "store._require_schema", "store._append_event"]
+            for priv in forbidden_privates:
+                self.assertNotIn(priv, src,
+                                 f"{adapter_mod} must not call private store method {priv}")
+
+    def test_phase10_record_approval_not_exposed_via_mcp(self) -> None:
+        """record_approval must not appear as a FastMCP tool in the MCP STDIO server."""
+        server_path = REPO_ROOT / "adapters" / "runtime_manager_mcp_stdio" / "server.py"
+        src = server_path.read_text(encoding="utf-8")
+        # record_approval must not be registered as a @app.tool
+        # The tool name would be "runtime_record_approval" if exposed
+        self.assertNotIn("runtime_record_approval", src,
+                         "record_approval must remain unexposed via MCP STDIO")
+
+    def test_phase10_stress_lab_exists_and_carries_not_permission(self) -> None:
+        """Stress lab scenarios module must exist and declare stress_pass_is_not_permission."""
+        scenarios_path = REPO_ROOT / "experiments" / "runtime_manager_stress_lab" / "scenarios.py"
+        self.assertTrue(scenarios_path.exists(), "stress lab scenarios.py must exist")
+        src = scenarios_path.read_text(encoding="utf-8")
+        self.assertIn("stress_pass_is_not_permission", src,
+                      "scenarios.py must declare stress_pass_is_not_permission")
+        self.assertIn("advisory/local stress only", src,
+                      "scenarios.py must carry advisory authority marker")
+
+    def test_phase10_integrity_report_is_not_permission(self) -> None:
+        """RuntimeIntegrityReport must declare integrity_report_is_not_permission field."""
+        store_path = REPO_ROOT / "core" / "runtime_manager_store.py"
+        src = store_path.read_text(encoding="utf-8")
+        self.assertIn("RuntimeIntegrityReport", src,
+                      "store must define RuntimeIntegrityReport")
+        self.assertIn("integrity_report_is_not_permission", src,
+                      "RuntimeIntegrityReport must carry integrity_report_is_not_permission")
+
+    def test_phase10_mcp_level_blocked_in_require_factory(self) -> None:
+        """mcp_level_blocked counter must be incremented in _require_current_token_factory, not only in runtime_run_command."""
+        server_path = REPO_ROOT / "adapters" / "runtime_manager_mcp_stdio" / "server.py"
+        src = server_path.read_text(encoding="utf-8")
+        # The factory must increment the counter (inside _require_current_token_factory body)
+        factory_start = src.index("def _require_current_token_factory")
+        factory_end = src.index("def build_app", factory_start)
+        factory_body = src[factory_start:factory_end]
+        self.assertIn('increment_policy_counter("mcp_level_blocked")', factory_body,
+                      "_require_current_token_factory must increment mcp_level_blocked on level block")
+
+    # ── Phase 11: Agent-Agnostic Bootstrap ───────────────────────────────────
+
+    def test_phase11_trigger_exists(self) -> None:
+        trigger = OPERATIONS_DOCS / "FORMAL_RESUME_TRIGGER_AGENT_AGNOSTIC_BOOTSTRAP_PHASE_11.md"
+        self.assertTrue(trigger.exists(), "Phase 11 trigger doc must exist")
+
+    def test_phase11_project_root_module_exists(self) -> None:
+        module = REPO_ROOT / "cli" / "project_root.py"
+        self.assertTrue(module.exists(), "cli/project_root.py must exist")
+
+    def test_phase11_project_root_exports_find_project_root(self) -> None:
+        from cli.project_root import find_project_root, ResolvedRoot
+        import inspect
+        sig = inspect.signature(find_project_root)
+        self.assertIn("explicit", sig.parameters)
+        self.assertIn("walk_up", sig.parameters)
+
+    def test_phase11_init_never_creates_claude_md(self) -> None:
+        init_src = (REPO_ROOT / "cli" / "commands" / "init.py").read_text(encoding="utf-8")
+        # _build_scaffold must not include CLAUDE.md as an artefact to create.
+        # (The template body may legitimately mention CLAUDE.md to explain it is subordinate.)
+        scaffold_start = init_src.index("def _build_scaffold")
+        scaffold_end = init_src.index("\ndef ", scaffold_start + 1)
+        scaffold_body = init_src[scaffold_start:scaffold_end]
+        self.assertNotIn('"CLAUDE.md"', scaffold_body,
+                         "_build_scaffold must not list CLAUDE.md as a created artefact")
+
+    def test_phase11_agents_md_template_is_agent_agnostic(self) -> None:
+        init_src = (REPO_ROOT / "cli" / "commands" / "init.py").read_text(encoding="utf-8")
+        template_start = init_src.index("_AGENTS_MD_TEMPLATE")
+        template_end = init_src.index('"""', init_src.index('"""', template_start) + 3) + 3
+        template = init_src[template_start:template_end].lower()
+        forbidden = ["claude is required", "requires claude", "must use claude", "only works with claude"]
+        for phrase in forbidden:
+            self.assertNotIn(phrase, template, f"AGENTS.md template must not contain: {phrase!r}")
+
+    def test_phase11_observation_center_template_authority_starts_agents_md(self) -> None:
+        init_src = (REPO_ROOT / "cli" / "commands" / "init.py").read_text(encoding="utf-8")
+        self.assertIn('authority_order = "AGENTS.md ->', init_src,
+                      "observation_center.toml template must set authority_order starting with AGENTS.md")
+
+    def test_phase11_repo_agents_md_declares_universal_role(self) -> None:
+        agents_md = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("universal", agents_md.lower(),
+                      "AGENTS.md in cerebro repo must declare its universal role")
+        self.assertIn("subordin", agents_md.lower(),
+                      "AGENTS.md must declare CLAUDE.md as subordinate")
+
+    def test_phase11_init_has_repair_scaffold_flag(self) -> None:
+        from cli.main import build_parser
+        parser = build_parser()
+        init_ns = parser.parse_args(["init", "--repair-scaffold"])
+        self.assertTrue(init_ns.repair_scaffold)
+
+    def test_phase11_walk_up_never_overrides_explicit(self) -> None:
+        import tempfile
+        from pathlib import Path as P
+        from cli.project_root import find_project_root
+        with tempfile.TemporaryDirectory() as tmp:
+            root = P(tmp)
+            (root / ".cerebro").mkdir()
+            explicit = root / "other"
+            explicit.mkdir()
+            result = find_project_root(explicit=str(explicit), start=root)
+            self.assertEqual(result.source, "explicit")
+            self.assertEqual(result.path, explicit.resolve())

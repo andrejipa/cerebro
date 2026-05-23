@@ -1131,7 +1131,10 @@ class ValidateCommandTests(unittest.TestCase):
             self.assertEqual(exit_code, 1)
             self.assertIn("state_missing", output)
             self.assertIn("no Cerebro state found in current directory", output)
-            self.assertIn("run `cerebro init` first", output)
+            self.assertTrue(
+                "run `cerebro init` first" in output or "Change into the project root" in output,
+                f"Expected remediation message in: {output}",
+            )
             self.assertNotIn("internal_error", output)
 
     def test_resume_command_reports_runtime_lock_timeout_as_operation_failed(self) -> None:

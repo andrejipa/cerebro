@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import os
 import subprocess
 import sys
@@ -105,6 +106,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertIn("rollback", result.stdout)
         self.assertIn("session-discard", result.stdout)
         self.assertIn("return-map-export", result.stdout)
+        self.assertIn("runtime-manager", result.stdout)
         self.assertIn("sources-export", result.stdout)
         self.assertIn("status-export", result.stdout)
         self.assertIn("validation-export", result.stdout)
@@ -133,6 +135,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
             "context-index-export",
             "impact-export",
             "return-map-export",
+            "runtime-manager",
             "sources-export",
             "status-export",
             "validation-export",
@@ -148,6 +151,27 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 )
                 self.assertEqual(result.returncode, 0)
                 self.assertIn(command, result.stdout)
+
+    def test_runtime_manager_mcp_stdio_reports_missing_optional_extra(self) -> None:
+        import adapters.runtime_manager_mcp_stdio as mcp_stdio
+
+        with tempfile.TemporaryDirectory() as project_dir:
+            project_root = Path(project_dir).resolve()
+            missing_mcp = ModuleNotFoundError("No module named 'mcp'", name="mcp")
+            stream = io.StringIO()
+            with mock.patch.object(mcp_stdio, "run_stdio", side_effect=missing_mcp):
+                with redirect_stdout(stream):
+                    exit_code = cli_main_module.main([
+                        "--project-root",
+                        str(project_root),
+                        "runtime-manager",
+                        "mcp-stdio",
+                    ])
+
+        output = stream.getvalue()
+        self.assertEqual(exit_code, 1)
+        self.assertIn("runtime_manager_mcp_unavailable", output)
+        self.assertIn('python -m pip install -e ".[mcp]"', output)
 
     def test_cli_rejects_unapproved_human_aliases(self) -> None:
         for alias in (
@@ -228,6 +252,578 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("isolated git worktrees", result.stdout)
         self.assertIn(".worktrees/", result.stdout)
+
+    def test_runtime_manager_help_declares_core_delegation(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "-m", "cli.main", "runtime-manager", "--help"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0)
+        help_text = result.stdout.replace("\n", " ")
+        self.assertIn("core.runtime_manager_store", result.stdout)
+        self.assertIn("does not parse TOML, SQLite, or Markdown directly", help_text)
+        self.assertIn("sync", result.stdout)
+        self.assertIn("status", result.stdout)
+        self.assertIn("next", result.stdout)
+
+    def test_runtime_manager_cli_sync_status_and_next_use_core_read_model(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            operations = root / "docs" / "operations"
+            operations.mkdir(parents=True)
+            (operations / "observation_center.toml").write_text(
+                """
+[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[projections]
+system_state = "projection only"
+opportunity_map = "projection only"
+
+[[observations]]
+id = "runtime-manager-phase-1"
+title = "Runtime Manager Phase 1"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "core/cli read-only"
+trigger = "FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_1.md"
+dependencies = []
+dependencies_satisfied = true
+required_validations = ["val-1"]
+next_action = "show status"
+done_when = "done"
+halt_if = "halt"
+
+[[validation_records]]
+id = "val-1"
+subject_id = "runtime-manager-phase-1"
+status = "green"
+checked_at = "2026-05-08T00:00:00Z"
+fresh_until = "2099-01-01T00:00:00Z"
+command_id = "unit-test"
+evidence_id = "ev-validation"
+reason = "fixture green validation"
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            sync_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            status_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "status"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            next_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "next", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(sync_result.returncode, 0, sync_result.stderr or sync_result.stdout)
+            sync_payload = json.loads(sync_result.stdout)
+            self.assertEqual(sync_payload["selected_id"], "runtime-manager-phase-1")
+            self.assertEqual(sync_payload["validations"]["expired"], 0)
+            self.assertEqual(sync_payload["selection_audit"]["policy_version"], "runtime-manager-selection-v1")
+            self.assertEqual(sync_payload["selection_audit"]["sort_policy"], ["priority_rank", "source_index", "id"])
+            self.assertEqual(sync_payload["selection_audit"]["decision"], "selected")
+            self.assertEqual(sync_payload["selection_audit"]["selected_id"], "runtime-manager-phase-1")
+            self.assertEqual(sync_payload["selection_audit"]["eligible_ids"], ["runtime-manager-phase-1"])
+            self.assertEqual(status_result.returncode, 0, status_result.stderr or status_result.stdout)
+            self.assertIn("mode: read-only status", status_result.stdout)
+            self.assertIn("projection_role: projection_only_not_authority", status_result.stdout)
+            self.assertIn("selected_id: runtime-manager-phase-1", status_result.stdout)
+            self.assertIn("selection_audit_decision: selected", status_result.stdout)
+            self.assertIn("selection_audit_policy_version: runtime-manager-selection-v1", status_result.stdout)
+            self.assertIn("selection_audit_sort_policy: priority_rank, source_index, id", status_result.stdout)
+            self.assertIn("selection_audit_eligible_ids: runtime-manager-phase-1", status_result.stdout)
+            self.assertIn("decisions_total: 0", status_result.stdout)
+            self.assertIn("evidence_total: 0", status_result.stdout)
+            self.assertIn("tools_total: 0", status_result.stdout)
+            self.assertIn("approvals_total: 0", status_result.stdout)
+            self.assertIn("events_total: 3", status_result.stdout)
+            self.assertIn("active_leases: 0", status_result.stdout)
+            self.assertIn("leases_expired: 0", status_result.stdout)
+            self.assertIn("replay_runs_total: 0", status_result.stdout)
+            self.assertIn("replay_runs_passed: 0", status_result.stdout)
+            self.assertIn("replay_runs_failed: 0", status_result.stdout)
+            self.assertIn("validations_total: 1", status_result.stdout)
+            self.assertIn("validations_green: 1", status_result.stdout)
+            self.assertIn("validations_expired: 0", status_result.stdout)
+            self.assertIn("stop_conditions_active: 0", status_result.stdout)
+            self.assertEqual(next_result.returncode, 0, next_result.stderr or next_result.stdout)
+            next_payload = json.loads(next_result.stdout)
+            self.assertEqual(next_payload["projection_role"], "projection_only_not_authority")
+            self.assertEqual(next_payload["selection_audit"]["decision"], "selected")
+            self.assertEqual(next_payload["next"]["required_decisions"], [])
+            self.assertEqual(next_payload["next"]["required_evidence"], [])
+            self.assertEqual(next_payload["next"]["required_tools"], [])
+            self.assertEqual(next_payload["next"]["required_approvals"], [])
+            self.assertEqual(next_payload["next"]["required_validations"], ["val-1"])
+            self.assertEqual(next_payload["next"]["next_action"], "show status")
+
+    def test_runtime_manager_status_and_next_write_projection_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            operations = root / "docs" / "operations"
+            operations.mkdir(parents=True)
+            (operations / "observation_center.toml").write_text(
+                """
+[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[[observations]]
+id = "item"
+title = "Item"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "core/cli read-only"
+trigger = "trigger.md"
+dependencies = []
+dependencies_satisfied = true
+next_action = "next"
+done_when = "done"
+halt_if = "halt"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            sync_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(sync_result.returncode, 0, sync_result.stderr or sync_result.stdout)
+
+            status_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "status", "--out", "runtime-status.txt"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            next_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "next", "--format", "json", "--out", "runtime-next.json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(status_result.returncode, 0, status_result.stderr or status_result.stdout)
+            self.assertIn("runtime_manager_projection_written", status_result.stdout)
+            status_text = (root / "runtime-status.txt").read_text(encoding="utf-8")
+            self.assertIn("projection_role: projection_only_not_authority", status_text)
+            self.assertIn("validations_total: 0", status_text)
+            self.assertIn("validations_expired: 0", status_text)
+            self.assertIn("stop_conditions_active: 0", status_text)
+            self.assertEqual(next_result.returncode, 0, next_result.stderr or next_result.stdout)
+            next_payload = json.loads((root / "runtime-next.json").read_text(encoding="utf-8"))
+            self.assertEqual(next_payload["projection_role"], "projection_only_not_authority")
+            self.assertEqual(next_payload["next"]["id"], "item")
+            self.assertEqual(next_payload["next"]["required_validations"], [])
+
+    def test_runtime_manager_projection_rejects_runtime_and_authority_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            operations = root / "docs" / "operations"
+            operations.mkdir(parents=True)
+            source = operations / "observation_center.toml"
+            source.write_text(
+                """
+[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[[observations]]
+id = "item"
+title = "Item"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "core/cli read-only"
+trigger = "trigger.md"
+dependencies = []
+dependencies_satisfied = true
+next_action = "next"
+done_when = "done"
+halt_if = "halt"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            sync_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(sync_result.returncode, 0, sync_result.stderr or sync_result.stdout)
+
+            for output_path in (
+                ".cerebro/status.txt",
+                "docs/operations/observation_center.toml",
+                "docs/operations/SYSTEM_STATE.md",
+                "docs/operations/OPPORTUNITY_MAP.md",
+            ):
+                with self.subTest(output_path=output_path):
+                    result = subprocess.run(
+                        [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "status", "--out", output_path],
+                        cwd=root,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(result.returncode, 1)
+                    self.assertIn("runtime_manager_failed", result.stdout)
+
+    def test_runtime_manager_projection_rejects_registered_source_when_state_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            tracked = root / "tracked.txt"
+            tracked.write_text("source\n", encoding="utf-8")
+            run_init(root, None)
+            store = StateStore(root)
+            store.register_sources(["tracked.txt"])
+            operations = root / "docs" / "operations"
+            operations.mkdir(parents=True, exist_ok=True)
+            (operations / "observation_center.toml").write_text(
+                """
+[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[[observations]]
+id = "item"
+title = "Item"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "core/cli read-only"
+trigger = "trigger.md"
+dependencies = []
+dependencies_satisfied = true
+next_action = "next"
+done_when = "done"
+halt_if = "halt"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            sync_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(sync_result.returncode, 0, sync_result.stderr or sync_result.stdout)
+            before = tracked.read_text(encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "status", "--out", "tracked.txt"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("registered source", result.stdout)
+            self.assertEqual(tracked.read_text(encoding="utf-8"), before)
+
+    def test_runtime_manager_status_fails_closed_when_source_digest_is_stale(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            operations = root / "docs" / "operations"
+            operations.mkdir(parents=True)
+            source = operations / "observation_center.toml"
+            source.write_text(
+                """
+[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[[observations]]
+id = "item"
+title = "Item"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "core/cli read-only"
+trigger = "trigger.md"
+dependencies = []
+dependencies_satisfied = true
+next_action = "next"
+done_when = "done"
+halt_if = "halt"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            sync_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(sync_result.returncode, 0, sync_result.stderr or sync_result.stdout)
+            source.write_text(source.read_text(encoding="utf-8") + "\n# drift\n", encoding="utf-8")
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "status"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("state: blocked", result.stdout)
+            self.assertIn("stale_source: true", result.stdout)
+            self.assertIn("gate_diagnostics_total: 1", result.stdout)
+            self.assertIn("gate_diagnostic: stale_source subject=runtime-manager", result.stdout)
+            self.assertIn("selection_audit_decision: global_blocked", result.stdout)
+            self.assertIn("selection_audit_global_blockers: stale_source", result.stdout)
+
+    def test_runtime_manager_cli_explains_validation_and_stop_condition_blocks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            operations = root / "docs" / "operations"
+            operations.mkdir(parents=True)
+            source = operations / "observation_center.toml"
+            source.write_text(
+                """
+[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[[observations]]
+id = "item"
+title = "Item"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "core/cli read-only"
+trigger = "trigger.md"
+dependencies = []
+dependencies_satisfied = true
+required_validations = ["val-1"]
+next_action = "next"
+done_when = "done"
+halt_if = "halt"
+""".lstrip(),
+                encoding="utf-8",
+            )
+            sync_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            blocked_validation = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "next"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            blocked_validation_json = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "next", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(sync_result.returncode, 0, sync_result.stderr or sync_result.stdout)
+            self.assertEqual(blocked_validation.returncode, 1)
+            self.assertIn("required validations", blocked_validation.stdout)
+            self.assertIn("gate_diagnostics_total: 1", blocked_validation.stdout)
+            self.assertIn("gate_diagnostic: missing_validations subject=item details=val-1:missing", blocked_validation.stdout)
+            self.assertEqual(blocked_validation_json.returncode, 1)
+            validation_payload = json.loads(blocked_validation_json.stdout)
+            self.assertIsNone(validation_payload["next"])
+            self.assertEqual(
+                validation_payload["gate_diagnostics"],
+                [
+                    {
+                        "code": "missing_validations",
+                        "subject_id": "item",
+                        "details": ["val-1:missing"],
+                        "severity": "blocking",
+                        "blocking": True,
+                    }
+                ],
+            )
+            self.assertEqual(validation_payload["selection_audit"]["decision"], "no_eligible")
+            self.assertEqual(validation_payload["selection_audit"]["eligible_ids"], [])
+            self.assertEqual(
+                validation_payload["selection_audit"]["entries"][0]["blockers"],
+                ["missing_validations=val-1:missing"],
+            )
+
+            source.write_text(
+                source.read_text(encoding="utf-8")
+                + """
+
+[[validation_records]]
+id = "val-1"
+subject_id = "item"
+status = "green"
+checked_at = "2026-05-08T00:00:00Z"
+fresh_until = "2099-01-01T00:00:00Z"
+command_id = "unit-test"
+evidence_id = "ev-validation"
+reason = "fixture green validation"
+
+[[stop_conditions]]
+id = "stop-1"
+subject_id = "item"
+status = "active"
+severity = "high"
+opened_at = "2026-05-08T00:00:00Z"
+resolved_at = ""
+reason = "fixture stop"
+""",
+                encoding="utf-8",
+            )
+            resync_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            blocked_stop = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "status"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            blocked_stop_json = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "status", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(resync_result.returncode, 0, resync_result.stderr or resync_result.stdout)
+            self.assertEqual(blocked_stop.returncode, 0, blocked_stop.stderr or blocked_stop.stdout)
+            self.assertIn("active stop condition", blocked_stop.stdout)
+            self.assertIn("gate_diagnostic: active_stop_condition subject=item details=<none>", blocked_stop.stdout)
+            self.assertIn("validations_green: 1", blocked_stop.stdout)
+            self.assertIn("validations_expired: 0", blocked_stop.stdout)
+            self.assertIn("stop_conditions_active: 1", blocked_stop.stdout)
+            self.assertEqual(blocked_stop_json.returncode, 0, blocked_stop_json.stderr or blocked_stop_json.stdout)
+            stop_payload = json.loads(blocked_stop_json.stdout)
+            self.assertEqual(
+                stop_payload["gate_diagnostics"],
+                [
+                    {
+                        "code": "active_stop_condition",
+                        "subject_id": "item",
+                        "details": [],
+                        "severity": "blocking",
+                        "blocking": True,
+                    }
+                ],
+            )
+            self.assertEqual(stop_payload["selection_audit"]["decision"], "no_eligible")
+            self.assertEqual(stop_payload["selection_audit"]["entries"][0]["blockers"], ["active_stop_condition"])
+
+    def test_runtime_manager_cli_expired_lease_does_not_block_and_appears_in_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            operations = root / "docs" / "operations"
+            operations.mkdir(parents=True)
+            (operations / "observation_center.toml").write_text(
+                """
+[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[[observations]]
+id = "open-item"
+title = "Open Item"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "core/cli read-only"
+trigger = "trigger.md"
+dependencies = []
+dependencies_satisfied = true
+next_action = "do it"
+done_when = "done"
+halt_if = "halt"
+
+[[runtime_leases]]
+id = "lease-expired"
+observation_id = "open-item"
+owner = "agent-old"
+status = "active"
+acquired_at = "2026-01-01T00:00:00Z"
+expires_at = "2000-01-01T00:00:00Z"
+reason = "stale expired lease"
+""".lstrip(),
+                encoding="utf-8",
+            )
+
+            sync_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            status_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "status"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+            next_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "next", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(sync_result.returncode, 0, sync_result.stderr or sync_result.stdout)
+            sync_payload = json.loads(sync_result.stdout)
+            self.assertEqual(sync_payload["state"], "ready")
+            self.assertEqual(sync_payload["selected_id"], "open-item")
+            self.assertEqual(sync_payload["leases"]["active"], 0)
+            self.assertEqual(sync_payload["leases"]["expired"], 1)
+            self.assertEqual(
+                sync_payload["gate_diagnostics"],
+                [
+                    {
+                        "code": "active_lease_expired",
+                        "subject_id": "runtime-manager",
+                        "details": ["open-item"],
+                        "severity": "informational",
+                        "blocking": False,
+                    }
+                ],
+            )
+            self.assertEqual(status_result.returncode, 0, status_result.stderr or status_result.stdout)
+            self.assertIn("active_leases: 0", status_result.stdout)
+            self.assertIn("leases_expired: 1", status_result.stdout)
+            self.assertIn("gate_diagnostic: active_lease_expired subject=runtime-manager details=open-item", status_result.stdout)
+            self.assertIn("severity=informational blocking=false", status_result.stdout)
+            self.assertEqual(next_result.returncode, 0, next_result.stderr or next_result.stdout)
+            next_payload = json.loads(next_result.stdout)
+            self.assertEqual(next_payload["next"]["id"], "open-item")
+            self.assertEqual(next_payload["selection_audit"]["decision"], "selected")
+            self.assertEqual(next_payload["selection_audit"]["global_blockers"], [])
 
     def test_session_discard_help_declares_explicit_reopen_boundary(self) -> None:
         result = subprocess.run(
@@ -345,6 +941,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 observed.append(handler_root)
                 return 0
 
+            (root / ".git").mkdir()
             previous_cwd = Path.cwd()
             try:
                 os.chdir(root)
@@ -407,6 +1004,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 observed.append(handler_root)
                 return 0
 
+            (root / ".git").mkdir()
             previous_cwd = Path.cwd()
             try:
                 os.chdir(root)
@@ -448,6 +1046,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 observed.append(handler_root)
                 return 0
 
+            (root / ".git").mkdir()
             previous_cwd = Path.cwd()
             try:
                 os.chdir(root)
@@ -491,6 +1090,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 observed.append(handler_root)
                 return 0
 
+            (root / ".git").mkdir()
             previous_cwd = Path.cwd()
             try:
                 os.chdir(root)
@@ -535,6 +1135,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 print("ANALYZE_CALLED")
                 return 0
 
+            (root / ".git").mkdir()
             previous_cwd = Path.cwd()
             try:
                 os.chdir(root)
@@ -567,6 +1168,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 observed.append(handler_root)
                 return 0
 
+            (root / ".git").mkdir()
             previous_cwd = Path.cwd()
             try:
                 os.chdir(root)
@@ -1175,6 +1777,7 @@ class CliHelpAndExitCodeTests(unittest.TestCase):
                 observed.append(handler_root)
                 return 0
 
+            (root / ".git").mkdir()
             previous_cwd = Path.cwd()
             try:
                 os.chdir(root)
@@ -2193,7 +2796,7 @@ class CliOutputTests(unittest.TestCase):
             self.assertIn("OK", output)
             self.assertIn("instance_created:", output)
             self.assertIn("state_path:", output)
-            self.assertIn("next_step: run `cerebro import-context --files ...`", output)
+            self.assertIn("next_step: edit docs/operations/observation_center.toml", output)
 
     def test_validate_ok_output_is_clear(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -2262,3 +2865,979 @@ class CliOutputTests(unittest.TestCase):
             self.assertIn("FAIL", output)
             self.assertIn("resume_blocked", output)
             self.assertIn("source_hash_mismatch", output)
+
+
+class RuntimeManagerRunEndToEndTests(unittest.TestCase):
+    """End-to-end CLI tests proving no bypass path in runtime-manager run."""
+
+    def _write_center(self, root: Path, argv: list[str], *, approval_requirement: str = "none") -> None:
+        import json as _json
+        ops = root / "docs" / "operations"
+        ops.mkdir(parents=True, exist_ok=True)
+        (ops / "observation_center.toml").write_text(
+            f"""[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[projections]
+system_state = "p"
+opportunity_map = "p"
+
+[[observations]]
+id = "obs-e2e"
+title = "e2e test"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "authorized"
+trigger = "TRIGGER.md"
+dependencies = []
+dependencies_satisfied = true
+next_action = "run"
+done_when = "done"
+halt_if = "never"
+
+[[command_registry]]
+id = "cmd-e2e"
+argv_prefix = {_json.dumps(argv)}
+path_scope = "."
+side_effect_class = "read-only"
+network_allowed = false
+timeout_seconds = 10
+output_budget_bytes = 65536
+sensitive_output_policy = "none"
+approval_requirement = "{approval_requirement}"
+rollback_class = "reversible"
+status = "enabled"
+""",
+            encoding="utf-8",
+        )
+
+    def _sync(self, root: Path) -> None:
+        subprocess.run(
+            [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+        )
+
+    def test_cli_run_executes_registered_command_and_reports_evidence_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            argv = [sys.executable, "-c", "print('cli-e2e-ok')"]
+            self._write_center(root, argv)
+            self._sync(root)
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "run", "cmd-e2e", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["eligible"])
+            self.assertEqual(payload["returncode"], 0)
+            self.assertIn("cli-e2e-ok", payload["stdout"])
+            self.assertGreater(payload["evidence_id"], 0)
+
+    def test_cli_run_fails_for_unregistered_command_without_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root, [sys.executable, "-c", "print('nope')"])
+            self._sync(root)
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "run", "cmd-not-in-registry",
+                 "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["eligible"])
+            self.assertIn("command_not_registered", payload["blockers"])
+            self.assertEqual(payload["evidence_id"], -1)
+
+    def test_cli_run_fails_when_approval_required_but_absent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            argv = [sys.executable, "-c", "print('needs-approval')"]
+            self._write_center(root, argv, approval_requirement="required")
+            self._sync(root)
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "run", "cmd-e2e", "--format", "json"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["eligible"])
+            self.assertIn("approval_required", payload["blockers"])
+            self.assertEqual(payload["evidence_id"], -1)
+
+    def test_cli_run_no_subprocess_when_db_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "run", "cmd-any"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("FAIL", result.stdout)
+
+
+class RuntimeManagerEvidenceEndToEndTests(unittest.TestCase):
+    """CLI end-to-end tests for runtime-manager evidence show/list."""
+
+    def _write_center(self, root: Path) -> None:
+        import json as _json
+        ops = root / "docs" / "operations"
+        ops.mkdir(parents=True, exist_ok=True)
+        argv = [sys.executable, "-c", "print('evidence-cli')"]
+        (ops / "observation_center.toml").write_text(
+            f"""[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[projections]
+system_state = "p"
+opportunity_map = "p"
+
+[[observations]]
+id = "obs-ev"
+title = "evidence cli test"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "authorized"
+trigger = "TRIGGER.md"
+dependencies = []
+dependencies_satisfied = true
+next_action = "run"
+done_when = "done"
+halt_if = "never"
+
+[[command_registry]]
+id = "cmd-ev"
+argv_prefix = {_json.dumps(argv)}
+path_scope = "."
+side_effect_class = "read-only"
+network_allowed = false
+timeout_seconds = 10
+output_budget_bytes = 65536
+sensitive_output_policy = "none"
+approval_requirement = "none"
+rollback_class = "reversible"
+status = "enabled"
+""",
+            encoding="utf-8",
+        )
+
+    def _sync_and_run(self, root: Path) -> dict:
+        subprocess.run(
+            [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+            cwd=root, check=True, capture_output=True,
+        )
+        result = subprocess.run(
+            [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "run", "cmd-ev", "--format", "json"],
+            cwd=root, capture_output=True, text=True,
+        )
+        return json.loads(result.stdout)
+
+    def test_evidence_show_returns_record_for_valid_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            run_payload = self._sync_and_run(root)
+            evidence_id = run_payload["evidence_id"]
+            self.assertGreater(evidence_id, 0)
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "evidence", "show",
+                 str(evidence_id), "--format", "json"],
+                cwd=root, capture_output=True, text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertIsNotNone(payload["evidence"])
+            self.assertEqual(payload["evidence"]["evidence_id"], evidence_id)
+            self.assertEqual(payload["evidence"]["command_id"], "cmd-ev")
+            self.assertEqual(payload["evidence"]["observation_id"], "obs-ev")
+
+    def test_evidence_show_returns_nonzero_for_unknown_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root, check=True, capture_output=True,
+            )
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "evidence", "show",
+                 "99999", "--format", "json"],
+                cwd=root, capture_output=True, text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            payload = json.loads(result.stdout)
+            self.assertIsNone(payload["evidence"])
+
+    def test_evidence_list_returns_all_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root, check=True, capture_output=True,
+            )
+            for _ in range(3):
+                subprocess.run(
+                    [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "run", "cmd-ev"],
+                    cwd=root, capture_output=True,
+                )
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "evidence", "list",
+                 "--format", "json"],
+                cwd=root, capture_output=True, text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["total"], 3)
+            ids = [e["evidence_id"] for e in payload["evidence"]]
+            self.assertEqual(ids, sorted(ids, reverse=True), "evidence list should be newest first")
+
+    def test_evidence_list_limit_option(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root, check=True, capture_output=True,
+            )
+            for _ in range(5):
+                subprocess.run(
+                    [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "run", "cmd-ev"],
+                    cwd=root, capture_output=True,
+                )
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "evidence", "list",
+                 "--limit", "2", "--format", "json"],
+                cwd=root, capture_output=True, text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(len(payload["evidence"]), 2)
+
+    def test_evidence_list_negative_limit_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "sync"],
+                cwd=root, check=True, capture_output=True,
+            )
+
+            result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "runtime-manager", "evidence", "list",
+                 "--limit", "-1", "--format", "json"],
+                cwd=root, capture_output=True, text=True,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("limit must be >= 0", result.stdout)
+
+
+class RuntimeManagerPhase4CLITests(unittest.TestCase):
+    """End-to-end CLI tests for Phase 4 subcommands: lease, stop, validation, approval, rollback."""
+
+    def _write_center(self, root: Path, *, approval_requirement: str = "none",
+                      rollback_class: str = "reversible") -> None:
+        import json as _json
+        ops = root / "docs" / "operations"
+        ops.mkdir(parents=True, exist_ok=True)
+        argv = [sys.executable, "-c", "print('p4-cli')"]
+        (ops / "observation_center.toml").write_text(
+            f"""[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[projections]
+system_state = "p"
+opportunity_map = "p"
+
+[[observations]]
+id = "obs-p4"
+title = "phase4 cli test"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "authorized"
+trigger = "TRIGGER.md"
+dependencies = []
+dependencies_satisfied = true
+next_action = "run"
+done_when = "done"
+halt_if = "never"
+
+[[command_registry]]
+id = "cmd-p4"
+argv_prefix = {_json.dumps(argv)}
+path_scope = "."
+side_effect_class = "read-only"
+network_allowed = false
+timeout_seconds = 10
+output_budget_bytes = 65536
+sensitive_output_policy = "none"
+approval_requirement = "{approval_requirement}"
+rollback_class = "{rollback_class}"
+status = "enabled"
+""",
+            encoding="utf-8",
+        )
+
+    def _cli(self, root: Path, *args: str, check: bool = False) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, "-m", "cli.main", "--project-root", str(root), *args],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=check,
+        )
+
+    def _sync(self, root: Path) -> None:
+        self._cli(root, "runtime-manager", "sync", check=True)
+
+    # ── lease ──────────────────────────────────────────────────────────────────
+
+    def test_lease_acquire_returns_json_with_lease_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            result = self._cli(root, "runtime-manager", "lease", "acquire",
+                               "obs-p4", "--owner", "agent-1", "--ttl-seconds", "60",
+                               "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertIn("lease_id", payload)
+            self.assertTrue(payload["lease_id"])
+            self.assertEqual(payload["observation_id"], "obs-p4")
+
+    def test_lease_list_returns_json_list(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            self._cli(root, "runtime-manager", "lease", "acquire",
+                      "obs-p4", "--owner", "agent-1", "--ttl-seconds", "60", check=True)
+            result = self._cli(root, "runtime-manager", "lease", "list", "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertIn("leases", payload)
+            self.assertEqual(len(payload["leases"]), 1)
+            self.assertEqual(payload["leases"][0]["observation_id"], "obs-p4")
+
+    def test_lease_release_removes_active_lease(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            acq = self._cli(root, "runtime-manager", "lease", "acquire",
+                            "obs-p4", "--owner", "agent-1", "--ttl-seconds", "60",
+                            "--format", "json", check=True)
+            lease_id = json.loads(acq.stdout)["lease_id"]
+            result = self._cli(root, "runtime-manager", "lease", "release",
+                               str(lease_id), "--owner", "agent-1", "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["released"])
+
+    # ── stop ───────────────────────────────────────────────────────────────────
+
+    def test_stop_raise_returns_json_with_condition_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            result = self._cli(root, "runtime-manager", "stop", "raise",
+                               "obs-p4", "--reason", "test-reason", "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertIn("stop_condition_id", payload)
+            self.assertTrue(payload["stop_condition_id"])
+            self.assertEqual(payload["subject_id"], "obs-p4")
+
+    def test_stop_list_shows_raised_condition(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            self._cli(root, "runtime-manager", "stop", "raise",
+                      "obs-p4", "--reason", "test-reason", check=True)
+            result = self._cli(root, "runtime-manager", "stop", "list", "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertIn("stop_conditions", payload)
+            self.assertEqual(len(payload["stop_conditions"]), 1)
+            self.assertEqual(payload["stop_conditions"][0]["subject_id"], "obs-p4")
+
+    def test_stop_resolve_clears_condition(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            raised = self._cli(root, "runtime-manager", "stop", "raise",
+                               "obs-p4", "--reason", "test-reason",
+                               "--format", "json", check=True)
+            cond_id = json.loads(raised.stdout)["stop_condition_id"]
+            result = self._cli(root, "runtime-manager", "stop", "resolve",
+                               str(cond_id), "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["resolved"])
+
+    # ── validation ─────────────────────────────────────────────────────────────
+
+    def test_validation_record_returns_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            result = self._cli(root, "runtime-manager", "validation", "record",
+                               "val-cli-1", "obs-p4",
+                               "--status", "red", "--reason", "failed",
+                               "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["validation_id"], "val-cli-1")
+            self.assertEqual(payload["status"], "red")
+
+    def test_validation_show_returns_recorded_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            self._cli(root, "runtime-manager", "validation", "record",
+                      "val-cli-2", "obs-p4",
+                      "--status", "red", "--reason", "failed", check=True)
+            result = self._cli(root, "runtime-manager", "validation", "show",
+                               "val-cli-2", "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["validation_id"], "val-cli-2")
+
+    def test_validation_show_not_found_returns_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            result = self._cli(root, "runtime-manager", "validation", "show",
+                               "no-such-val", "--format", "json")
+            self.assertNotEqual(result.returncode, 0)
+
+    # ── approval ───────────────────────────────────────────────────────────────
+
+    def test_approval_record_returns_json_with_approval_id(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root, approval_requirement="required")
+            self._sync(root)
+            result = self._cli(root, "runtime-manager", "approval", "record",
+                               "cmd-p4", "obs-p4", "--actor", "human-1",
+                               "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertIn("approval_id", payload)
+            self.assertTrue(payload["approval_id"])
+            self.assertEqual(payload["command_id"], "cmd-p4")
+
+    def test_approval_list_shows_recorded_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root, approval_requirement="required")
+            self._sync(root)
+            self._cli(root, "runtime-manager", "approval", "record",
+                      "cmd-p4", "obs-p4", "--actor", "human-1", check=True)
+            result = self._cli(root, "runtime-manager", "approval", "list", "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertIn("approvals", payload)
+            self.assertEqual(len(payload["approvals"]), 1)
+            self.assertEqual(payload["approvals"][0]["command_id"], "cmd-p4")
+
+    def test_approval_revoke_revokes_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root, approval_requirement="required")
+            self._sync(root)
+            rec = self._cli(root, "runtime-manager", "approval", "record",
+                            "cmd-p4", "obs-p4", "--actor", "human-1",
+                            "--format", "json", check=True)
+            approval_id = json.loads(rec.stdout)["approval_id"]
+            # approval_id is a UUID string
+            result = self._cli(root, "runtime-manager", "approval", "revoke",
+                               approval_id, "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["revoked"])
+
+    # ── rollback ───────────────────────────────────────────────────────────────
+
+    def test_rollback_list_returns_empty_initially(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            result = self._cli(root, "runtime-manager", "rollback", "list", "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertIn("rollback_runs", payload)
+            self.assertEqual(payload["rollback_runs"], [])
+
+    def test_rollback_executes_and_appears_in_list(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            run = self._cli(root, "runtime-manager", "run", "cmd-p4",
+                            "--format", "json", check=True)
+            evidence_id = json.loads(run.stdout)["evidence_id"]
+            # register rollback via store directly
+            from core.runtime_manager_store import RuntimeManagerStore
+            store = RuntimeManagerStore(root)
+            store.register_rollback(
+                "cmd-p4",
+                argv_prefix=(sys.executable, "-c", "print('undo')"),
+            )
+            result = self._cli(root, "runtime-manager", "rollback",
+                               "--evidence-id", str(evidence_id), "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["eligible"])
+
+
+class RuntimeManagerPhase5CLITests(unittest.TestCase):
+    """End-to-end CLI tests for Phase 5 trace, metrics, and replay surfaces."""
+
+    def _write_center(self, root: Path) -> None:
+        ops = root / "docs" / "operations"
+        ops.mkdir(parents=True, exist_ok=True)
+        argv = [sys.executable, "-c", "print('SECRET_TOKEN=phase5-cli')"]
+        (ops / "observation_center.toml").write_text(
+            f"""[center]
+version = 1
+queue_authority = "machine-primary"
+single_flight = true
+
+[projections]
+system_state = "p"
+opportunity_map = "p"
+
+[[observations]]
+id = "obs-p5"
+title = "phase5 cli test"
+status = "open"
+kind = "slice"
+priority = "critical"
+boundary = "authorized"
+trigger = "TRIGGER.md"
+dependencies = []
+dependencies_satisfied = true
+next_action = "run"
+done_when = "done"
+halt_if = "never"
+
+[[command_registry]]
+id = "cmd-p5"
+argv_prefix = {json.dumps(argv)}
+path_scope = "."
+side_effect_class = "read-only"
+network_allowed = false
+timeout_seconds = 10
+output_budget_bytes = 65536
+sensitive_output_policy = "none"
+approval_requirement = "none"
+rollback_class = "reversible"
+status = "enabled"
+""",
+            encoding="utf-8",
+        )
+
+    def _cli(self, root: Path, *args: str, check: bool = False) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, "-m", "cli.main", "--project-root", str(root), *args],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=check,
+        )
+
+    def _sync(self, root: Path) -> None:
+        self._cli(root, "runtime-manager", "sync", check=True)
+
+    def test_trace_list_show_and_export_otel_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            self._cli(root, "runtime-manager", "status", "--format", "json", check=True)
+
+            listed = self._cli(root, "runtime-manager", "trace", "list", "--format", "json")
+            self.assertEqual(listed.returncode, 0, listed.stderr)
+            list_payload = json.loads(listed.stdout)
+            self.assertGreaterEqual(list_payload["total"], 1)
+            trace_id = list_payload["traces"][0]["trace_id"]
+
+            shown = self._cli(root, "runtime-manager", "trace", "show", trace_id, "--format", "json")
+            self.assertEqual(shown.returncode, 0, shown.stderr)
+            show_payload = json.loads(shown.stdout)
+            self.assertTrue(show_payload["trace"]["trace_is_not_permission"])
+
+            exported = self._cli(root, "runtime-manager", "trace", "export", trace_id, "--format", "otel-json")
+            self.assertEqual(exported.returncode, 0, exported.stderr)
+            export_payload = json.loads(exported.stdout)
+            self.assertTrue(export_payload["projection_is_not_opentelemetry_export"])
+            self.assertTrue(export_payload["telemetry_is_not_permission"])
+
+    def test_trace_show_missing_returns_nonzero(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+
+            result = self._cli(root, "runtime-manager", "trace", "show", "rt-missing", "--format", "json")
+
+            self.assertNotEqual(result.returncode, 0)
+            payload = json.loads(result.stdout)
+            self.assertIsNone(payload["trace"])
+
+    def test_metrics_json_counts_run_and_traces(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            self._cli(root, "runtime-manager", "run", "cmd-p5", "--format", "json", check=True)
+
+            result = self._cli(root, "runtime-manager", "metrics", "--format", "json")
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["runs_total"], 1)
+            self.assertEqual(payload["runs_passed"], 1)
+            self.assertGreaterEqual(payload["traces_total"], 1)
+
+    def test_replay_json_passes_and_does_not_treat_trace_as_permission(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            self._cli(root, "runtime-manager", "run", "cmd-p5", "--format", "json", check=True)
+            scenario = root / "phase5-replay.json"
+            scenario.write_text(
+                json.dumps(
+                    {
+                        "scenario_id": "phase5-cli-replay",
+                        "checks": [
+                            {"id": "run-traced", "type": "trace_exists", "operation": "run"},
+                            {"id": "run-counted", "type": "metric_at_least", "metric": "runs_total", "min": 1},
+                            {
+                                "id": "secret-not-retained",
+                                "type": "trace_forbids_text",
+                                "text": "SECRET_TOKEN=phase5-cli",
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = self._cli(root, "runtime-manager", "replay", "--scenario", str(scenario), "--format", "json")
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["passed"])
+            self.assertEqual(payload["authority"], "runtime replay evidence only; not permission")
+
+
+class RuntimeManagerIntegrityCheckCliTests(unittest.TestCase):
+    """Phase 10 — CLI integrity check end-to-end tests."""
+
+    def _write_center(self, root: Path) -> None:
+        ops = root / "docs" / "operations"
+        ops.mkdir(parents=True, exist_ok=True)
+        (ops / "observation_center.toml").write_text(
+            "[center]\nversion = 1\n\n"
+            "[[observations]]\n"
+            'id = "obs-integrity"\n'
+            'title = "integrity test obs"\n'
+            'status = "open"\n'
+            'kind = "slice"\n'
+            'priority = "high"\n'
+            'boundary = "docs/"\n'
+            'trigger = "none"\n'
+            "dependencies = []\n"
+            "dependencies_satisfied = true\n"
+            'next_action = "test"\n'
+            'done_when = "done"\n'
+            'halt_if = "never"\n',
+            encoding="utf-8",
+        )
+
+    def _cli(self, root: Path, *args: str, check: bool = False) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, "-m", "cli.main", "--project-root", str(root), *args],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=check,
+        )
+
+    def _sync(self, root: Path) -> None:
+        self._cli(root, "runtime-manager", "sync", check=True)
+
+    def test_integrity_check_returns_zero_on_clean_db(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            result = self._cli(root, "runtime-manager", "integrity", "check", "--format", "text")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("RUNTIME MANAGER INTEGRITY CHECK", result.stdout)
+            self.assertIn("integrity_report_is_not_permission: true", result.stdout)
+
+    def test_integrity_check_json_carries_not_permission_marker(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            self._write_center(root)
+            self._sync(root)
+            result = self._cli(root, "runtime-manager", "integrity", "check", "--format", "json")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertTrue(payload["integrity_report_is_not_permission"])
+            self.assertIn("generated_at", payload)
+            self.assertIn("issues", payload)
+
+    def test_integrity_check_without_db_returns_nonzero(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            result = self._cli(root, "runtime-manager", "integrity", "check")
+            self.assertNotEqual(result.returncode, 0)
+
+
+# ---------------------------------------------------------------------------
+# Phase 11 — Agent-Agnostic Bootstrap tests
+# ---------------------------------------------------------------------------
+
+class CerebroInitScaffoldTests(unittest.TestCase):
+    """Phase 11: cerebro init creates multi-agent scaffold (no CLAUDE.md)."""
+
+    def _cli(self, cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, "-m", "cli.main", *args],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+        )
+
+    def test_init_creates_state_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = self._cli(root, "init")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((root / ".cerebro" / "state.json").exists())
+
+    def test_init_creates_runtime_db(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = self._cli(root, "init")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((root / ".cerebro" / "runtime.db").exists())
+
+    def test_init_creates_agents_md(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = self._cli(root, "init")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((root / "AGENTS.md").exists())
+
+    def test_init_does_not_create_claude_md(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._cli(root, "init")
+            self.assertFalse((root / "CLAUDE.md").exists(),
+                             "cerebro init must never create CLAUDE.md in a managed project")
+
+    def test_init_creates_observation_center_toml(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._cli(root, "init")
+            obs = root / "docs" / "operations" / "observation_center.toml"
+            self.assertTrue(obs.exists())
+
+    def test_init_creates_system_state_md(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._cli(root, "init")
+            self.assertTrue((root / "docs" / "operations" / "SYSTEM_STATE.md").exists())
+
+    def test_init_creates_opportunity_map_md(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._cli(root, "init")
+            self.assertTrue((root / "docs" / "operations" / "OPPORTUNITY_MAP.md").exists())
+
+    def test_init_observation_center_authority_starts_with_agents_md(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._cli(root, "init")
+            obs_text = (root / "docs" / "operations" / "observation_center.toml").read_text(encoding="utf-8")
+            data = tomllib.loads(obs_text)
+            authority = data["center"].get("authority_order", "")
+            self.assertTrue(
+                authority.startswith("AGENTS.md"),
+                f"authority_order must start with AGENTS.md, got: {authority!r}",
+            )
+
+    def test_init_agents_md_does_not_require_claude(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self._cli(root, "init")
+            content = (root / "AGENTS.md").read_text(encoding="utf-8").lower()
+            forbidden_phrases = [
+                "claude is required",
+                "requires claude",
+                "must use claude",
+                "only works with claude",
+            ]
+            for phrase in forbidden_phrases:
+                self.assertNotIn(phrase, content,
+                                 f"AGENTS.md template must not contain Claude-mandatory language: {phrase!r}")
+
+    def test_init_preserves_existing_agents_md(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            original = "# My custom AGENTS.md\n"
+            (root / "AGENTS.md").write_text(original, encoding="utf-8")
+            self._cli(root, "init")
+            self.assertEqual((root / "AGENTS.md").read_text(encoding="utf-8"), original,
+                             "cerebro init must not overwrite existing AGENTS.md")
+
+    def test_init_fails_on_already_initialized_project(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            r1 = self._cli(root, "init")
+            self.assertEqual(r1.returncode, 0)
+            r2 = self._cli(root, "init")
+            self.assertNotEqual(r2.returncode, 0)
+            self.assertIn("repair-scaffold", r2.stdout + r2.stderr)
+
+    def test_repair_scaffold_creates_missing_artefacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            # Manually create state.json so fresh init would fail
+            run_init(root, None)
+            # Remove AGENTS.md to simulate partial scaffold
+            agents_md = root / "AGENTS.md"
+            agents_md.unlink()
+            result = self._cli(root, "init", "--repair-scaffold")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(agents_md.exists())
+
+    def test_repair_scaffold_does_not_overwrite_existing_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run_init(root, None)
+            original = "# preserved\n"
+            (root / "AGENTS.md").write_text(original, encoding="utf-8")
+            self._cli(root, "init", "--repair-scaffold")
+            self.assertEqual((root / "AGENTS.md").read_text(encoding="utf-8"), original)
+
+    def test_repair_scaffold_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run_init(root, None)
+            r1 = self._cli(root, "init", "--repair-scaffold")
+            r2 = self._cli(root, "init", "--repair-scaffold")
+            self.assertEqual(r1.returncode, 0)
+            self.assertEqual(r2.returncode, 0)
+
+
+class ProjectRootWalkUpTests(unittest.TestCase):
+    """Phase 11: walk-up root detection."""
+
+    def test_walkup_finds_cerebro_dir_from_subdir(self) -> None:
+        from cli.project_root import find_project_root
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".cerebro").mkdir()
+            subdir = root / "src" / "nested"
+            subdir.mkdir(parents=True)
+            result = find_project_root(start=subdir)
+            self.assertEqual(result.path, root.resolve())
+            self.assertEqual(result.source, "cerebro")
+
+    def test_walkup_finds_git_when_no_cerebro(self) -> None:
+        from cli.project_root import find_project_root
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".git").mkdir()
+            subdir = root / "deep" / "dir"
+            subdir.mkdir(parents=True)
+            result = find_project_root(start=subdir)
+            self.assertEqual(result.path, root.resolve())
+            self.assertEqual(result.source, "git")
+
+    def test_walk_up_false_always_returns_cwd(self) -> None:
+        from cli.project_root import find_project_root
+        with tempfile.TemporaryDirectory() as tmp:
+            start = Path(tmp) / "subdir"
+            start.mkdir()
+            result = find_project_root(start=start, walk_up=False)
+            self.assertEqual(result.path, start.resolve())
+            self.assertEqual(result.source, "cwd")
+
+    def test_explicit_project_root_overrides_walkup(self) -> None:
+        from cli.project_root import find_project_root
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            explicit = root / "explicit_root"
+            explicit.mkdir()
+            # Even if .cerebro exists at root, explicit wins
+            (root / ".cerebro").mkdir()
+            result = find_project_root(explicit=str(explicit), start=root)
+            self.assertEqual(result.path, explicit.resolve())
+            self.assertEqual(result.source, "explicit")
+
+    def test_cerebro_marker_takes_priority_over_git(self) -> None:
+        from cli.project_root import find_project_root
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".git").mkdir()
+            inner = root / "subproject"
+            inner.mkdir()
+            (inner / ".cerebro").mkdir()
+            result = find_project_root(start=inner / "src")
+            (inner / "src").mkdir(exist_ok=True)
+            result = find_project_root(start=inner / "src")
+            self.assertEqual(result.path, inner.resolve())
+            self.assertEqual(result.source, "cerebro")
