@@ -1,4 +1,10 @@
-# Cerebro — Instruções para Agentes
+# Cerebro — Instruções para Agentes (AGENTS.md universal)
+
+> **AGENTS.md é o arquivo de instrução universal para qualquer agente de IA** — Claude Code,
+> OpenAI Codex, GitHub Copilot, Cursor ou qualquer LLM compatível com o padrão aberto.
+> Se existir um `CLAUDE.md` neste repositório, ele é um **suplemento local opcional**
+> exclusivo para o Claude Code e é **subordinado** a este arquivo. `CLAUDE.md` nunca é
+> requisito operacional; qualquer agente pode operar o cerebro usando apenas este arquivo.
 
 ## Contexto rápido — leia antes de tudo
 
@@ -22,45 +28,8 @@ e coordenação multiagente. O sistema está em **freeze deliberado**
 
 ## Verificação obrigatória antes de qualquer trabalho
 
-``` 
-@'
-import errno, os, sys, tempfile, unittest
-from pathlib import Path
-
-workspace = Path(r'D:\projetos_cli\ambiente_cerebro\cerebro')
-for name in ('.tmp_test', '.tmp_claims', '.tmp_live_proofs'):
-    (workspace / name).mkdir(exist_ok=True)
-os.environ['TEMP'] = str((workspace / '.tmp_test').resolve())
-os.environ['TMP'] = os.environ['TEMP']
-os.environ['CEREBRO_SESSION_CLAIMS_DIR'] = str((workspace / '.tmp_claims').resolve())
-os.environ['CEREBRO_SESSION_LIVE_PROOFS_DIR'] = str((workspace / '.tmp_live_proofs').resolve())
-
-def _sandbox_mkdtemp(suffix=None, prefix=None, dir=None):
-    prefix, suffix, dir, output_type = tempfile._sanitize_params(prefix, suffix, dir)
-    names = tempfile._get_candidate_names()
-    if output_type is bytes:
-        names = map(os.fsencode, names)
-    for _ in range(tempfile.TMP_MAX):
-        name = next(names)
-        path = os.path.join(dir, prefix + name + suffix)
-        sys.audit('tempfile.mkdtemp', path)
-        try:
-            os.mkdir(path, 0o777)
-        except FileExistsError:
-            continue
-        except PermissionError:
-            if os.name == 'nt' and os.path.isdir(dir) and os.access(dir, os.W_OK):
-                continue
-            raise
-        return os.path.abspath(path)
-    raise FileExistsError(errno.EEXIST, 'No usable temporary directory name found')
-
-tempfile.mkdtemp = _sandbox_mkdtemp
-suite = unittest.defaultTestLoader.discover('tests')
-result = unittest.TextTestRunner(verbosity=1).run(suite)
-print(f'SUMMARY ran={result.testsRun} failures={len(result.failures)} errors={len(result.errors)} skipped={len(result.skipped)}')
-raise SystemExit(0 if result.wasSuccessful() else 1)
-'@ | python -
+```powershell
+python -m tests.gate_runner --profile base
 ```
 
 Se houver falha: **pare tudo e corrija antes de continuar**.
@@ -68,8 +37,8 @@ Suíte vermelha = estado inválido = nada pode avançar.
 
 Neste shell/sandbox, o comando bruto `python -m unittest discover -s tests -v`
 não é a fonte de verdade por causa do `tempfile.mkdtemp(..., 0o700)` no
-Windows. Use o runner equivalente acima com `TEMP/TMP` e authority overrides
-locais.
+Windows. Use `tests.gate_runner`, que fixa `TEMP/TMP` e os diretórios locais de
+claims/live proofs antes de carregar a suíte.
 
 ## Como este projeto trabalha — leia isto
 
@@ -115,6 +84,20 @@ documentada.
 Sem trigger formal ativo, limite mutações a `docs/` e a este arquivo. Com
 trigger formal ativo, siga exatamente a whitelist e as stop conditions do
 trigger; não extrapole o boundary reaberto.
+
+## Sessões Cowork em projeto externo
+
+Quando o trabalho é em um **projeto externo** (third-party), este repo é
+**read-only** durante a sessão Cowork:
+
+- Só leia arquivos deste repo para contexto.
+- Não crie arquivos em `docs/operations/` nem em nenhum outro lugar deste repo.
+- Intake gates, triggers formais e SYSTEM_STATE são gerenciados pelo operador
+  via CLI — não pelo agente Cowork.
+- Toda escrita vai para a pasta do projeto externo.
+
+Exceção: o André pode pedir explicitamente que uma nota ou regra seja registrada
+neste repo. Nesse caso, escreva apenas o arquivo específico autorizado.
 
 ## Comandos de teste
 

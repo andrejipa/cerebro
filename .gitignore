@@ -50,6 +50,8 @@ build/
 .tmp_aclprobe/
 
 # tooling / personal
+.claude/
+CLAUDE.md
 .obsidian/
 .wrangler/
 venv/

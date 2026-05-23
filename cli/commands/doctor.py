@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import json
+import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from core.state_store import StateStore, StateStoreError, StateValidationError
@@ -13,6 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 STATUS_HEALTHY = "SAUDAVEL"
 STATUS_WARNING = "ATENCAO"
 STATUS_CRITICAL = "CRITICO"
+SUITE_TIMEOUT_SECONDS = 240
 
 
 def build_doctor_report(root: Path, *, repo_root: Path | None = None) -> dict[str, object]:
@@ -23,6 +28,7 @@ def build_doctor_report(root: Path, *, repo_root: Path | None = None) -> dict[st
     state_check, runtime = _state_check(store)
     checks = [
         _python_check(),
+        _installation_check(resolved_repo_root),
         _suite_check(resolved_repo_root),
         state_check,
         _session_check(store, runtime),
@@ -59,6 +65,192 @@ def _python_check() -> dict[str, str]:
     }
 
 
+def _installation_check(repo_root: Path) -> dict[str, str]:
+    missing = [
+        str(path.relative_to(repo_root))
+        for path in (
+            repo_root / "cli" / "main.py",
+            repo_root / "core" / "__init__.py",
+            repo_root / "extensions" / "__init__.py",
+        )
+        if not path.exists()
+    ]
+    if missing:
+        return {
+            "name": "installation",
+            "status": STATUS_CRITICAL,
+            "message": f"repo root is missing import packages: {', '.join(missing)}",
+        }
+
+    import_result = _run_isolated_import_check(repo_root)
+    if import_result["status"] == STATUS_CRITICAL:
+        return import_result
+
+    executable_result = _run_cerebro_executable_check()
+    if executable_result["status"] != STATUS_HEALTHY:
+        return executable_result
+
+    return {
+        "name": "installation",
+        "status": STATUS_HEALTHY,
+        "message": "isolated Python import and cerebro executable are available",
+    }
+
+
+def _run_isolated_import_check(repo_root: Path) -> dict[str, str]:
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        try:
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    (
+                        "import json, cli.main, core, extensions; "
+                        "print(json.dumps({'cli.main': cli.main.__file__, "
+                        "'core': core.__file__, 'extensions': extensions.__file__}))"
+                    ),
+                ],
+                cwd=tmp_dir,
+                capture_output=True,
+                text=True,
+                check=False,
+                env=_environment_without_pythonpath(),
+            )
+        except OSError as exc:
+            return {
+                "name": "installation",
+                "status": STATUS_CRITICAL,
+                "message": f"isolated installed import could not be executed: {exc}",
+            }
+    if result.returncode != 0:
+        return {
+            "name": "installation",
+            "status": STATUS_CRITICAL,
+            "message": f"isolated installed import failed: {_first_output_line(result)}",
+        }
+    module_paths = _parse_isolated_import_output(result)
+    if module_paths is None:
+        return {
+            "name": "installation",
+            "status": STATUS_CRITICAL,
+            "message": f"isolated installed import returned invalid output: {_first_output_line(result)}",
+        }
+
+    foreign = {
+        name: path
+        for name, path in module_paths.items()
+        if not path or not _path_is_within(Path(path).resolve(), repo_root)
+    }
+    if foreign:
+        details = ", ".join(f"{name} -> {path}" for name, path in sorted(foreign.items()))
+        return {
+            "name": "installation",
+            "status": STATUS_CRITICAL,
+            "message": f"isolated installed import points outside this repo: {details}",
+        }
+    return {
+        "name": "installation",
+        "status": STATUS_HEALTHY,
+        "message": "isolated installed import points at this repo",
+    }
+
+
+def _run_cerebro_executable_check() -> dict[str, str]:
+    executable = shutil.which("cerebro")
+    if executable is None:
+        return {
+            "name": "installation",
+            "status": STATUS_WARNING,
+            "message": "cerebro executable was not found on PATH",
+        }
+
+    expected_scripts_dir = _scripts_dir_for_current_interpreter()
+    executable_dir = Path(executable).resolve().parent
+    if not _same_path(executable_dir, expected_scripts_dir):
+        return {
+            "name": "installation",
+            "status": STATUS_WARNING,
+            "message": (
+                "cerebro executable on PATH is from a different Python environment "
+                f"({executable}); expected it under {expected_scripts_dir}"
+            ),
+        }
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        try:
+            result = subprocess.run(
+                [executable, "--help"],
+                cwd=tmp_dir,
+                capture_output=True,
+                text=True,
+                check=False,
+                env=_environment_without_pythonpath(),
+            )
+        except OSError as exc:
+            return {
+                "name": "installation",
+                "status": STATUS_CRITICAL,
+                "message": f"cerebro executable could not be started from PATH ({executable}): {exc}",
+            }
+    if result.returncode != 0:
+        return {
+            "name": "installation",
+            "status": STATUS_CRITICAL,
+            "message": f"cerebro executable failed from PATH ({executable}): {_first_output_line(result)}",
+        }
+    return {
+        "name": "installation",
+        "status": STATUS_HEALTHY,
+        "message": f"cerebro executable works from PATH ({executable})",
+    }
+
+
+def _environment_without_pythonpath() -> dict[str, str]:
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    return env
+
+
+def _first_output_line(result: subprocess.CompletedProcess[str]) -> str:
+    combined = "\n".join(part for part in (result.stderr, result.stdout) if part)
+    return next((line.strip() for line in combined.splitlines() if line.strip()), "no output")
+
+
+def _parse_isolated_import_output(result: subprocess.CompletedProcess[str]) -> dict[str, str] | None:
+    required_keys = {"cli.main", "core", "extensions"}
+    for line in reversed(result.stdout.splitlines()):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        try:
+            payload = json.loads(stripped)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict) and all(isinstance(value, str) for value in payload.values()):
+            if required_keys.issubset(payload):
+                return payload
+    return None
+
+
+def _path_is_within(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+
+def _scripts_dir_for_current_interpreter() -> Path:
+    executable = Path(sys.executable).resolve()
+    if os.name == "nt" and executable.parent.name.lower() != "scripts":
+        return executable.parent / "Scripts"
+    return executable.parent
+
+
+def _same_path(left: Path, right: Path) -> bool:
+    return os.path.normcase(os.path.abspath(left)) == os.path.normcase(os.path.abspath(right))
+
+
 def _suite_check(repo_root: Path) -> dict[str, str]:
     tests_dir = repo_root / "tests"
     if not tests_dir.exists():
@@ -70,12 +262,19 @@ def _suite_check(repo_root: Path) -> dict[str, str]:
 
     try:
         result = subprocess.run(
-            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
+            [sys.executable, "-m", "tests.gate_runner", "--profile", "base"],
             cwd=repo_root,
             capture_output=True,
             text=True,
             check=False,
+            timeout=SUITE_TIMEOUT_SECONDS,
         )
+    except subprocess.TimeoutExpired:
+        return {
+            "name": "suite",
+            "status": STATUS_CRITICAL,
+            "message": f"base gate timed out after {SUITE_TIMEOUT_SECONDS}s",
+        }
     except OSError as exc:
         return {
             "name": "suite",
@@ -84,6 +283,7 @@ def _suite_check(repo_root: Path) -> dict[str, str]:
         }
 
     combined = "\n".join(part for part in (result.stdout, result.stderr) if part)
+    summary_line = next((line.strip() for line in reversed(combined.splitlines()) if line.strip().startswith("SUMMARY ")), "")
     ran_line = next((line.strip() for line in combined.splitlines() if line.strip().startswith("Ran ")), "suite result unavailable")
     final_line = next(
         (
@@ -96,7 +296,7 @@ def _suite_check(repo_root: Path) -> dict[str, str]:
     return {
         "name": "suite",
         "status": STATUS_HEALTHY if result.returncode == 0 else STATUS_CRITICAL,
-        "message": f"{ran_line}; {final_line}",
+        "message": f"{summary_line or ran_line}; {final_line}",
     }
 
 
@@ -124,11 +324,12 @@ def _state_check(store: StateStore) -> tuple[dict[str, str], dict | None]:
             "message": f"failed to read canonical state: {exc}",
         }, None
 
+    validation_result = snapshot.last_validation.result
     return {
         "name": "state",
-        "status": STATUS_HEALTHY,
+        "status": STATUS_HEALTHY if validation_result == "ok" else STATUS_CRITICAL,
         "message": (
-            f"revision {snapshot.revision}; validation {snapshot.last_validation.result}; "
+            f"revision {snapshot.revision}; validation {validation_result}; "
             f"sources {len(snapshot.sources)}"
         ),
     }, runtime
