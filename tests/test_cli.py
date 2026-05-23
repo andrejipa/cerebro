@@ -586,14 +586,25 @@ halt_if = "halt"
                 capture_output=True,
                 text=True,
             )
+            next_result = subprocess.run(
+                [sys.executable, "-m", "cli.main", "--project-root", str(root), "runtime-manager", "next"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+            )
 
             self.assertEqual(result.returncode, 1)
+            self.assertEqual(result.stdout.splitlines()[0], "FAIL")
             self.assertIn("state: blocked", result.stdout)
             self.assertIn("stale_source: true", result.stdout)
             self.assertIn("gate_diagnostics_total: 1", result.stdout)
             self.assertIn("gate_diagnostic: stale_source subject=runtime-manager", result.stdout)
             self.assertIn("selection_audit_decision: global_blocked", result.stdout)
             self.assertIn("selection_audit_global_blockers: stale_source", result.stdout)
+            self.assertEqual(next_result.returncode, 1)
+            self.assertEqual(next_result.stdout.splitlines()[0], "FAIL")
+            self.assertIn("state: blocked", next_result.stdout)
+            self.assertIn("stale_source", next_result.stdout)
 
     def test_runtime_manager_cli_explains_validation_and_stop_condition_blocks(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

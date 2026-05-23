@@ -737,7 +737,7 @@ def _print_next(status: RuntimeManagerStatus, next_item: RuntimeObservation | No
 
 def _render_status_text(status: RuntimeManagerStatus) -> str:
     lines = [
-        "OK",
+        "FAIL" if status.state == "blocked" else "OK",
         "RUNTIME MANAGER",
         "mode: read-only status",
         "projection_role: projection_only_not_authority",
