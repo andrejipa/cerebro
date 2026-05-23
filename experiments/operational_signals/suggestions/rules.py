@@ -372,8 +372,6 @@ def _resolve_markdown_target(source_artifact: str, target: str) -> Path | None:
 
 def _target_exists(path: Path) -> bool:
     path_str = str(path)
-    if path.is_absolute():
-        return path.exists()
     if _is_windows_absolute(path_str):
         # On Windows this resolves directly; on Linux we fall back to
         # progressive suffix matching against REPO_ROOT so that paths like
@@ -390,6 +388,8 @@ def _target_exists(path: Path) -> bool:
             if suffix and (REPO_ROOT / suffix).exists():
                 return True
         return False
+    if path.is_absolute():
+        return path.exists()
     return (REPO_ROOT / path).exists()
 
 

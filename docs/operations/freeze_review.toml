@@ -11,14 +11,14 @@
 # for the cadence contract and `last_outcome.verdict` vocabulary.
 
 [review]
-last_review_date = "2026-04-19"
+last_review_date = "2026-05-08"
 trigger_count_since_review = 0
 round_count_since_review = 0
 mandatory_review_after_rounds = 50
 mandatory_review_after_days = 90
 
 [last_outcome]
-date = "2026-04-19"
-verdict = "freeze_confirmed"
-rationale = "auditoria pós-hardening concluída; prova de parada P1-P5 limpa; nenhum Formal Resume Trigger observado; suíte 704/0/6 estável"
-next_review_due = "2026-07-18"
+date = "2026-05-08"
+verdict = "resume_authorized"
+rationale = "human-approved opening for Cerebro Control Plane Growth 001: current approved surfaces are strong but do not yet provide a single operational control-plane contract for queue, decision envelope, evidence, capability policy, trace/replay, and third-party governance"
+next_review_due = "2026-08-06"

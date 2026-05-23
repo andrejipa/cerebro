@@ -1,0 +1,305 @@
+{
+  "authority": "non-authoritative; advisory operator evidence bundle stress matrix only",
+  "boundary": {
+    "may_suggest": [
+      "compare operator evidence bundle output under degraded evidence",
+      "show missing or mutating bundle inputs as blockers",
+      "show malformed stress matrices as boundary errors",
+      "show duplicate or digest-mismatched inputs as blocking evidence",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat bundle output as permission",
+      "treat passing scenarios as permission",
+      "treat artifact digests as truth",
+      "hide blockers",
+      "hide malformed bundle input",
+      "hide stale or mismatched digest input",
+      "infer negative evidence from silence"
+    ]
+  },
+  "guardrails": {
+    "artifact_digest_is_not_truth": true,
+    "bundle_output_is_not_permission": true,
+    "bundle_stress_matrix_is_not_authority": true,
+    "bundle_stress_matrix_is_not_claim_graph": true,
+    "bundle_stress_matrix_is_not_memory": true,
+    "bundle_stress_matrix_is_not_permission": true,
+    "bundle_stress_matrix_is_not_runtime_gate": true,
+    "malformed_bundle_input_is_blocking_evidence": true,
+    "passing_scenario_is_not_permission": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "matrix_role": "advisory degraded-evidence operator evidence bundle stress matrix only",
+  "scenarios": [
+    {
+      "authority": "non-authoritative; advisory operator evidence bundle stress matrix only",
+      "blocker_count": 0,
+      "boundary_error_count": 0,
+      "bundle_summary": "decision=none; readiness=no_action; input_count=6; source_artifact_count=4; stress_boundary_errors=1",
+      "expected": {
+        "action_readiness": "no_action",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      },
+      "forbidden_interpretations": [
+        "treat bundle output as permission",
+        "hide degraded bundle input",
+        "hide malformed bundle boundary input",
+        "treat artifact digests as truth",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "no_action",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "none"
+      },
+      "passed": true,
+      "purpose": "Prove clean bundle construction summarizes evidence without granting permission.",
+      "scenario_id": "clean_bundle",
+      "state_change": "none",
+      "title": "Clean evidence bundle remains no-action"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence bundle stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "bundle_summary": "bundle input rejected before advisory handoff could hide degraded evidence",
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat bundle output as permission",
+        "hide degraded bundle input",
+        "hide malformed bundle boundary input",
+        "treat artifact digests as truth",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "unsupported operator_packet schema_version: None",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Prove absent packet evidence is exposed as boundary error.",
+      "scenario_id": "missing_operator_packet",
+      "state_change": "none",
+      "title": "Missing operator packet blocks bundle construction"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence bundle stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "bundle_summary": "bundle input rejected before advisory handoff could hide degraded evidence",
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat bundle output as permission",
+        "hide degraded bundle input",
+        "hide malformed bundle boundary input",
+        "treat artifact digests as truth",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "operator_packet must declare state_change = none",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Prove state-changing packet evidence cannot enter the bundle.",
+      "scenario_id": "mutating_operator_packet",
+      "state_change": "none",
+      "title": "Mutating operator packet is rejected"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence bundle stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "bundle_summary": "bundle input rejected before advisory handoff could hide degraded evidence",
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat bundle output as permission",
+        "hide degraded bundle input",
+        "hide malformed bundle boundary input",
+        "treat artifact digests as truth",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "stress matrix guardrail missing or false: stress_matrix_is_not_permission",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Prove guardrail failure cannot be hidden inside the bundle.",
+      "scenario_id": "malformed_stress_matrix",
+      "state_change": "none",
+      "title": "Malformed stress matrix guardrail is rejected"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence bundle stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "bundle_summary": "bundle input rejected before advisory handoff could hide degraded evidence",
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat bundle output as permission",
+        "hide degraded bundle input",
+        "hide malformed bundle boundary input",
+        "treat artifact digests as truth",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "source artifact must preserve state_change none: mutating_source_artifact",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Prove source artifact digests cannot smuggle state-changing evidence.",
+      "scenario_id": "mutating_source_artifact",
+      "state_change": "none",
+      "title": "Mutating source artifact is rejected"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence bundle stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "bundle_summary": "bundle input rejected before advisory handoff could hide degraded evidence",
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat bundle output as permission",
+        "hide degraded bundle input",
+        "hide malformed bundle boundary input",
+        "treat artifact digests as truth",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "operator evidence bundle input artifact ids must be unique",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Prove input identity collision cannot make bundle evidence ambiguous.",
+      "scenario_id": "duplicate_input_id",
+      "state_change": "none",
+      "title": "Duplicate input artifact ids are rejected"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence bundle stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "bundle_summary": "bundle input rejected before advisory handoff could hide degraded evidence",
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat bundle output as permission",
+        "hide degraded bundle input",
+        "hide malformed bundle boundary input",
+        "treat artifact digests as truth",
+        "infer negative evidence from silence"
+      ],
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "operator evidence bundle digest/summary mismatch: digest mismatch for operator_decision_packet; summary mismatch for operator_decision_packet",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Prove stale or tampered bundle input rows are visible blockers.",
+      "scenario_id": "digest_summary_mismatch",
+      "state_change": "none",
+      "title": "Digest and summary mismatch is rejected"
+    }
+  ],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "all_scenarios_passed": true,
+    "blocker_count": 6,
+    "boundary_error_count": 6,
+    "decisions": {
+      "clean_bundle": {
+        "action_readiness": "no_action",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      },
+      "digest_summary_mismatch": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "duplicate_input_id": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "malformed_stress_matrix": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "missing_operator_packet": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "mutating_operator_packet": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "mutating_source_artifact": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      }
+    },
+    "fail_count": 0,
+    "pass_count": 7,
+    "scenario_count": 7,
+    "scenario_ids": [
+      "clean_bundle",
+      "missing_operator_packet",
+      "mutating_operator_packet",
+      "malformed_stress_matrix",
+      "mutating_source_artifact",
+      "duplicate_input_id",
+      "digest_summary_mismatch"
+    ]
+  }
+}

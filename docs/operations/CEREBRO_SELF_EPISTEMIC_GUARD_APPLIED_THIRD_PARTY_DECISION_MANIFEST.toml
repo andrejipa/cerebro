@@ -1,0 +1,59 @@
+schema_version = "1"
+
+[proposed_action]
+action_id = "applied_third_party_pilot_decision_slice_8"
+intent = "Apply the Epistemic Guard to the real operator decision of whether to resume the third-party project-management pilot now."
+action_kind = "advisory_decision_assessment"
+proposed_by = "operator"
+created_at = "2026-04-24"
+expected_state_change = "none"
+notes = [
+  "advisory only",
+  "does not grant permission",
+  "does not create runtime authority",
+  "does not mutate any third-party project",
+  "actual third-party .cerebro mutation remains separately gated",
+]
+
+[[scenario]]
+scenario_id = "assess_resume_third_party_pilot_now"
+intent = "Assess whether the third-party pilot workstream can be resumed as an advisory decision without executing target-project mutation."
+action_profile = { zone = "ZONE_1", reads = ["AGENTS.md", "docs/operations/SYSTEM_STATE.md", "docs/operations/OPPORTUNITY_MAP.md", "docs/operations/FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md", "docs/operations/THIRD_PARTY_INTAKE_GATE_RPG_CAMINHADA.md", "docs/operations/THIRD_PARTY_PILOT_RECON_CLAUDE.md"], writes = [], authority_impact = "none", runtime_impact = "none", reversibility = "high", active_trigger = true, existing_state_policy = "not_applicable" }
+sources = [
+  { source_id = "agents", path = "AGENTS.md", authority_state = "canonical", freshness = "current", role = "protocol" },
+  { source_id = "system_state", path = "docs/operations/SYSTEM_STATE.md", authority_state = "advisory", freshness = "current", role = "state_projection" },
+  { source_id = "opportunity_map", path = "docs/operations/OPPORTUNITY_MAP.md", authority_state = "advisory", freshness = "current", role = "next_action_projection" },
+  { source_id = "third_party_trigger", path = "docs/operations/FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md", authority_state = "provisional", freshness = "current", role = "pilot_boundary" },
+  { source_id = "intake_gate", path = "docs/operations/THIRD_PARTY_INTAKE_GATE_RPG_CAMINHADA.md", authority_state = "advisory", freshness = "current", role = "intake_evidence" },
+  { source_id = "claude_recon", path = "docs/operations/THIRD_PARTY_PILOT_RECON_CLAUDE.md", authority_state = "advisory", freshness = "current", role = "target_recon" },
+]
+claims = [
+  { claim_id = "claim-current-decision-real", subject = "third_party_pilot_resume_decision", predicate = "decision_kind", value = "real_operator_decision", source_id = "opportunity_map" },
+  { claim_id = "claim-action-advisory-only", subject = "applied_third_party_pilot_decision_slice_8", predicate = "authority_impact", value = "none", source_id = "third_party_trigger" },
+  { claim_id = "claim-runtime-impact-none", subject = "applied_third_party_pilot_decision_slice_8", predicate = "runtime_impact", value = "none", source_id = "third_party_trigger" },
+  { claim_id = "claim-state-change-none", subject = "applied_third_party_pilot_decision_slice_8", predicate = "state_change", value = "none", source_id = "third_party_trigger" },
+  { claim_id = "claim-selected-target", subject = "third_party_pilot", predicate = "selected_target", value = "D:\\projetos_cli\\pessoais\\rpg_caminhada", source_id = "claude_recon" },
+  { claim_id = "claim-intake-status", subject = "rpg_caminhada_intake_gate", predicate = "status", value = "proposal_ready_for_human_approval", source_id = "intake_gate" },
+  { claim_id = "claim-human-decisions-required", subject = "third_party_pilot", predicate = "required_human_decisions", value = "target_legacy_state_source_set", source_id = "intake_gate" },
+  { claim_id = "claim-target-mutation-not-authorized", subject = "third_party_pilot", predicate = "target_mutation_authorized", value = "false", source_id = "intake_gate" },
+  { claim_id = "claim-legacy-state-known", subject = "rpg_caminhada", predicate = "legacy_state", value = "schema_v1_not_reusable_without_out_of_scope_migration", source_id = "intake_gate" },
+  { claim_id = "claim-source-set-expanded", subject = "rpg_caminhada_source_set", predicate = "minimum_import_list", value = "seven_required_files", source_id = "intake_gate" },
+]
+requirements = [
+  { requirement_id = "req-real-decision", subject = "third_party_pilot_resume_decision", predicate = "decision_kind", description = "real operator decision instead of recursive guard hardening", required_for = "applied guard run" },
+  { requirement_id = "req-advisory-authority", subject = "applied_third_party_pilot_decision_slice_8", predicate = "authority_impact", description = "advisory-only authority impact", required_for = "freeze-safe applied decision assessment" },
+  { requirement_id = "req-runtime-impact", subject = "applied_third_party_pilot_decision_slice_8", predicate = "runtime_impact", description = "no runtime impact", required_for = "freeze-safe applied decision assessment" },
+  { requirement_id = "req-state-change", subject = "applied_third_party_pilot_decision_slice_8", predicate = "state_change", description = "explicit non-mutating state posture", required_for = "applied advisory decision report" },
+  { requirement_id = "req-selected-target", subject = "third_party_pilot", predicate = "selected_target", description = "selected third-party pilot target", required_for = "pilot readiness assessment" },
+  { requirement_id = "req-intake-status", subject = "rpg_caminhada_intake_gate", predicate = "status", description = "intake gate status visible before any target mutation", required_for = "pilot readiness assessment" },
+  { requirement_id = "req-human-decisions-visible", subject = "third_party_pilot", predicate = "required_human_decisions", description = "human decisions required before mutation are explicit", required_for = "safe pilot continuation" },
+  { requirement_id = "req-target-mutation-not-authorized", subject = "third_party_pilot", predicate = "target_mutation_authorized", description = "target mutation remains unauthorized by advisory assessment", required_for = "permission boundary preservation" },
+  { requirement_id = "req-legacy-state-known", subject = "rpg_caminhada", predicate = "legacy_state", description = "legacy state handling risk is known", required_for = "safe pilot continuation" },
+  { requirement_id = "req-source-set-expanded", subject = "rpg_caminhada_source_set", predicate = "minimum_import_list", description = "expanded source set supersedes the insufficient four-file set", required_for = "safe pilot continuation" },
+]
+protocol_notes = [
+  "advisory_assessment_is_not_permission",
+  "target_mutation_requires_separate_human_go",
+  "existing_state_v1_blocks_automatic_reuse",
+  "source_set_selection_remains_human_approved",
+]

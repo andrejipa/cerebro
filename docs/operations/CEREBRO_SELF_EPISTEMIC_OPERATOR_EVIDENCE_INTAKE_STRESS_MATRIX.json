@@ -1,0 +1,349 @@
+{
+  "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+  "boundary": {
+    "may_suggest": [
+      "compare intake output under degraded manifest evidence",
+      "show missing artifacts as blockers",
+      "show stale digest inputs as blockers",
+      "show root escape attempts as blockers",
+      "show mutating payloads as blockers",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat intake output as permission",
+      "treat passing scenarios as permission",
+      "treat digest equality as truth",
+      "hide blockers",
+      "hide malformed manifest input",
+      "hide stale or mismatched digest input",
+      "infer negative evidence from silence"
+    ]
+  },
+  "guardrails": {
+    "digest_equality_is_not_truth": true,
+    "intake_output_is_not_permission": true,
+    "intake_stress_matrix_is_not_authority": true,
+    "intake_stress_matrix_is_not_claim_graph": true,
+    "intake_stress_matrix_is_not_memory": true,
+    "intake_stress_matrix_is_not_permission": true,
+    "intake_stress_matrix_is_not_runtime_gate": true,
+    "malformed_intake_input_is_blocking_evidence": true,
+    "passing_scenario_is_not_permission": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "matrix_role": "advisory degraded-evidence operator evidence intake stress matrix only",
+  "scenarios": [
+    {
+      "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+      "blocker_count": 0,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      },
+      "forbidden_interpretations": [
+        "treat intake output as permission",
+        "hide degraded manifest evidence",
+        "hide stale digest input",
+        "hide root escape input",
+        "treat digest equality as truth",
+        "infer negative evidence from silence"
+      ],
+      "intake_summary": "decision=none; readiness=advisory_report_allowed; blockers=0; inputs=6; packet=no_action; stress=6/0; authority=non-authoritative; advisory operator evidence intake report only",
+      "observed": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "none"
+      },
+      "passed": true,
+      "purpose": "Proves declared evidence can reproduce the operator bundle without permission.",
+      "scenario_id": "clean_manifest",
+      "state_change": "none",
+      "title": "Clean manifest rebuilds the advisory bundle"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat intake output as permission",
+        "hide degraded manifest evidence",
+        "hide stale digest input",
+        "hide root escape input",
+        "treat digest equality as truth",
+        "infer negative evidence from silence"
+      ],
+      "intake_summary": "decision=review_blockers; readiness=blocked; blockers=1; inputs=5; packet=none; stress=n/a/n/a; authority=non-authoritative; advisory operator evidence intake report only",
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "drift_policy: artifact file is missing: missing-drift-policy.json",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Proves absent declared files block intake instead of being ignored.",
+      "scenario_id": "missing_artifact",
+      "state_change": "none",
+      "title": "Missing declared artifact is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat intake output as permission",
+        "hide degraded manifest evidence",
+        "hide stale digest input",
+        "hide root escape input",
+        "treat digest equality as truth",
+        "infer negative evidence from silence"
+      ],
+      "intake_summary": "decision=review_blockers; readiness=blocked; blockers=1; inputs=6; packet=none; stress=n/a/n/a; authority=non-authoritative; advisory operator evidence intake report only",
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "metacognitive_handoff: digest mismatch",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Proves stale expected digests block intake without treating digests as truth.",
+      "scenario_id": "stale_digest",
+      "state_change": "none",
+      "title": "Digest mismatch is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat intake output as permission",
+        "hide degraded manifest evidence",
+        "hide stale digest input",
+        "hide root escape input",
+        "treat digest equality as truth",
+        "infer negative evidence from silence"
+      ],
+      "intake_summary": "decision=review_blockers; readiness=blocked; blockers=1; inputs=5; packet=none; stress=n/a/n/a; authority=non-authoritative; advisory operator evidence intake report only",
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "baseline_lifecycle: artifact path escapes root: ../outside.json",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Proves a declared path cannot escape the manifest root.",
+      "scenario_id": "root_escape",
+      "state_change": "none",
+      "title": "Root escape is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat intake output as permission",
+        "hide degraded manifest evidence",
+        "hide stale digest input",
+        "hide root escape input",
+        "treat digest equality as truth",
+        "infer negative evidence from silence"
+      ],
+      "intake_summary": "decision=review_blockers; readiness=blocked; blockers=1; inputs=5; packet=none; stress=n/a/n/a; authority=non-authoritative; advisory operator evidence intake report only",
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "baseline_lifecycle: artifact path must point to a .json file",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Proves intake refuses non-JSON declared artifact paths.",
+      "scenario_id": "non_json_artifact",
+      "state_change": "none",
+      "title": "Non-JSON artifact is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat intake output as permission",
+        "hide degraded manifest evidence",
+        "hide stale digest input",
+        "hide root escape input",
+        "treat digest equality as truth",
+        "infer negative evidence from silence"
+      ],
+      "intake_summary": "decision=review_blockers; readiness=blocked; blockers=1; inputs=5; packet=none; stress=n/a/n/a; authority=non-authoritative; advisory operator evidence intake report only",
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "drift_policy: artifact must declare state_change none",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Proves declared artifacts that try to change state block intake.",
+      "scenario_id": "mutating_payload",
+      "state_change": "none",
+      "title": "Mutating payload is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat intake output as permission",
+        "hide degraded manifest evidence",
+        "hide stale digest input",
+        "hide root escape input",
+        "treat digest equality as truth",
+        "infer negative evidence from silence"
+      ],
+      "intake_summary": "manifest construction blocked before intake",
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "operator evidence intake artifact ids must be unique",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Proves duplicate declared artifacts block intake before bundle construction.",
+      "scenario_id": "duplicate_artifact_id",
+      "state_change": "none",
+      "title": "Duplicate artifact id is visible"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence intake stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat intake output as permission",
+        "hide degraded manifest evidence",
+        "hide stale digest input",
+        "hide root escape input",
+        "treat digest equality as truth",
+        "infer negative evidence from silence"
+      ],
+      "intake_summary": "decision=review_blockers; readiness=blocked; blockers=1; inputs=5; packet=none; stress=n/a/n/a; authority=non-authoritative; advisory operator evidence intake report only",
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "missing required artifact declaration: operator_packet_stress_matrix",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Proves omitting the packet stress matrix blocks intake.",
+      "scenario_id": "missing_required_artifact",
+      "state_change": "none",
+      "title": "Missing required declaration is visible"
+    }
+  ],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "all_scenarios_passed": true,
+    "blocker_count": 7,
+    "boundary_error_count": 7,
+    "decisions": {
+      "clean_manifest": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      },
+      "duplicate_artifact_id": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "missing_artifact": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "missing_required_artifact": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "mutating_payload": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "non_json_artifact": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "root_escape": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "stale_digest": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      }
+    },
+    "fail_count": 0,
+    "pass_count": 8,
+    "scenario_count": 8,
+    "scenario_ids": [
+      "clean_manifest",
+      "missing_artifact",
+      "stale_digest",
+      "root_escape",
+      "non_json_artifact",
+      "mutating_payload",
+      "duplicate_artifact_id",
+      "missing_required_artifact"
+    ]
+  }
+}

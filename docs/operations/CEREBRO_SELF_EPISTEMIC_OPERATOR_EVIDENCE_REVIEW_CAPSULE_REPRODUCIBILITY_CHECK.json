@@ -1,0 +1,90 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "review_capsule_json",
+      "blocked": false,
+      "blockers": [],
+      "check_status": "matched",
+      "checked_digest": "f5e520e5042d9fbbb57fe2a29d8513ec0b28ec023e26f713bd86fc9c08d4d2d4",
+      "digest_match": true,
+      "exists": true,
+      "mismatches": [],
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_REVIEW_CAPSULE.json",
+      "regenerated_digest": "f5e520e5042d9fbbb57fe2a29d8513ec0b28ec023e26f713bd86fc9c08d4d2d4"
+    },
+    {
+      "artifact_id": "review_capsule_markdown",
+      "blocked": false,
+      "blockers": [],
+      "check_status": "matched",
+      "checked_digest": "eac1533eedc4a1fddddfb64f4f1bb32b948f9ea9f253a546196c81de1609adf7",
+      "digest_match": true,
+      "exists": true,
+      "mismatches": [],
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_REVIEW_CAPSULE.md",
+      "regenerated_digest": "eac1533eedc4a1fddddfb64f4f1bb32b948f9ea9f253a546196c81de1609adf7"
+    }
+  ],
+  "authority": "non-authoritative; advisory operator evidence review capsule reproducibility check only",
+  "blockers": [],
+  "boundary": {
+    "may_suggest": [
+      "compare checked review capsule JSON with regenerated advisory output",
+      "compare checked review capsule Markdown with regenerated advisory output",
+      "show stale checked artifacts as blockers",
+      "show missing checked artifacts as blockers",
+      "show malformed checked artifacts as blockers",
+      "show mutating checked artifacts as blockers",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "refresh checked artifacts automatically",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "create canonical evidence graph",
+      "promote or demote authority",
+      "treat reproducibility as permission",
+      "treat digest equality as truth",
+      "hide blockers",
+      "hide mismatches",
+      "hide stale checked artifacts",
+      "infer negative evidence from silence"
+    ]
+  },
+  "check_role": "advisory checked review-capsule artifact reproducibility evidence only",
+  "guardrails": {
+    "artifact_reproducible_is_not_permission": true,
+    "checked_artifact_is_not_memory": true,
+    "digest_equality_is_not_truth": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "review_capsule_reproducibility_is_not_authority": true,
+    "review_capsule_reproducibility_is_not_claim_graph": true,
+    "review_capsule_reproducibility_is_not_memory": true,
+    "review_capsule_reproducibility_is_not_permission": true,
+    "review_capsule_reproducibility_is_not_runtime_gate": true,
+    "review_capsule_reproducibility_is_not_source_registry": true,
+    "silence_is_not_negative_evidence": true,
+    "stale_artifact_is_review_evidence_only": true
+  },
+  "mismatches": [],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "action_readiness": "advisory_report_allowed",
+    "artifact_count": 2,
+    "blocked": false,
+    "blocker_count": 0,
+    "json_digest_match": true,
+    "markdown_digest_match": true,
+    "mismatch_count": 0,
+    "missing_artifact_count": 0,
+    "recommended_human_decision": "none",
+    "reproducibility_status": "reproducible"
+  }
+}

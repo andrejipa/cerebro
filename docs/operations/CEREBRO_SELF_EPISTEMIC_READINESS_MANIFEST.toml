@@ -1,0 +1,210 @@
+schema_version = "1"
+generated_report = "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_REPORT.md"
+generated_trace = "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE.json"
+generator = "experiments.epistemic_readiness.generate_readiness_report_from_manifest"
+renderer = "experiments.epistemic_readiness.render_readiness_markdown"
+authority = "non-authoritative; advisory evidence only"
+state_change = "none"
+trigger = "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_13"
+
+[baseline]
+label = "slice-13-baseline-refresh-2026-04-24"
+candidates_extracted = 35
+findings_evaluated = 35
+ready_count = 35
+blocked_count = 0
+insufficient_count = 0
+
+[[source]]
+path = "docs/operations/SYSTEM_STATE.md"
+max_lines = 80
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/OPPORTUNITY_MAP.md"
+max_lines = 80
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FREEZE_POLICY.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/EPISTEMIC_AUTHORITY_RUNTIME_SPEC.md"
+max_lines = 160
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/CLAIM_EXTRACTION_CONTRACT.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/CLAIM_EXTRACTION_IMPLEMENTATION_READINESS.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_CLAIM_EXTRACTION_SLICE_1.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_CLAIM_EVALUATION_SLICE_1.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_CLAIM_EXTRACTION_TEMPORAL_NORMALIZATION.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_ACTION_MANIFEST_SLICE_3.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_DECISION_TRACE_SLICE_4.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_TRACE_DIFF_SLICE_5.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_PROTOCOL_SELF_AUDIT_SLICE_6.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_IDENTITY_STABILITY_SLICE_7.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_LIFECYCLE_SLICE_8.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_9.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_REPLAY_ORCHESTRATOR_SLICE_10.md"
+max_lines = 120
+source_role = "primary"
+
+[[source]]
+path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_11.md"
+max_lines = 120
+source_role = "primary"
+
+[action]
+action_id = "cerebro-self-readiness-baseline-refresh-slice-13-rerun"
+purpose = "regenerate the Cerebro self-readiness report, structured decision trace, advisory trace diff, protocol self-audit candidates, advisory baseline lifecycle evidence, and advisory drift-policy disposition after the human-approved slice 12 material refresh candidate is applied to the derived replay baseline"
+zone = "zone_1"
+uncertainty = "low"
+
+[action.blast_radius]
+writes = [
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_REPORT.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_BASELINE.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_DIFF.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_DIFF.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_PROTOCOL_SELF_AUDIT.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_PROTOCOL_SELF_AUDIT.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_LIFECYCLE.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_LIFECYCLE.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_DRIFT_POLICY.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_DRIFT_POLICY.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_REFRESH.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_REFRESH.md",
+]
+reads = [
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_MANIFEST.toml",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_BASELINE.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_DIFF.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_PROTOCOL_SELF_AUDIT.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_LIFECYCLE.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_DRIFT_POLICY.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_DRIFT_POLICY.md",
+  "docs/operations/SYSTEM_STATE.md",
+  "docs/operations/OPPORTUNITY_MAP.md",
+  "docs/operations/FREEZE_POLICY.md",
+  "docs/operations/EPISTEMIC_AUTHORITY_RUNTIME_SPEC.md",
+  "docs/operations/CLAIM_EXTRACTION_CONTRACT.md",
+  "docs/operations/CLAIM_EXTRACTION_IMPLEMENTATION_READINESS.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_CLAIM_EXTRACTION_SLICE_1.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_CLAIM_EVALUATION_SLICE_1.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_CLAIM_EXTRACTION_TEMPORAL_NORMALIZATION.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_ACTION_MANIFEST_SLICE_3.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_DECISION_TRACE_SLICE_4.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_TRACE_DIFF_SLICE_5.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_PROTOCOL_SELF_AUDIT_SLICE_6.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_IDENTITY_STABILITY_SLICE_7.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_LIFECYCLE_SLICE_8.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_9.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_REPLAY_ORCHESTRATOR_SLICE_10.md",
+  "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_11.md",
+]
+authority_impact = "advisory"
+runtime_impact = "none"
+state_impact = "derived-output"
+third_party_impact = "none"
+scope = "local"
+reversibility = "high"
+rollback = "git-revert"
+gate_level = "G2"
+promotion_path = "requires-trigger"
+stop_conditions = [
+  "report readiness is treated as permission",
+  "risk readiness is treated as authority",
+  "trace presence is treated as permission",
+  "trace diff presence is treated as permission",
+  "trace diff is used for automatic promotion or demotion",
+  "self-audit candidates are written as memory automatically",
+  "self-audit candidates are used for automatic protocol demotion or promotion",
+  "stable identity hides evidence-span drift instead of separating traceability drift",
+  "stable identity is treated as permission, truth, or authority",
+  "baseline refresh is applied automatically",
+  "baseline refresh is applied without explicit human approval",
+  "baseline freshness is treated as permission, truth, memory, or authority",
+  "baseline lifecycle hides source, semantic, risk, guardrail, or traceability drift",
+  "replay bundle helper writes the checked-in baseline automatically",
+  "replay bundle success is treated as authority or permission",
+  "drift policy is treated as permission, truth, memory, authority, or a runtime gate",
+  "drift policy auto-refreshes the replay baseline",
+  "generated output is used as a runtime gate",
+  "canonical state mutation becomes necessary",
+]
+
+[action.risk_budget]
+max_writes = 13
+allowed_paths = [
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_REPORT.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_BASELINE.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_DIFF.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE_DIFF.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_PROTOCOL_SELF_AUDIT.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_PROTOCOL_SELF_AUDIT.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_LIFECYCLE.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_LIFECYCLE.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_DRIFT_POLICY.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_DRIFT_POLICY.md",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_REFRESH.json",
+  "docs/operations/CEREBRO_SELF_EPISTEMIC_BASELINE_REFRESH.md",
+]
+allowed_authority_impact = "advisory"
+allowed_runtime_impact = "none"
+max_irreversibility = "low"
+required_rollback_evidence = "git-revert"
+human_approval_required = false

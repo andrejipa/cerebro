@@ -1,0 +1,42 @@
+schema_version = "1"
+
+[proposed_action]
+action_id = "epistemic_guard_pre_action_report_slice_3"
+intent = "Produce a checked-in advisory pre-action guard report for the Epistemic Guard slice 3 work."
+action_kind = "derived_experiment"
+proposed_by = "operator"
+created_at = "2026-04-24"
+expected_state_change = "none"
+notes = [
+  "advisory only",
+  "does not grant permission",
+  "does not create runtime authority",
+]
+
+[[scenario]]
+scenario_id = "pre_action_guard_report_slice_3"
+intent = "Generate a pre-action report for a bounded derived experiment under an active trigger."
+action_profile = { zone = "ZONE_1", reads = ["AGENTS.md", "docs/operations/SYSTEM_STATE.md", "docs/operations/OPPORTUNITY_MAP.md", "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_GUARD_PRE_ACTION_REPORT_SLICE_3.md"], writes = ["experiments/epistemic_guard/pre_action.py", "experiments/epistemic_guard/__init__.py", "experiments/epistemic_guard/README.md", "experiments/epistemic_guard/tests/test_epistemic_guard.py", "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_PRE_ACTION_MANIFEST.toml", "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_PRE_ACTION_REPORT.json", "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_PRE_ACTION_REPORT.md"], authority_impact = "none", runtime_impact = "none", reversibility = "high", active_trigger = true }
+sources = [
+  { source_id = "agents", path = "AGENTS.md", authority_state = "canonical", freshness = "current", role = "protocol" },
+  { source_id = "system_state", path = "docs/operations/SYSTEM_STATE.md", authority_state = "advisory", freshness = "current", role = "state_projection" },
+  { source_id = "opportunity_map", path = "docs/operations/OPPORTUNITY_MAP.md", authority_state = "advisory", freshness = "current", role = "next_action_projection" },
+  { source_id = "trigger", path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_GUARD_PRE_ACTION_REPORT_SLICE_3.md", authority_state = "provisional", freshness = "current", role = "slice_boundary" },
+]
+claims = [
+  { claim_id = "claim-trigger-active", subject = "pre_action_report_slice_3_trigger", predicate = "status", value = "active", source_id = "trigger" },
+  { claim_id = "claim-boundary-derived-only", subject = "pre_action_report_slice_3", predicate = "authority_impact", value = "none", source_id = "trigger" },
+  { claim_id = "claim-runtime-impact-none", subject = "pre_action_report_slice_3", predicate = "runtime_impact", value = "none", source_id = "trigger" },
+  { claim_id = "claim-state-change-none", subject = "pre_action_report_slice_3", predicate = "state_change", value = "none", source_id = "trigger" },
+  { claim_id = "claim-next-action", subject = "epistemic_guard", predicate = "next_shape", value = "real pre-action guard reports", source_id = "opportunity_map" },
+  { claim_id = "claim-gate-initial", subject = "agents_equivalent_gate", predicate = "result", value = "923/0/0/6", source_id = "agents" },
+]
+requirements = [
+  { requirement_id = "req-trigger", subject = "pre_action_report_slice_3_trigger", predicate = "status", description = "active formal trigger for slice 3", required_for = "derived experiment work" },
+  { requirement_id = "req-state-change", subject = "pre_action_report_slice_3", predicate = "state_change", description = "explicit non-mutating state posture", required_for = "pre-action advisory report" },
+  { requirement_id = "req-runtime-impact", subject = "pre_action_report_slice_3", predicate = "runtime_impact", description = "no runtime impact", required_for = "freeze-safe derived experiment" },
+]
+protocol_notes = [
+  "pre_action_report_is_not_permission",
+  "guard_pass_is_not_runtime_authority",
+]

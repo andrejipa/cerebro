@@ -1,0 +1,57 @@
+schema_version = "1"
+
+[[scenario]]
+scenario_id = "manifest_driven_epistemic_guard_slice_2"
+intent = "Generate the manifest-driven advisory decision report for epistemic_guard slice 2."
+protocol_notes = [
+  "manifest_presence_is_not_permission",
+  "derived_report_is_not_runtime_gate",
+]
+action_profile = { zone = "ZONE_1", reads = ["docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_GUARD_DECISION_MANIFEST_SLICE_2.md", "docs/operations/SYSTEM_STATE.md", "docs/operations/OPPORTUNITY_MAP.md", "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_ENVELOPE_ORACLE.md"], writes = ["docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_MANIFEST_REPORT.json", "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_MANIFEST_REPORT.md"], authority_impact = "none", runtime_impact = "none", reversibility = "high", active_trigger = true }
+sources = [
+  { source_id = "trigger", path = "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_GUARD_DECISION_MANIFEST_SLICE_2.md", freshness = "current", role = "trigger" },
+  { source_id = "system", path = "docs/operations/SYSTEM_STATE.md", freshness = "current", role = "projection" },
+  { source_id = "opportunity", path = "docs/operations/OPPORTUNITY_MAP.md", freshness = "current", role = "projection" },
+  { source_id = "slice1_oracle", path = "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_ENVELOPE_ORACLE.md", freshness = "current", role = "derived" },
+]
+claims = [
+  { claim_id = "claim-trigger-active", subject = "slice_2_trigger", predicate = "is", value = "active", source_id = "trigger" },
+  { claim_id = "claim-boundary", subject = "slice_2_boundary", predicate = "allows", value = "epistemic_guard_manifest_outputs", source_id = "trigger" },
+  { claim_id = "claim-runtime-closed", subject = "runtime_boundary", predicate = "is", value = "closed", source_id = "system" },
+  { claim_id = "claim-next", subject = "next_epistemic_step", predicate = "is", value = "manifest_driven_real_action_envelopes", source_id = "opportunity" },
+  { claim_id = "claim-oracle-exists", subject = "decision_envelope_oracle", predicate = "exists", value = "true", source_id = "slice1_oracle" },
+]
+requirements = [
+  { requirement_id = "req-trigger", subject = "slice_2_trigger", predicate = "is", description = "active trigger evidence", required_for = "manifest-driven report generation" },
+  { requirement_id = "req-boundary", subject = "slice_2_boundary", predicate = "allows", description = "manifest output boundary", required_for = "manifest-driven report generation" },
+  { requirement_id = "req-oracle", subject = "decision_envelope_oracle", predicate = "exists", description = "slice 1 decision oracle evidence", required_for = "manifest-driven report generation" },
+]
+
+[[scenario]]
+scenario_id = "runtime_promotion_without_trigger"
+intent = "Promote epistemic_guard from advisory evidence into a canonical runtime permission gate."
+protocol_notes = [
+  "permission_is_not_sufficient_evidence",
+  "advisory_guard_is_not_runtime_authority",
+]
+action_profile = { zone = "ZONE_3", reads = ["experiments/epistemic_guard/README.md"], writes = ["core/state_store.py"], authority_impact = "canonical", runtime_impact = "direct", reversibility = "medium", active_trigger = false }
+sources = [
+  { source_id = "guard_readme", path = "experiments/epistemic_guard/README.md", freshness = "current", role = "derived" },
+]
+claims = [
+  { claim_id = "claim-advisory-only", subject = "epistemic_guard", predicate = "authority", value = "advisory_only", source_id = "guard_readme" },
+]
+
+[[scenario]]
+scenario_id = "approval_expired_for_manifest_report"
+intent = "Reuse an old approval after the evidence read set gained the slice 1 oracle report."
+action_profile = { zone = "ZONE_2", reads = ["docs/operations/SYSTEM_STATE.md", "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_ENVELOPE_ORACLE.md"], writes = ["docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_MANIFEST_REPORT.md"], authority_impact = "advisory", runtime_impact = "none", reversibility = "high" }
+approval = { status = "approved", approval_id = "approval-before-slice1-oracle", approved_reads = ["docs/operations/SYSTEM_STATE.md"], approved_writes = ["docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_MANIFEST_REPORT.md"] }
+sources = [
+  { source_id = "system", path = "docs/operations/SYSTEM_STATE.md", freshness = "current", role = "projection" },
+  { source_id = "slice1_oracle", path = "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_ENVELOPE_ORACLE.md", freshness = "current", role = "derived" },
+]
+claims = [
+  { claim_id = "claim-system-current", subject = "system_snapshot", predicate = "is", value = "current", source_id = "system" },
+  { claim_id = "claim-oracle-new", subject = "decision_envelope_oracle", predicate = "is_new_input_for", value = "manifest_report", source_id = "slice1_oracle" },
+]

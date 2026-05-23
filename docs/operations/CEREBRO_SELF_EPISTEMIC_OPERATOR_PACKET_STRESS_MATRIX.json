@@ -1,0 +1,258 @@
+{
+  "authority": "non-authoritative; advisory operator packet stress matrix evidence only",
+  "boundary": {
+    "may_suggest": [
+      "compare operator packet output under degraded evidence",
+      "show which degraded evidence requires human review",
+      "show which degraded evidence blocks action",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat packet output as permission",
+      "treat passing scenarios as permission",
+      "hide blockers",
+      "hide malformed boundary input",
+      "infer negative evidence from silence"
+    ]
+  },
+  "guardrails": {
+    "malformed_boundary_is_blocking_evidence": true,
+    "operator_packet_output_is_not_permission": true,
+    "passing_scenario_is_not_permission": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true,
+    "stress_matrix_is_not_authority": true,
+    "stress_matrix_is_not_claim_graph": true,
+    "stress_matrix_is_not_memory": true,
+    "stress_matrix_is_not_permission": true,
+    "stress_matrix_is_not_runtime_gate": true
+  },
+  "matrix_role": "advisory degraded-evidence operator packet stress matrix only",
+  "scenarios": [
+    {
+      "authority": "non-authoritative; advisory operator packet stress matrix evidence only",
+      "blocker_count": 0,
+      "expected": {
+        "action_readiness": "no_action",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      },
+      "forbidden_interpretations": [
+        "treat packet output as permission",
+        "hide degraded evidence",
+        "hide malformed boundary input",
+        "infer negative evidence from silence"
+      ],
+      "missing_evidence_count": 0,
+      "observed": {
+        "action_readiness": "no_action",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "none"
+      },
+      "packet_summary": "No human decision is requested by current advisory evidence; this is not permission.",
+      "passed": true,
+      "purpose": "Prove clean advisory evidence asks for no human decision and grants no permission.",
+      "scenario_id": "clean_no_action",
+      "state_change": "none",
+      "title": "Clean evidence stays no-action"
+    },
+    {
+      "authority": "non-authoritative; advisory operator packet stress matrix evidence only",
+      "blocker_count": 0,
+      "expected": {
+        "action_readiness": "human_approval_required",
+        "boundary_error": false,
+        "recommended_human_decision": "provide_missing_evidence"
+      },
+      "forbidden_interpretations": [
+        "treat packet output as permission",
+        "hide degraded evidence",
+        "hide malformed boundary input",
+        "infer negative evidence from silence"
+      ],
+      "missing_evidence_count": 3,
+      "observed": {
+        "action_readiness": "human_approval_required",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "provide_missing_evidence"
+      },
+      "packet_summary": "Human decision `provide_missing_evidence` is required before action.",
+      "passed": true,
+      "purpose": "Prove low sufficiency is preserved as missing evidence instead of permission.",
+      "scenario_id": "handoff_human_review",
+      "state_change": "none",
+      "title": "Insufficient handoff evidence asks for human review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator packet stress matrix evidence only",
+      "blocker_count": 3,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat packet output as permission",
+        "hide degraded evidence",
+        "hide malformed boundary input",
+        "infer negative evidence from silence"
+      ],
+      "missing_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "review_blockers"
+      },
+      "packet_summary": "Action is blocked pending human blocker review (3 blocker(s)).",
+      "passed": true,
+      "purpose": "Prove incompatible taxonomy evidence remains visible as a blocker.",
+      "scenario_id": "conformance_failure",
+      "state_change": "none",
+      "title": "Failed decision conformance blocks action"
+    },
+    {
+      "authority": "non-authoritative; advisory operator packet stress matrix evidence only",
+      "blocker_count": 0,
+      "expected": {
+        "action_readiness": "human_approval_required",
+        "boundary_error": false,
+        "recommended_human_decision": "approve_baseline_refresh"
+      },
+      "forbidden_interpretations": [
+        "treat packet output as permission",
+        "hide degraded evidence",
+        "hide malformed boundary input",
+        "infer negative evidence from silence"
+      ],
+      "missing_evidence_count": 1,
+      "observed": {
+        "action_readiness": "human_approval_required",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "approve_baseline_refresh"
+      },
+      "packet_summary": "Human decision `approve_baseline_refresh` is required before action.",
+      "passed": true,
+      "purpose": "Prove drift can request approval without refreshing or mutating anything.",
+      "scenario_id": "drift_review_required",
+      "state_change": "none",
+      "title": "Material drift asks for baseline refresh approval"
+    },
+    {
+      "authority": "non-authoritative; advisory operator packet stress matrix evidence only",
+      "blocker_count": 2,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat packet output as permission",
+        "hide degraded evidence",
+        "hide malformed boundary input",
+        "infer negative evidence from silence"
+      ],
+      "missing_evidence_count": 1,
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "error": "",
+        "recommended_human_decision": "review_blockers"
+      },
+      "packet_summary": "Action is blocked pending human blocker review (2 blocker(s)).",
+      "passed": true,
+      "purpose": "Prove lifecycle blockers dominate normal approval and stop the packet.",
+      "scenario_id": "lifecycle_blocker",
+      "state_change": "none",
+      "title": "Baseline lifecycle blocker stops action"
+    },
+    {
+      "authority": "non-authoritative; advisory operator packet stress matrix evidence only",
+      "blocker_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      },
+      "forbidden_interpretations": [
+        "treat packet output as permission",
+        "hide degraded evidence",
+        "hide malformed boundary input",
+        "infer negative evidence from silence"
+      ],
+      "missing_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "error": "drift guardrail missing or false: drift_policy_is_not_permission",
+        "recommended_human_decision": "review_blockers"
+      },
+      "packet_summary": "Boundary rejected before packet construction: drift guardrail missing or false: drift_policy_is_not_permission",
+      "passed": true,
+      "purpose": "Prove false guardrails degrade to blocked review instead of silent pass.",
+      "scenario_id": "malformed_boundary",
+      "state_change": "none",
+      "title": "Malformed boundary input is rejected"
+    }
+  ],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "all_scenarios_passed": true,
+    "decisions": {
+      "clean_no_action": {
+        "action_readiness": "no_action",
+        "boundary_error": false,
+        "recommended_human_decision": "none"
+      },
+      "conformance_failure": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "drift_review_required": {
+        "action_readiness": "human_approval_required",
+        "boundary_error": false,
+        "recommended_human_decision": "approve_baseline_refresh"
+      },
+      "handoff_human_review": {
+        "action_readiness": "human_approval_required",
+        "boundary_error": false,
+        "recommended_human_decision": "provide_missing_evidence"
+      },
+      "lifecycle_blocker": {
+        "action_readiness": "blocked",
+        "boundary_error": false,
+        "recommended_human_decision": "review_blockers"
+      },
+      "malformed_boundary": {
+        "action_readiness": "blocked",
+        "boundary_error": true,
+        "recommended_human_decision": "review_blockers"
+      }
+    },
+    "fail_count": 0,
+    "pass_count": 6,
+    "scenario_count": 6,
+    "scenario_ids": [
+      "clean_no_action",
+      "handoff_human_review",
+      "conformance_failure",
+      "drift_review_required",
+      "lifecycle_blocker",
+      "malformed_boundary"
+    ]
+  }
+}

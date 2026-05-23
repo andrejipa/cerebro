@@ -1,0 +1,278 @@
+{
+  "authority": "non-authoritative; advisory operator evidence final review index only",
+  "blockers": [],
+  "boundary": {
+    "may_suggest": [
+      "summarize the current checked operator evidence review chain",
+      "show missing final review inputs as blockers",
+      "show malformed final review inputs as blockers",
+      "show mutating final review inputs as blockers",
+      "show root escapes and .cerebro targets as boundary blockers",
+      "show failed review capsule inputs as blockers",
+      "show failed review capsule stress matrix as blockers",
+      "show stale or failed review capsule reproducibility as blockers",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "refresh artifacts automatically",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "create canonical evidence graph",
+      "promote or demote authority",
+      "treat final review index as permission",
+      "treat review clear as permission",
+      "treat stress pass as permission",
+      "treat reproducibility as permission",
+      "treat digest equality as truth",
+      "hide blockers",
+      "hide missing evidence",
+      "infer negative evidence from silence"
+    ]
+  },
+  "guardrails": {
+    "dependency_clean_is_not_truth": true,
+    "digest_equality_is_not_truth": true,
+    "final_review_clear_is_review_evidence_only": true,
+    "final_review_index_is_not_authority": true,
+    "final_review_index_is_not_canonical_evidence_graph": true,
+    "final_review_index_is_not_claim_graph": true,
+    "final_review_index_is_not_memory": true,
+    "final_review_index_is_not_permission": true,
+    "final_review_index_is_not_runtime_gate": true,
+    "final_review_index_is_not_source_registry": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "reproducibility_is_not_permission": true,
+    "retrieved_is_not_relevant": true,
+    "review_clear_is_not_permission": true,
+    "silence_is_not_negative_evidence": true,
+    "stress_pass_is_not_permission": true
+  },
+  "index_role": "operator-facing advisory final review index only",
+  "inputs": [
+    {
+      "action_readiness": "advisory_report_allowed",
+      "authority": "non-authoritative; advisory operator evidence review capsule only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "f5e520e5042d9fbbb57fe2a29d8513ec0b28ec023e26f713bd86fc9c08d4d2d4",
+      "exists": true,
+      "input_id": "review_capsule",
+      "parse_status": "parsed",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_REVIEW_CAPSULE.json",
+      "recommended_human_decision": "none",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": {
+        "action_readiness": "advisory_report_allowed",
+        "blocker_count": 0,
+        "decision_posture": "no_action",
+        "decision_posture_human_decision": "none",
+        "digest_match": true,
+        "input_blocker_count": 0,
+        "input_count": 4,
+        "missing_review_evidence_count": 0,
+        "provenance_artifact_count": 20,
+        "provenance_dependency_edge_count": 39,
+        "provenance_digest_manifest": "d254a139135ddb7f46f29c8e28e3f8252894244ecb6bb2b74aee6eb9b99f4ef8",
+        "provenance_present_count": 20,
+        "recommended_human_decision": "none",
+        "reproducibility_status": "reproducible",
+        "review_status": "review_clear",
+        "stress_blocker_count": 7,
+        "stress_boundary_error_count": 4,
+        "stress_fail_count": 0,
+        "stress_pass_count": 9,
+        "stress_scenario_count": 9,
+        "stress_text_digest_only_count": 1
+      }
+    },
+    {
+      "action_readiness": "",
+      "authority": "non-authoritative; advisory operator evidence review capsule stress matrix only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "caba91ab112b524366013fb09539880aba7b56bcb0d5b47daa41d8f5dc5ba6a8",
+      "exists": true,
+      "input_id": "review_capsule_stress_matrix",
+      "parse_status": "parsed",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_REVIEW_CAPSULE_STRESS_MATRIX.json",
+      "recommended_human_decision": "",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": {
+        "all_scenarios_passed": true,
+        "blocker_count": 15,
+        "boundary_error_count": 2,
+        "decisions": {
+          "cerebro_state_input": {
+            "action_readiness": "blocked",
+            "boundary_error_count": 1,
+            "recommended_human_decision": "review_blockers",
+            "review_status": "blocked_review",
+            "visible_error": true
+          },
+          "clean_review_capsule": {
+            "action_readiness": "advisory_report_allowed",
+            "boundary_error_count": 0,
+            "recommended_human_decision": "none",
+            "review_status": "review_clear",
+            "visible_error": false
+          },
+          "failed_stress_input": {
+            "action_readiness": "blocked",
+            "boundary_error_count": 0,
+            "recommended_human_decision": "review_blockers",
+            "review_status": "blocked_review",
+            "visible_error": true
+          },
+          "malformed_reproducibility_input": {
+            "action_readiness": "blocked",
+            "boundary_error_count": 0,
+            "recommended_human_decision": "review_blockers",
+            "review_status": "blocked_review",
+            "visible_error": true
+          },
+          "missing_decision_packet": {
+            "action_readiness": "blocked",
+            "boundary_error_count": 0,
+            "recommended_human_decision": "review_blockers",
+            "review_status": "blocked_review",
+            "visible_error": true
+          },
+          "mutating_provenance_input": {
+            "action_readiness": "blocked",
+            "boundary_error_count": 0,
+            "recommended_human_decision": "review_blockers",
+            "review_status": "blocked_review",
+            "visible_error": true
+          },
+          "provenance_blocker_input": {
+            "action_readiness": "blocked",
+            "boundary_error_count": 0,
+            "recommended_human_decision": "review_blockers",
+            "review_status": "blocked_review",
+            "visible_error": true
+          },
+          "root_escape_input": {
+            "action_readiness": "blocked",
+            "boundary_error_count": 1,
+            "recommended_human_decision": "review_blockers",
+            "review_status": "blocked_review",
+            "visible_error": true
+          },
+          "stale_reproducibility_input": {
+            "action_readiness": "blocked",
+            "boundary_error_count": 0,
+            "recommended_human_decision": "review_blockers",
+            "review_status": "blocked_review",
+            "visible_error": true
+          }
+        },
+        "degraded_blocker_count": 15,
+        "fail_count": 0,
+        "input_blocker_count": 5,
+        "missing_review_evidence_count": 4,
+        "pass_count": 9,
+        "scenario_count": 9,
+        "scenario_ids": [
+          "clean_review_capsule",
+          "missing_decision_packet",
+          "malformed_reproducibility_input",
+          "mutating_provenance_input",
+          "root_escape_input",
+          "cerebro_state_input",
+          "stale_reproducibility_input",
+          "failed_stress_input",
+          "provenance_blocker_input"
+        ]
+      }
+    },
+    {
+      "action_readiness": "advisory_report_allowed",
+      "authority": "non-authoritative; advisory operator evidence review capsule reproducibility check only",
+      "blocked": false,
+      "blockers": [],
+      "digest": "3a419d11e2be2416929e3699ef0d7038470e74fa1365c82d13606e5fbdac12eb",
+      "exists": true,
+      "input_id": "review_capsule_reproducibility",
+      "parse_status": "parsed",
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_REVIEW_CAPSULE_REPRODUCIBILITY_CHECK.json",
+      "recommended_human_decision": "none",
+      "schema_version": "1",
+      "state_change": "none",
+      "summary": {
+        "action_readiness": "advisory_report_allowed",
+        "artifact_count": 2,
+        "blocked": false,
+        "blocker_count": 0,
+        "json_digest_match": true,
+        "markdown_digest_match": true,
+        "mismatch_count": 0,
+        "missing_artifact_count": 0,
+        "recommended_human_decision": "none",
+        "reproducibility_status": "reproducible"
+      }
+    }
+  ],
+  "missing_review_evidence": [],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "action_readiness": "advisory_report_allowed",
+    "blocked": false,
+    "blocker_count": 0,
+    "capsule_action_readiness": "advisory_report_allowed",
+    "capsule_blocker_count": 0,
+    "capsule_missing_review_evidence_count": 0,
+    "capsule_recommended_human_decision": "none",
+    "capsule_review_status": "review_clear",
+    "dependency_statuses": {
+      "review_capsule": {
+        "blocked": false,
+        "blocker_count": 0,
+        "digest": "f5e520e5042d9fbbb57fe2a29d8513ec0b28ec023e26f713bd86fc9c08d4d2d4",
+        "parse_status": "parsed",
+        "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_REVIEW_CAPSULE.json"
+      },
+      "review_capsule_reproducibility": {
+        "blocked": false,
+        "blocker_count": 0,
+        "digest": "3a419d11e2be2416929e3699ef0d7038470e74fa1365c82d13606e5fbdac12eb",
+        "parse_status": "parsed",
+        "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_REVIEW_CAPSULE_REPRODUCIBILITY_CHECK.json"
+      },
+      "review_capsule_stress_matrix": {
+        "blocked": false,
+        "blocker_count": 0,
+        "digest": "caba91ab112b524366013fb09539880aba7b56bcb0d5b47daa41d8f5dc5ba6a8",
+        "parse_status": "parsed",
+        "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_REVIEW_CAPSULE_STRESS_MATRIX.json"
+      }
+    },
+    "input_blocker_count": 0,
+    "input_count": 3,
+    "json_digest_match": true,
+    "markdown_digest_match": true,
+    "missing_review_evidence_count": 0,
+    "recommended_human_decision": "none",
+    "reproducibility_action_readiness": "advisory_report_allowed",
+    "reproducibility_blocker_count": 0,
+    "reproducibility_mismatch_count": 0,
+    "reproducibility_missing_artifact_count": 0,
+    "reproducibility_recommended_human_decision": "none",
+    "reproducibility_status": "reproducible",
+    "review_status": "final_review_clear",
+    "stress_all_scenarios_passed": true,
+    "stress_blocker_count": 15,
+    "stress_boundary_error_count": 2,
+    "stress_degraded_blocker_count": 15,
+    "stress_fail_count": 0,
+    "stress_pass_count": 9,
+    "stress_scenario_count": 9
+  }
+}

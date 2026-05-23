@@ -9,8 +9,345 @@
 [archive]
 non_authoritative = true
 source = "observation_center.toml"
-rotated_at = "2026-04-27"
-rotated_items = 121
+rotated_at = "2026-05-09"
+rotated_items = 142
+
+[[observations]]
+id = "agent-agnostic-bootstrap-phase-11"
+title = "Make cerebro agent-agnostic: AGENTS.md universal, cerebro init scaffold, walk-up root detection"
+status = "resolved"
+kind = "slice"
+priority = "high"
+resolved_at = "2026-05-09"
+closure_evidence = "Phase 11 delivered: cli/project_root.py (find_project_root with walk_up param; checks .cerebro/ then .git/ at each level; --project-root sovereign); cli/commands/init.py rewritten (AGENTS.md template universal + subordinate CLAUDE.md note; observation_center.toml authority_order starts with AGENTS.md; SYSTEM_STATE.md + OPPORTUNITY_MAP.md projections; _write_if_absent never overwrites; _build_scaffold idempotent; --repair-scaffold mode); cli/main.py updated (walk_up=False for init; --repair-scaffold flag; find_project_root dispatcher); repo AGENTS.md updated to declare universal/subordinate role; 14 CerebroInitScaffoldTests + 5 ProjectRootWalkUpTests in test_cli.py; 9 Phase 11 architecture tests in test_architecture.py. Never creates CLAUDE.md in managed project. Gate 2453/0/6. Schema unchanged (v15). Trigger FORMAL_RESUME_TRIGGER_AGENT_AGNOSTIC_BOOTSTRAP_PHASE_11.md consumed 2026-05-09."
+trigger_consumed = "FORMAL_RESUME_TRIGGER_AGENT_AGNOSTIC_BOOTSTRAP_PHASE_11.md consumed 2026-05-09"
+
+[[observations]]
+id = "runtime-manager-phase-10-local-hardening-stress"
+title = "Runtime Manager Phase 10: Local-Only Hardening, Stress Lab, and Integrity Check"
+status = "resolved"
+kind = "slice"
+priority = "high"
+resolved_at = "2026-05-09"
+closure_evidence = "Phase 10 delivered: experiments/runtime_manager_stress_lab/ (8 deterministic scenarios: lease race, rate limit concurrency, token revoke/expire, expired-lease reclaim, replay path guard, reads under load, DB busy contention — all carry stress_pass_is_not_permission=True); RuntimeIntegrityReport dataclass + check_integrity() in store (orphan trace events, incomplete old traces, expired-active leases/tokens, stale rate buckets, evidence without trace, policy counter plausibility); CLI runtime-manager integrity check [--format text|json]; removed _max_level dead code from runtime_manager_policy.py; mcp_level_blocked counter moved to _require_current_token_factory covering all MCP tools; stable error codes: autonomy_level_blocked, rate_limited, replay_path_out_of_scope; adapters.runtime_manager_mcp_stdio and adapters.runtime_manager_local_agent added to pyproject.toml packages; 8 Phase 10 architecture tests; eval_phase10_hardening.py (8 evaluators all pass); 10 Phase 10 eval tests in test_evals.py; 7 integrity store tests; 3 integrity CLI tests; 9 stress lab tests. Gate 2418/0/6. Schema unchanged (v15). Trigger FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_10.md consumed 2026-05-09."
+trigger_consumed = "FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_10.md consumed 2026-05-09"
+
+[[observations]]
+id = "runtime-manager-phase-9-concurrency-auth-readiness"
+title = "Runtime Manager Phase 9: multiagent cross-process concurrency and per-operation auth readiness"
+status = "resolved"
+kind = "slice"
+priority = "high"
+resolved_at = "2026-05-09"
+closure_evidence = "Phase 9 delivered: per-operation token re-authentication via _require_current_token_factory in MCP STDIO server (every tool call re-reads token from DB; revoked/expired token raises PermissionError token_revoked_mid_session); RuntimeManagerStoreError.code attribute added; acquire_lease raises code=lease_contention on UNIQUE conflict; release_lease/heartbeat_lease trace code=lease_owner_mismatch on wrong-owner noop; check_and_increment_rate_limit uses BEGIN IMMEDIATE for atomic write-lock; auth.py exposes load_raw_token_from_env(); 19 cross-process concurrency tests (multiprocessing.Barrier, spawn, real runtime.db: 8-process lease race exactly-1-success, wrong-owner noop, rate limit under concurrency, token revoked/expired mid-session, expired lease reclaim); eval_phase9_concurrency_auth.py (6 evaluators, all pass); 9 Phase 9 eval tests in test_evals.py. eval_mcp_safety.py updated for Phase 9 refactoring. Gate 2381/0/6. Trigger FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_9.md consumed 2026-05-09."
+trigger_consumed = "FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_9.md consumed 2026-05-09"
+
+[[observations]]
+id = "runtime-manager-phase-8-autonomy-calibration"
+title = "Runtime Manager Phase 8: Autonomy Calibration and Progressive Friction"
+status = "resolved"
+kind = "slice"
+priority = "high"
+resolved_at = "2026-05-09"
+closure_evidence = "Phase 8 delivered: schema v15 (risk_level_override, data_sensitivity, target_scope, requires_human_decision on command_registry; max_autonomy_level on adapter_tokens; autonomy_level on execution_evidence; policy_counters table); core/runtime_manager_policy.py (classify_action(), LEVEL_ORDER, explain_levels()); classify_runtime_action/check_command_eligibility autonomy metadata; CLI policy classify + explain-levels; MCP server _TOOL_LEVELS + _check_level + token ceiling enforcement + L4 unconditionally blocked + mcp_level_blocked counter; RuntimeManagerMetrics actions_l0-l4 + mcp_level_blocked; eval_autonomy_levels.py (9 evaluator functions, all pass); 82 new Phase 8 tests; 5 governance tests in test_architecture.py. Gate 2348/0/6. Trigger FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_8.md consumed 2026-05-09."
+trigger_consumed = "FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_8.md consumed 2026-05-09"
+
+[[observations]]
+id = "runtime-manager-phase-7"
+title = "Runtime Manager Phase 7 — MCP STDIO real + token identity persistente + rate limit persistente"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+resolved_at = "2026-05-09"
+closure_evidence = "Phase 7 delivered: schema v14 (adapter_tokens + adapter_rate_buckets); store APIs issue_adapter_token/revoke_adapter_token/authenticate_adapter_token/check_and_increment_rate_limit; PersistentRateLimiter wrapper; adapters/runtime_manager_mcp_stdio/ (server.py, auth.py, scopes.py) with FastMCP STDIO server, 12 tools, scope enforcement, rate limit, no HTTP, no record_approval; CLI mcp-stdio subcommand; eval_mcp_safety.py (10 evaluators, all pass on real server); 48 new token/MCP tests; 25 new MCP safety eval tests. Gate 2248/0/6. Trigger FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_7.md consumed 2026-05-08."
+trigger_consumed = "FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_7.md consumed 2026-05-08"
+
+[[observations]]
+id = "runtime-manager-phase-3"
+title = "Runtime Manager Phase 3 evidence read API and status counters"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+resolved_at = "2026-05-08"
+closure_evidence = "Phase 3 delivered: read_evidence(id), list_evidence(observation_id, limit), execution_evidence_total in RuntimeManagerStatus + _read_ledger_counts() + runtime_synced event; CLI evidence show/list; negative list limits fail closed; 11 EvidenceReadAPITests + 5 CLI evidence end-to-end. Gate 1939/0/6. Docs-only reconciliation removed the completed item from the active queue."
+trigger_consumed = "autonomous continuation authorized in chat on 2026-05-08"
+
+[[observations]]
+id = "runtime-manager-phase-2"
+title = "Runtime Manager Phase 2 constrained command executor"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+resolved_at = "2026-05-08"
+closure_evidence = "All Phase 2 acceptance criteria satisfied: command_registry schema (14 cols) + CommandPolicy; check_command_eligibility() enforcement gate; _command_action_fingerprint() sha256 of canonical JSON (command_id+argv_prefix+path_scope); run_command() executes exactly argv_prefix via Path.relative_to scope check, timeout, output budget, digest capture before truncation/redaction, approval_id resolution, command_run event + execution_evidence row (schema v8, 16 cols, AUTOINCREMENT PK); ExecutionEvidence dataclass; CommandRunResult gains evidence_id; CLI run exposes evidence_id; 8 ExecutionEvidenceTests + 4 CLI end-to-end no-bypass tests; gate 1922/0/6. Trigger consumed."
+trigger_consumed = "FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_2.md"
+phase_3_trigger = "autonomous continuation — runtime-manager-phase-3 opened directly"
+
+[[observations]]
+id = "runtime-manager-phase-1"
+title = "Runtime Manager Phase 1 canonical local control plane"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+resolved_at = "2026-05-08"
+closure_evidence = "All Phase 1 acceptance criteria satisfied: contract explicit; runtime.db schema v6 with observations/decisions/evidence_records/tool_registry/approval_records/runtime_leases/replay_runs/validation_records/stop_conditions; CLI sync/status/next read-only; projection exports safe; gate diagnostics with severity/blocking; selection audit; lease expiry classification; replay diagnostics; event vocabulary ordering (runtime_opened before queue_item_observed on first sync, runtime_synced enriched); read_status/read_next event isolation proven; test suite green 1887/0/6. Phase 2 trigger written."
+trigger_consumed = "FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_1.md"
+phase_2_trigger = "FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_2.md"
+
+[[observations]]
+id = "third-party-pilot-cycle-1"
+title = "Third-party project pilot cycle 1"
+status = "resolved"
+kind = "checkpoint"
+priority = "high"
+boundary = "docs/operations/FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md + docs/operations/RUNBOOK_THIRD_PARTY_PILOT.md + selected third-party .cerebro/ only after human go"
+trigger = "FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md"
+source_plan = "RUNBOOK_THIRD_PARTY_PILOT.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = false
+dependencies = ["claude-third-party-recon", "human-target-selection"]
+dependencies_satisfied = true
+recommended_target = 'D:\projetos_cli\pessoais\rpg_caminhada'
+candidate_targets = [
+  'D:\projetos_cli\Portal\Resolução Humaita Codex',
+  'D:\projetos_cli\pessoais\rpg_caminhada',
+  'D:\projetos_cli\escritorio',
+]
+boundary_decision = "human-approved 2026-04-27 and reconfirmed 2026-05-08: all rpg_caminhada triggers and docs live in rpg_caminhada/.cerebro/, never in Cerebro repo"
+boundary_reconciliation = "2026-05-08: human target selection confirmed in chat as rpg_caminhada; read-only check found rpg_caminhada/.cerebro/state.json with ten registered sources and legacy state archived at .cerebro_legacy_v1_2026-04-24."
+next_action = "Use the validated rpg_caminhada continuity context for target-local planning only; open any target product slice under rpg_caminhada rules, not as Cerebro runtime work."
+done_when = "rpg_caminhada target-local .cerebro validate/analyze pass is green, the source set is accepted or corrected in the target-local intake record, and Cerebro repo gate is green."
+halt_if = "Any rpg_caminhada trigger or doc is written to Cerebro repo instead of rpg_caminhada/.cerebro/; sensitive material in initial sources; validate/analyze fails; Cerebro gate turns red."
+resolution = "Reconciled the stale waiting checkpoint after human confirmed rpg_caminhada. Re-registered the same ten source paths with added=0 removed=0 kept=10 to refresh hashes, then validate and analyze passed in the target."
+evidence = "target validate: OK validation_passed sources=10 revision=3; target analyze: OK analysis_ready validation=ok sources=10; Cerebro doc/architecture tests 70/0; full AGENTS-equivalent gate 969/0/0/6."
+
+[[observations]]
+id = "control-plane-guardrail-eval-slice-1"
+title = "Create the advisory Control Plane guardrail eval"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, persistent log, external adapter, MCP, Agents SDK, OpenTelemetry exporter, scheduler, ranking, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CONTROL_PLANE_GUARDRAIL_EVAL_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["control-plane-telemetry-projection-slice-1"]
+dependencies_satisfied = true
+next_action = "Use the eval only as advisory laundering-risk evidence before considering persistent logs, OpenTelemetry export, MCP, Agents SDK, or runtime promotion."
+done_when = "experiments/control_plane_guardrail_eval exists, lifecycle ledger records it, and clean/drifted telemetry projections evaluate deterministically without creating permission semantics."
+halt_if = "The layer imports opentelemetry, emits OTLP, writes files, appends logs, registers memory, executes commands, grants permission, mutates .cerebro, exposes CLI/adapters, treats clean eval as truth, or becomes a runtime gate."
+resolution = "Implemented ControlPlaneGuardrailFinding, ControlPlaneGuardrailReport, telemetry projection evaluator, JSON/Markdown renderers, projection boundary validation, status/name/event/attribute laundering checks, semconv/export/sensitive-GenAI checks, missing span/event guardrail checks, packet verdict/status contradiction checks, and static no-runtime/no-IO source guard."
+evidence = "control_plane_guardrail_eval tests 8/0; lifecycle registration rerun."
+
+[[observations]]
+id = "control-plane-telemetry-projection-slice-1"
+title = "Create the advisory Control Plane telemetry projection"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, persistent log, external adapter, MCP, Agents SDK, OpenTelemetry exporter, scheduler, ranking, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CONTROL_PLANE_TELEMETRY_PROJECTION_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["control-plane-review-packet-slice-1", "control-plane-review-matrix-slice-1", "control-plane-scenario-lab-slice-1"]
+dependencies_satisfied = true
+next_action = "Use the projection only as in-memory advisory observability before considering persistent logs, OpenTelemetry export, MCP, Agents SDK, or runtime promotion."
+done_when = "experiments/control_plane_telemetry_projection exists, lifecycle ledger records it, and existing packet/matrix/lab/adversarial artifacts project to deterministic spans/events without export or permission semantics."
+halt_if = "The layer imports opentelemetry, emits OTLP, writes files, appends logs, registers memory, executes commands, grants permission, mutates .cerebro, exposes CLI/adapters, treats semconv compatibility as stable, or becomes a runtime gate."
+resolution = "Implemented ControlPlaneTelemetryEvent, ControlPlaneTelemetrySpan, ControlPlaneTelemetryProjection, packet/matrix/scenario/adversarial projection functions, JSON/Markdown renderers, duplicate and unsafe id rejection, non-authority validation, no-OTel/no-sensitive-GenAI source guard, and guardrails for projection/export/permission/span-status/semconv stability."
+evidence = "control_plane_telemetry_projection tests 9/0; lifecycle registration rerun."
+
+[[observations]]
+id = "control-plane-scenario-lab-slice-1"
+title = "Create the advisory Control Plane scenario lab"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, persistent log, external adapter, MCP, Agents SDK, OpenTelemetry export, scheduler, ranking, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CONTROL_PLANE_SCENARIO_LAB_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["control-plane-review-packet-slice-1", "control-plane-review-matrix-slice-1"]
+dependencies_satisfied = true
+next_action = "Use the scenario lab only as advisory adversarial/eval hardening before considering CLI, persistent logs, OpenTelemetry mapping, external adapters, or runtime promotion."
+done_when = "experiments/control_plane_scenario_lab exists, lifecycle ledger records it, and declared in-memory scenarios can be run through packet/matrix outputs with expectation-drift reporting but no permission semantics."
+halt_if = "The lab reads manifests, writes files, appends logs, registers memory, exports telemetry, executes commands, chooses tasks, ranks or schedules scenarios, grants permission, mutates .cerebro, exposes CLI/adapters, emits execution approval, or becomes a runtime gate."
+resolution = "Implemented ControlPlaneScenario, ControlPlaneScenarioResult, ControlPlaneScenarioLabReport, ControlPlaneAdversarialProbe, ControlPlaneAdversarialFinding, ControlPlaneAdversarialProbeResult, ControlPlaneAdversarialReport, builtin scenario and adversarial probe batteries, JSON/Markdown renderers, duplicate/unsafe id rejection, input authority validation through packet building, expectation-drift reporting, replay/packet/matrix guardrail probes, advisory-allow boundary probe, and semantic laundering/collision probes."
+evidence = "control_plane_scenario_lab tests 9/0; lifecycle registration rerun."
+
+[[observations]]
+id = "control-plane-review-matrix-slice-1"
+title = "Create the advisory Control Plane review matrix"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, persistent log, external adapter, MCP, Agents SDK, OpenTelemetry export, scheduler, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CONTROL_PLANE_REVIEW_MATRIX_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["control-plane-review-packet-slice-1"]
+dependencies_satisfied = true
+next_action = "Use review matrices only as advisory observed-count compression before considering CLI, persistent logs, OpenTelemetry mapping, external adapters, or advisory-required promotion."
+done_when = "experiments/control_plane_review_matrix exists, lifecycle ledger records it, and already-built review packets can be summarized into counts without a pass/fail matrix verdict or permission semantics."
+halt_if = "The layer writes files, appends logs, registers memory, exports telemetry, executes commands, selects tasks, schedules scenarios, ranks scenarios, grants permission, mutates .cerebro, exposes CLI/adapters, emits a gate/pass verdict, or becomes a runtime gate."
+resolution = "Implemented ControlPlaneReviewMatrixRow, ControlPlaneReviewMatrix, build_control_plane_review_matrix, JSON/Markdown renderers, duplicate trace-id rejection, guardrail validation, and observed counts for packet verdicts, review statuses, replay statuses, blockers, replay issues, and human decisions."
+evidence = "control_plane_review_matrix tests 6/0; lifecycle registration rerun."
+
+[[observations]]
+id = "control-plane-review-packet-slice-1"
+title = "Create the advisory Control Plane review packet facade"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, persistent log, external adapter, MCP, Agents SDK, OpenTelemetry export, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CONTROL_PLANE_REVIEW_PACKET_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["control-plane-assessment-report-slice-1", "capability-policy-slice-1", "control-plane-trace-slice-1", "control-plane-event-ledger-slice-1", "control-plane-replay-eval-slice-1"]
+dependencies_satisfied = true
+next_action = "Use review packets only as advisory operator compression before considering CLI, persistent logs, OpenTelemetry mapping, external adapters, or advisory-required promotion."
+done_when = "experiments/control_plane_review_packet exists, lifecycle ledger records it, and existing Control Plane layers can be composed into one packet without writing files or granting permission."
+halt_if = "The layer writes files, appends logs, registers memory, exports telemetry, executes commands, selects tasks beyond supplied assessment evidence, recomputes readiness, grants permission, mutates .cerebro, exposes CLI/adapters, or becomes a runtime gate."
+resolution = "Implemented ControlPlaneReviewPacket, build_control_plane_review_packet, JSON/Markdown renderers, packet verdict derivation over existing trace/eval status, ledger JSONL preservation, replay digest checks, and explicit packet-pass-is-not-execution-approval guardrails."
+evidence = "control_plane_review_packet tests 7/0; lifecycle registration rerun."
+
+[[observations]]
+id = "control-plane-replay-eval-slice-1"
+title = "Create the advisory Control Plane replay-contract evaluator"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, persistent log, external adapter, MCP, Agents SDK, OpenTelemetry export, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CONTROL_PLANE_REPLAY_EVAL_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["control-plane-event-ledger-slice-1"]
+dependencies_satisfied = true
+next_action = "Use replay evaluation only as advisory quality evidence before considering persistent logs, OpenTelemetry mapping, external adapters, or advisory-required promotion."
+done_when = "experiments/control_plane_replay_eval exists, lifecycle ledger records it, and JSONL replay inputs can be classified as passed, incomplete, failed, or authority drift without writing files or granting permission."
+halt_if = "The layer writes files, appends logs, registers memory, exports telemetry, executes commands, selects tasks, recomputes readiness, grants permission, mutates .cerebro, exposes CLI/adapters, or becomes a runtime gate."
+resolution = "Implemented ControlPlaneReplayEvaluationIssue, ControlPlaneReplayEvaluation, evaluate_control_plane_replay_jsonl, JSON/Markdown renderers, and verdicts for replay_contract_passed, replay_incomplete, replay_contract_failed, and replay_contains_authority_drift."
+evidence = "control_plane_replay_eval tests 9/0; lifecycle registration rerun."
+
+[[observations]]
+id = "control-plane-event-ledger-slice-1"
+title = "Create the in-memory Control Plane JSONL event ledger experiment"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, persistent log, external adapter, MCP, Agents SDK, OpenTelemetry export, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CONTROL_PLANE_EVENT_LEDGER_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["control-plane-trace-slice-1"]
+dependencies_satisfied = true
+next_action = "Use JSONL replay only as advisory inspection evidence before considering persistent logs, OpenTelemetry mapping, external adapters, or any advisory-required promotion."
+done_when = "experiments/control_plane_event_ledger exists, lifecycle ledger records it, and JSONL render/parse verifies derived trace events without writing files or granting permission."
+halt_if = "The layer writes files, appends logs, registers memory, exports telemetry, executes commands, grants permission, mutates .cerebro, exposes CLI/adapters, or becomes a runtime gate."
+resolution = "Implemented ControlPlaneEventRecord, ControlPlaneEventLedger, JSONL renderer/parser, replay status derivation, sequence/trace/digest/event vocabulary checks, per-row event digests, digest-is-not-truth guardrails, and decision_opened/decision_closed boundary checks."
+evidence = "control_plane_event_ledger tests 8/0; lifecycle registration rerun."
+
+[[observations]]
+id = "control-plane-trace-slice-1"
+title = "Create the read-only Control Plane trace correlation experiment"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, external adapter, MCP, Agents SDK, OpenTelemetry export, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CONTROL_PLANE_TRACE_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["control-plane-assessment-report-slice-1", "capability-policy-slice-1"]
+dependencies_satisfied = true
+next_action = "Use trace correlation as advisory replay evidence before considering JSONL event ledgers, external adapter exposure, or any advisory-required promotion."
+done_when = "experiments/control_plane_trace exists, lifecycle ledger records it, and the trace correlates assessment/capability inputs into deterministic replay evidence without recomputing decisions or granting permission."
+halt_if = "The layer selects tasks, executes commands, grants permission, registers tools, writes memory, mutates .cerebro, exposes CLI/adapters, or becomes a runtime gate."
+resolution = "Implemented ControlPlaneTraceEvent, ControlPlaneTrace, build_control_plane_trace, deterministic replay digest, JSON/Markdown renderers, and input-boundary checks requiring non-authoritative state_change none inputs."
+evidence = "control_plane_trace tests 9/0; lifecycle registration rerun."
+
+[[observations]]
+id = "capability-policy-slice-1"
+title = "Create the read-only Control Plane capability-policy experiment"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, external adapter, MCP, Agents SDK, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CAPABILITY_POLICY_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["cerebro-control-plane-growth-001", "control-plane-assessment-report-slice-1"]
+dependencies_satisfied = true
+next_action = "Use capability-policy assessments as advisory evidence before any external tool adapter, MCP server, Agents SDK tool, or runtime permission promotion is considered."
+done_when = "experiments/capability_policy exists, lifecycle ledger records it, the evaluator can load TOML rules and classify declared command/tool requests without executing them, and focused tests pass."
+halt_if = "The layer executes commands, grants permission, registers tools, mutates .cerebro, exposes MCP/external adapters, adds CLI/runtime authority, or becomes a gate."
+resolution = "Implemented CapabilityRule, CapabilityRequest, CapabilityAssessment, TOML manifest loading, request evaluation, and JSON/Markdown renderers with explicit non-authority boundaries."
+evidence = "capability_policy tests 8/0; lifecycle registration rerun."
+
+[[observations]]
+id = "control-plane-assessment-report-slice-1"
+title = "Create the read-only Control Plane assessment report experiment"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "derived experiment only; no runtime, CLI, extension, .cerebro, schema, or third-party mutation"
+trigger = "FORMAL_RESUME_TRIGGER_CONTROL_PLANE_ASSESSMENT_REPORT_SLICE_1.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["cerebro-control-plane-growth-001"]
+dependencies_satisfied = true
+next_action = "Use the new experiment as the first control-plane report layer before considering ledger migration, MCP exposure, or advisory-required promotion."
+done_when = "experiments/control_plane_assessment exists, lifecycle ledger records it, the report composes decision_runtime, epistemic_guard, claim_evaluation, and operational_signals without authority, and focused tests pass."
+halt_if = "The report schedules work, grants permission, writes memory, creates a claim graph, mutates .cerebro, adds a CLI command, or becomes a runtime gate."
+resolution = "Implemented ControlPlaneAssessment with JSON/Markdown renderers and six focused tests. Output declares state_change none, non-authoritative authority, advisory_pass_is_not_permission, and must_not_execute_automatically."
+evidence = "control_plane_assessment tests 6/0; lifecycle tests 18/0; runtime unit tests 25/0."
+
+[[observations]]
+id = "cerebro-control-plane-growth-001"
+title = "Open the Cerebro Control Plane growth front"
+status = "resolved"
+kind = "slice"
+priority = "critical"
+boundary = "docs-only Formal Resume Trigger: FORMAL_RESUME_TRIGGER_CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+trigger = "FORMAL_RESUME_TRIGGER_CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_plan = "CEREBRO_CONTROL_PLANE_GROWTH_001.md"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = true
+dependencies = ["human-approved-growth-opening"]
+dependencies_satisfied = true
+next_action = "Resolved by defining the control-plane front, promotion ladder, anti-lixo rule, rule-refactor protocol, and first implementation target."
+done_when = "Control-plane trigger and plan exist; freeze review records resume_authorized; live projections point to the growth front; focused doc-governance and architecture tests pass."
+halt_if = "Any implementation file outside the allowed docs list is needed; advisory experiments are promoted to runtime authority; queue authority splits; focused tests fail."
+resolution = "Opened the growth front and then completed the first derived assessment-report slice without promoting runtime authority."
+evidence = "doc governance tests 19/0; architecture tests 51/0."
+
+[[observations]]
+id = "third-party-audit-reconciliation-lesson"
+title = "Record lesson from external fiscal audit reanalysis"
+status = "resolved"
+kind = "slice"
+priority = "high"
+boundary = "docs-only operational lesson under freeze; no runtime, target project, or schema mutation"
+trigger = "operator-requested docs-only note on 2026-04-28"
+source_plan = "conversation audit: structured qtd_cabecas lagged behind narrative/history evidence; NF 990 and high-priority expense review remained unresolved"
+source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
+auto_continuation = false
+dependencies = []
+dependencies_satisfied = true
+next_action = "Future third-party fiscal/accounting audits must run structured-vs-narrative reconciliation before final confidence claims: value totals, quantity totals, expected documents, excluded notes with reasons, PDFs without extracted keys, manual rules, and high-priority human-review rows."
+done_when = "The lesson is visible in the historical observation archive and mirrored in the human projections without opening a runtime-growth slice."
+halt_if = "The lesson is treated as permission to mutate core/cli/extensions/tests, to alter a target project, or to assert fiscal closure without document-level evidence."
+resolution = "Recorded as a process correction: Cerebro helped by finding contradiction, but acted too reactively; future audit closeout must force cross-field reconciliation before declaring readiness."
+evidence = "Initial gate on 2026-04-28: AGENTS-equivalent runner passed 958 tests, 0 failures, 0 errors, 6 skips."
 
 [[observations]]
 id = "verification-artifact-root-shape-hardening"
@@ -2096,3 +2433,30 @@ kind = "slice"
 priority = "medium"
 resolved_at = "2026-04-27"
 evidence = "7bc1fa9d — VALID_INVARIANT_NAMES in schema.py, ACTION_RECORD_OPTIONAL_KEYS in agent_runtime.py, vocabulary check in validation.py, 6 new tests in ActionInvariantsFieldTests. Gate: 84 tests, 0 new failures."
+
+[[observations]]
+id = "runtime-manager-phase-4"
+title = "Phase 4 Closing Sprint: CLI + auto_stop_on_failure + small APIs + reconciliation"
+status = "resolved"
+kind = "slice"
+priority = "high"
+resolved_at = "2026-05-08"
+resolution = "Phase 4 complete. Gate 2064/0/6. CLI: lease/stop/validation/approval/rollback. Store: list_leases, list_stop_conditions, read_validation, list_approvals, check_rollback_eligibility, list_rollback_runs, auto_stop_on_failure. Schema v12 (managed_approvals, UNION approval queries). 14 new CLI tests, ~50 new store tests."
+
+[[observations]]
+id = "runtime-manager-phase-5"
+title = "Phase 5: Local-forte observability -- traces, metrics, replay, policy seam"
+status = "resolved"
+kind = "slice"
+priority = "high"
+resolved_at = "2026-05-08"
+resolution = "Phase 5 complete. schema v13 (runtime_traces table). APIs: read_metrics, list_traces, read_trace, export_trace (json/jsonl/otel-json), replay_scenario (4 check types). CLI: trace list/show/export, metrics, replay --scenario. core/runtime_manager_policy.py with decide_runtime_state (pure, no I/O). experiments/runtime_manager_evals/ with 18 tests (trace/metrics/replay invariant evals). tests/fixtures/runtime_manager_scenarios/ with 3 scenario fixtures. Docs: FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_5.md, RUNTIME_MANAGER_ADAPTER_CONTRACT.md, RUNTIME_MANAGER_MCP_THREAT_MODEL.md. Gate green after fix."
+
+[[observations]]
+id = "runtime-manager-phase-6"
+title = "Phase 6: adapter piloto local + segurança + evals"
+status = "resolved"
+kind = "slice"
+priority = "high"
+resolved_at = "2026-05-08"
+resolution = "Phase 6 complete. Gate 2175/0/6. adapters/runtime_manager_local_agent/: AgentContext (agent_id, agent_role, session_id, lease_owner derived), LocalRateLimiter (sliding window 10 mutate/60 read per agent_id), AdapterMetrics + AdapterMetricsAccumulator (adapter_calls_total, adapter_calls_blocked, adapter_rate_limited, adapter_mutations_total, adapter_permission_laundering_blocked, active_agent_leases), LocalAgentAdapter (full public interface: status, next, lease acquire/release/heartbeat, check, approval, run, stop, validation, trace, metrics, replay). Fails closed on lease-absent mutations and rate-limit excess. 66 new adapter tests. eval_adapter_safety.py: 9 invariant checks (no direct SQL, no argv, no external SDK, replay/metrics not permission, lease ownership, rate limit, no secret in trace, approval fingerprint, mutation-without-lease blocked). 17 new eval tests (35 total in test_evals.py). CONTRACT.md Phase 5 schema inconsistency fixed (ended_at->finished_at, event_id->event_count, no runtime_metrics view). CONTRACT.md Phase 6 section added. RUNTIME_MANAGER_MCP_THREAT_MODEL.md updated with tested mitigations (rate limit, agent identity, lease ownership, prompt injection, replay laundering, trace exfiltration). fixtures/mcp_tool_call_shape.json added. FORMAL_RESUME_TRIGGER_RUNTIME_MANAGER_PHASE_6.md (consumed). Schema unchanged (v13)."

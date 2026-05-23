@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from core.action_identity import action_runtime_signature, matches_action_retry_identity
@@ -933,6 +934,7 @@ class RuntimeUnitTests(unittest.TestCase):
 
     def test_sync_success_memory_notes_locks_first_subject_consolidation(self) -> None:
         notes = []
+        recorded_at = datetime.now(timezone.utc).replace(microsecond=0)
         first_success_records = [
             {
                 "task_id": "task-a",
@@ -945,7 +947,7 @@ class RuntimeUnitTests(unittest.TestCase):
                 "acceptance_defined": True,
                 "has_sensitive_actions": False,
                 "pattern_signature": "ws=single|acceptance=defined|actions=fs.create_file|sensitive=no",
-                "recorded_at": "2026-04-13T00:00:00+00:00",
+                "recorded_at": recorded_at.isoformat(),
             },
         ]
 
@@ -964,7 +966,7 @@ class RuntimeUnitTests(unittest.TestCase):
                     "acceptance_defined": True,
                     "has_sensitive_actions": False,
                     "pattern_signature": "ws=single|acceptance=defined|actions=fs.create_file|sensitive=no",
-                    "recorded_at": "2026-04-13T00:00:10+00:00",
+                    "recorded_at": (recorded_at + timedelta(seconds=10)).isoformat(),
                 }
             ],
         )
@@ -982,7 +984,7 @@ class RuntimeUnitTests(unittest.TestCase):
                     "acceptance_defined": False,
                     "has_sensitive_actions": True,
                     "pattern_signature": "ws=wide|acceptance=missing|actions=fs.move|sensitive=yes",
-                    "recorded_at": "2026-04-13T00:00:20+00:00",
+                    "recorded_at": (recorded_at + timedelta(seconds=20)).isoformat(),
                 }
             ],
         )

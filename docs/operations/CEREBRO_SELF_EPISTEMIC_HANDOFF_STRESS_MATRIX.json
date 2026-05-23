@@ -1,0 +1,349 @@
+{
+  "authority": "non-authoritative; advisory handoff stress matrix evidence only",
+  "boundary": {
+    "may_suggest": [
+      "compare handoff output under degraded evidence",
+      "identify degraded evidence that requires human review",
+      "identify blocker evidence that must stop action",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat green scenarios as permission",
+      "infer negative evidence from silence"
+    ]
+  },
+  "guardrails": {
+    "passing_scenario_is_not_permission": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true,
+    "stress_matrix_is_not_authority": true,
+    "stress_matrix_is_not_claim_graph": true,
+    "stress_matrix_is_not_memory": true,
+    "stress_matrix_is_not_permission": true,
+    "stress_matrix_is_not_runtime_gate": true
+  },
+  "matrix_role": "advisory degraded-evidence handoff stress matrix only",
+  "scenarios": [
+    {
+      "authority": "non-authoritative; advisory handoff stress matrix evidence only",
+      "expected": {
+        "action_readiness": "no_action",
+        "recommended_human_decision": "none"
+      },
+      "handoff_summary": {
+        "action_readiness": "no_action",
+        "blocked_count": 0,
+        "candidates_extracted": 1,
+        "conflict_count": 0,
+        "findings_evaluated": 1,
+        "insufficient_count": 0,
+        "known_count": 5,
+        "missing_evidence_count": 0,
+        "ready_count": 1,
+        "recommended_human_decision": "none",
+        "risk_note_count": 4,
+        "source_count": 1,
+        "unknown_count": 3
+      },
+      "observed": {
+        "action_readiness": "no_action",
+        "recommended_human_decision": "none"
+      },
+      "passed": true,
+      "purpose": "Prove the handoff can say no action when all evidence is clean.",
+      "scenario_id": "clean_no_action",
+      "signals": {
+        "conflicts": [],
+        "known": [
+          "readiness trace covers 1 bounded source reads",
+          "1 findings evaluated; 1 ready; 0 blocked; 0 insufficient",
+          "replay baseline and current trace match",
+          "drift policy reports no drift and no action",
+          "protocol self-audit reports no candidates"
+        ],
+        "missing_evidence": [],
+        "risk_notes": [
+          "registered != true",
+          "retrieved != relevant",
+          "remembered != trusted",
+          "handoff output is advisory and not permission"
+        ],
+        "unknown": [
+          "bounded source heads do not prove full-project completeness",
+          "silence is not negative evidence; absent claims are not evidence of absence",
+          "readiness evidence does not grant permission to mutate state"
+        ]
+      },
+      "state_change": "none",
+      "title": "Clean evidence produces no human decision"
+    },
+    {
+      "authority": "non-authoritative; advisory handoff stress matrix evidence only",
+      "expected": {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "provide_missing_evidence"
+      },
+      "handoff_summary": {
+        "action_readiness": "human_approval_required",
+        "blocked_count": 0,
+        "candidates_extracted": 1,
+        "conflict_count": 0,
+        "findings_evaluated": 1,
+        "insufficient_count": 1,
+        "known_count": 5,
+        "missing_evidence_count": 3,
+        "ready_count": 0,
+        "recommended_human_decision": "provide_missing_evidence",
+        "risk_note_count": 4,
+        "source_count": 1,
+        "unknown_count": 3
+      },
+      "observed": {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "provide_missing_evidence"
+      },
+      "passed": true,
+      "purpose": "Prove low sufficiency is not treated as permission to continue.",
+      "scenario_id": "insufficient_evidence",
+      "signals": {
+        "conflicts": [],
+        "known": [
+          "readiness trace covers 1 bounded source reads",
+          "1 findings evaluated; 0 ready; 0 blocked; 1 insufficient",
+          "replay baseline and current trace match",
+          "drift policy reports no drift and no action",
+          "protocol self-audit reports no candidates"
+        ],
+        "missing_evidence": [
+          "stress-claim-1: sufficiency=insufficient",
+          "stress-claim-1: operational_readiness=needs_review",
+          "1 findings are insufficient"
+        ],
+        "risk_notes": [
+          "registered != true",
+          "retrieved != relevant",
+          "remembered != trusted",
+          "handoff output is advisory and not permission"
+        ],
+        "unknown": [
+          "bounded source heads do not prove full-project completeness",
+          "silence is not negative evidence; absent claims are not evidence of absence",
+          "readiness evidence does not grant permission to mutate state"
+        ]
+      },
+      "state_change": "none",
+      "title": "Insufficient evidence asks for missing evidence"
+    },
+    {
+      "authority": "non-authoritative; advisory handoff stress matrix evidence only",
+      "expected": {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "adjudicate_conflict"
+      },
+      "handoff_summary": {
+        "action_readiness": "human_approval_required",
+        "blocked_count": 0,
+        "candidates_extracted": 1,
+        "conflict_count": 1,
+        "findings_evaluated": 1,
+        "insufficient_count": 0,
+        "known_count": 5,
+        "missing_evidence_count": 0,
+        "ready_count": 1,
+        "recommended_human_decision": "adjudicate_conflict",
+        "risk_note_count": 4,
+        "source_count": 1,
+        "unknown_count": 3
+      },
+      "observed": {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "adjudicate_conflict"
+      },
+      "passed": true,
+      "purpose": "Prove conflict dominates clean readiness and forces review.",
+      "scenario_id": "active_conflict",
+      "signals": {
+        "conflicts": [
+          "stress-claim-1: conflict=active"
+        ],
+        "known": [
+          "readiness trace covers 1 bounded source reads",
+          "1 findings evaluated; 1 ready; 0 blocked; 0 insufficient",
+          "replay baseline and current trace match",
+          "drift policy reports no drift and no action",
+          "protocol self-audit reports no candidates"
+        ],
+        "missing_evidence": [],
+        "risk_notes": [
+          "registered != true",
+          "retrieved != relevant",
+          "remembered != trusted",
+          "handoff output is advisory and not permission"
+        ],
+        "unknown": [
+          "bounded source heads do not prove full-project completeness",
+          "silence is not negative evidence; absent claims are not evidence of absence",
+          "readiness evidence does not grant permission to mutate state"
+        ]
+      },
+      "state_change": "none",
+      "title": "Active conflict asks for adjudication"
+    },
+    {
+      "authority": "non-authoritative; advisory handoff stress matrix evidence only",
+      "expected": {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "approve_baseline_refresh"
+      },
+      "handoff_summary": {
+        "action_readiness": "human_approval_required",
+        "blocked_count": 0,
+        "candidates_extracted": 1,
+        "conflict_count": 0,
+        "findings_evaluated": 1,
+        "insufficient_count": 0,
+        "known_count": 3,
+        "missing_evidence_count": 2,
+        "ready_count": 1,
+        "recommended_human_decision": "approve_baseline_refresh",
+        "risk_note_count": 5,
+        "source_count": 1,
+        "unknown_count": 3
+      },
+      "observed": {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "approve_baseline_refresh"
+      },
+      "passed": true,
+      "purpose": "Prove drift evidence requests approval without refreshing anything.",
+      "scenario_id": "drift_review_required",
+      "signals": {
+        "conflicts": [],
+        "known": [
+          "readiness trace covers 1 bounded source reads",
+          "1 findings evaluated; 1 ready; 0 blocked; 0 insufficient",
+          "protocol self-audit reports no candidates"
+        ],
+        "missing_evidence": [
+          "baseline lifecycle requires human action: approve_baseline_refresh",
+          "drift policy requires human action: approve_baseline_refresh"
+        ],
+        "risk_notes": [
+          "registered != true",
+          "retrieved != relevant",
+          "remembered != trusted",
+          "handoff output is advisory and not permission",
+          "drift policy classification is material_refresh_candidate"
+        ],
+        "unknown": [
+          "bounded source heads do not prove full-project completeness",
+          "silence is not negative evidence; absent claims are not evidence of absence",
+          "readiness evidence does not grant permission to mutate state"
+        ]
+      },
+      "state_change": "none",
+      "title": "Material drift requires explicit baseline refresh approval"
+    },
+    {
+      "authority": "non-authoritative; advisory handoff stress matrix evidence only",
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers"
+      },
+      "handoff_summary": {
+        "action_readiness": "blocked",
+        "blocked_count": 0,
+        "candidates_extracted": 1,
+        "conflict_count": 0,
+        "findings_evaluated": 1,
+        "insufficient_count": 0,
+        "known_count": 3,
+        "missing_evidence_count": 2,
+        "ready_count": 1,
+        "recommended_human_decision": "review_blockers",
+        "risk_note_count": 6,
+        "source_count": 1,
+        "unknown_count": 3
+      },
+      "observed": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers"
+      },
+      "passed": true,
+      "purpose": "Prove protocol risk blocks action instead of asking for normal approval.",
+      "scenario_id": "protocol_blocker",
+      "signals": {
+        "conflicts": [],
+        "known": [
+          "readiness trace covers 1 bounded source reads",
+          "1 findings evaluated; 1 ready; 0 blocked; 0 insufficient",
+          "replay baseline and current trace match"
+        ],
+        "missing_evidence": [
+          "drift policy requires human action: review_blockers",
+          "protocol self-audit reported 1 high/blocking candidates"
+        ],
+        "risk_notes": [
+          "registered != true",
+          "retrieved != relevant",
+          "remembered != trusted",
+          "handoff output is advisory and not permission",
+          "protocol self-audit reported 1 candidates",
+          "drift policy classification is blocked_regression_or_protocol_risk"
+        ],
+        "unknown": [
+          "bounded source heads do not prove full-project completeness",
+          "silence is not negative evidence; absent claims are not evidence of absence",
+          "readiness evidence does not grant permission to mutate state"
+        ]
+      },
+      "state_change": "none",
+      "title": "Protocol blocker stops action"
+    }
+  ],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "decisions": {
+      "active_conflict": {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "adjudicate_conflict"
+      },
+      "clean_no_action": {
+        "action_readiness": "no_action",
+        "recommended_human_decision": "none"
+      },
+      "drift_review_required": {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "approve_baseline_refresh"
+      },
+      "insufficient_evidence": {
+        "action_readiness": "human_approval_required",
+        "recommended_human_decision": "provide_missing_evidence"
+      },
+      "protocol_blocker": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers"
+      }
+    },
+    "fail_count": 0,
+    "pass_count": 5,
+    "scenario_count": 5,
+    "scenario_ids": [
+      "clean_no_action",
+      "insufficient_evidence",
+      "active_conflict",
+      "drift_review_required",
+      "protocol_blocker"
+    ]
+  }
+}

@@ -1,0 +1,514 @@
+{
+  "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+  "boundary": {
+    "may_suggest": [
+      "compare final review index output under degraded input evidence",
+      "show missing final review inputs as blockers",
+      "show malformed final review inputs as blockers",
+      "show mutating final review inputs as blockers",
+      "show root escapes and .cerebro targets as boundary blockers",
+      "show failed review capsule evidence as blocking review evidence",
+      "show failed review capsule stress matrices as blocking review evidence",
+      "show stale or failed reproducibility as blocking review evidence",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "refresh artifacts automatically",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "create canonical evidence graph",
+      "promote or demote authority",
+      "treat final review index output as permission",
+      "treat final review index stress matrix output as permission",
+      "treat passing scenarios as permission",
+      "treat digest equality as truth",
+      "hide blockers",
+      "hide malformed final review input",
+      "hide missing final review input",
+      "hide failed stress coverage",
+      "hide stale or mismatched reproducibility",
+      "infer negative evidence from silence"
+    ]
+  },
+  "guardrails": {
+    "boundary_error_is_review_blocker_not_exception": true,
+    "degraded_final_review_evidence_is_review_evidence_only": true,
+    "digest_equality_is_not_truth": true,
+    "final_review_index_output_is_not_permission": true,
+    "final_review_index_stress_matrix_is_not_authority": true,
+    "final_review_index_stress_matrix_is_not_claim_graph": true,
+    "final_review_index_stress_matrix_is_not_memory": true,
+    "final_review_index_stress_matrix_is_not_permission": true,
+    "final_review_index_stress_matrix_is_not_runtime_gate": true,
+    "final_review_index_stress_matrix_is_not_source_registry": true,
+    "passing_scenario_is_not_permission": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "matrix_role": "advisory degraded-evidence operator evidence final review index stress matrix only",
+  "scenarios": [
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 0,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "advisory_report_allowed",
+        "recommended_human_decision": "none",
+        "visible_error": false
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 0,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "advisory_report_allowed",
+        "error": "",
+        "recommended_human_decision": "none",
+        "review_status": "final_review_clear",
+        "visible_error": false
+      },
+      "passed": true,
+      "purpose": "Proves complete final review evidence stays clear without becoming permission.",
+      "review_summary": "review_status=final_review_clear; recommended_human_decision=none; action_readiness=advisory_report_allowed; blocker_count=0; input_blocker_count=0; missing_review_evidence_count=0",
+      "scenario_id": "clean_final_review_index",
+      "state_change": "none",
+      "title": "Clean final review index remains advisory"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 1,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "review_capsule: final review input is missing: missing-capsule.json",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves an absent required final review input becomes visible evidence.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=1; input_blocker_count=1; missing_review_evidence_count=1",
+      "scenario_id": "missing_review_capsule",
+      "state_change": "none",
+      "title": "Missing review capsule blocks final review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "review_capsule_stress_matrix: final review input is malformed: Expecting property name enclosed in double quotes",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves malformed JSON stays visible to the operator.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=1; input_blocker_count=1; missing_review_evidence_count=0",
+      "scenario_id": "malformed_stress_matrix",
+      "state_change": "none",
+      "title": "Malformed stress matrix blocks final review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "review_capsule_reproducibility: final review input must declare state_change none",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves state-changing reproducibility evidence cannot pass.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=1; input_blocker_count=1; missing_review_evidence_count=0",
+      "scenario_id": "mutating_reproducibility_check",
+      "state_change": "none",
+      "title": "Mutating reproducibility blocks final review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 1,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "review_capsule: path blocked: path escapes project root: ../outside-capsule.json",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves relative paths escaping the project root become boundary blockers.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=1; input_blocker_count=1; missing_review_evidence_count=1",
+      "scenario_id": "root_escape_input",
+      "state_change": "none",
+      "title": "Root escape blocks final review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 1,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 1,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "review_capsule: path blocked: path crosses canonical state boundary",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves canonical state boundary targets are rejected as review evidence.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=1; input_blocker_count=1; missing_review_evidence_count=1",
+      "scenario_id": "cerebro_state_input",
+      "state_change": "none",
+      "title": ".cerebro target blocks final review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 4,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 4,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "review_capsule: review capsule must be review_clear; review_capsule: review capsule recommended_human_decision must be none; review_capsule: review capsule action_readiness must be advisory_report_allowed; review_capsule: review capsule blocker_count must be 0",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves a failed capsule summary stays visible instead of becoming clear.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=4; input_blocker_count=4; missing_review_evidence_count=0",
+      "scenario_id": "blocked_review_capsule",
+      "state_change": "none",
+      "title": "Blocked review capsule blocks final review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 3,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 3,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "review_capsule_stress_matrix: review capsule stress matrix pass_count must equal scenario_count; review_capsule_stress_matrix: review capsule stress matrix fail_count must be 0; review_capsule_stress_matrix: review capsule stress matrix all_scenarios_passed must be true",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves failed upstream stress coverage blocks the final index.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=3; input_blocker_count=3; missing_review_evidence_count=0",
+      "scenario_id": "failed_review_capsule_stress_matrix",
+      "state_change": "none",
+      "title": "Failed review capsule stress matrix blocks final review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 6,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 6,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "review_capsule_reproducibility: review capsule reproducibility_status must be reproducible; review_capsule_reproducibility: review capsule reproducibility recommended_human_decision must be none; review_capsule_reproducibility: review capsule reproducibility action_readiness must be advisory_report_allowed; review_capsule_reproducibility: review capsule reproducibility blocker_count must be 0; review_capsule_reproducibility: review capsule reproducibility mismatch_count must be 0; review_capsule_reproducibility: review capsule reproducibility json_digest_match must be true",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves stale or mismatched checked artifacts remain blocking evidence.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=6; input_blocker_count=6; missing_review_evidence_count=0",
+      "scenario_id": "failed_review_capsule_reproducibility",
+      "state_change": "none",
+      "title": "Failed reproducibility blocks final review"
+    },
+    {
+      "authority": "non-authoritative; advisory operator evidence final review index stress matrix only",
+      "blocker_count": 1,
+      "boundary_error_count": 0,
+      "expected": {
+        "action_readiness": "blocked",
+        "recommended_human_decision": "review_blockers",
+        "visible_error": true
+      },
+      "forbidden_interpretations": [
+        "treat final review index stress output as permission",
+        "treat final review index output as permission",
+        "hide degraded final review input",
+        "treat passing scenarios as permission",
+        "treat digest equality as truth",
+        "write memory from final review evidence",
+        "register sources from final review evidence",
+        "promote final review evidence to runtime authority",
+        "infer negative evidence from silence"
+      ],
+      "input_blocker_count": 1,
+      "missing_review_evidence_count": 0,
+      "observed": {
+        "action_readiness": "blocked",
+        "error": "review_capsule: final review input missing summary",
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "passed": true,
+      "purpose": "Proves structurally incomplete JSON cannot pass as review evidence.",
+      "review_summary": "review_status=blocked_review; recommended_human_decision=review_blockers; action_readiness=blocked; blocker_count=1; input_blocker_count=1; missing_review_evidence_count=0",
+      "scenario_id": "missing_summary",
+      "state_change": "none",
+      "title": "Missing summary blocks final review"
+    }
+  ],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "all_scenarios_passed": true,
+    "blocker_count": 19,
+    "boundary_error_count": 2,
+    "decisions": {
+      "blocked_review_capsule": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "cerebro_state_input": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 1,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "clean_final_review_index": {
+        "action_readiness": "advisory_report_allowed",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "none",
+        "review_status": "final_review_clear",
+        "visible_error": false
+      },
+      "failed_review_capsule_reproducibility": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "failed_review_capsule_stress_matrix": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "malformed_stress_matrix": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "missing_review_capsule": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "missing_summary": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "mutating_reproducibility_check": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 0,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      },
+      "root_escape_input": {
+        "action_readiness": "blocked",
+        "boundary_error_count": 1,
+        "recommended_human_decision": "review_blockers",
+        "review_status": "blocked_review",
+        "visible_error": true
+      }
+    },
+    "degraded_blocker_count": 19,
+    "fail_count": 0,
+    "input_blocker_count": 19,
+    "missing_review_evidence_count": 3,
+    "pass_count": 10,
+    "scenario_count": 10,
+    "scenario_ids": [
+      "clean_final_review_index",
+      "missing_review_capsule",
+      "malformed_stress_matrix",
+      "mutating_reproducibility_check",
+      "root_escape_input",
+      "cerebro_state_input",
+      "blocked_review_capsule",
+      "failed_review_capsule_stress_matrix",
+      "failed_review_capsule_reproducibility",
+      "missing_summary"
+    ]
+  }
+}

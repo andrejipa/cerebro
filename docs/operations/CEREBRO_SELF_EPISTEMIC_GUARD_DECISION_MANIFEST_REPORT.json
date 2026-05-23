@@ -1,0 +1,169 @@
+{
+  "authority": "non-authoritative; advisory decision envelope only",
+  "envelopes": [
+    {
+      "action_profile": {
+        "active_trigger": true,
+        "authority_impact": "none",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_GUARD_DECISION_MANIFEST_SLICE_2.md",
+          "docs/operations/SYSTEM_STATE.md",
+          "docs/operations/OPPORTUNITY_MAP.md",
+          "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_ENVELOPE_ORACLE.md"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [
+          "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_MANIFEST_REPORT.json",
+          "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_MANIFEST_REPORT.md"
+        ],
+        "zone": "ZONE_1"
+      },
+      "action_readiness": "derived_experiment_allowed",
+      "approval_status": "not_required",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [],
+      "claim_summary": [
+        "claim-boundary: slice_2_boundary allows epistemic_guard_manifest_outputs [trigger]",
+        "claim-next: next_epistemic_step is manifest_driven_real_action_envelopes [opportunity]",
+        "claim-oracle-exists: decision_envelope_oracle exists true [slice1_oracle]",
+        "claim-runtime-closed: runtime_boundary is closed [system]",
+        "claim-trigger-active: slice_2_trigger is active [trigger]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Generate the manifest-driven advisory decision report for epistemic_guard slice 2.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "passed",
+      "read_set": [
+        "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_ENVELOPE_ORACLE.md",
+        "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_GUARD_DECISION_MANIFEST_SLICE_2.md",
+        "docs/operations/OPPORTUNITY_MAP.md",
+        "docs/operations/SYSTEM_STATE.md"
+      ],
+      "recommended_human_decision": "none",
+      "scenario_id": "manifest_driven_epistemic_guard_slice_2",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "sufficient",
+      "warnings": [
+        "derived_report_is_not_runtime_gate",
+        "manifest_presence_is_not_permission"
+      ]
+    },
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "canonical",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "experiments/epistemic_guard/README.md"
+        ],
+        "reversibility": "medium",
+        "runtime_impact": "direct",
+        "writes": [
+          "core/state_store.py"
+        ],
+        "zone": "ZONE_3"
+      },
+      "action_readiness": "canonical_change_requires_trigger",
+      "approval_status": "missing_for_authority_impact",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [
+        "human_approval_missing_for_authority_impact",
+        "missing_active_trigger_for_runtime_or_canonical_change"
+      ],
+      "claim_summary": [
+        "claim-advisory-only: epistemic_guard authority advisory_only [guard_readme]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Promote epistemic_guard from advisory evidence into a canonical runtime permission gate.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "passed",
+      "read_set": [
+        "experiments/epistemic_guard/README.md"
+      ],
+      "recommended_human_decision": "review_blockers",
+      "scenario_id": "runtime_promotion_without_trigger",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "blocked",
+      "warnings": [
+        "advisory_guard_is_not_runtime_authority",
+        "permission_is_not_sufficient_evidence"
+      ]
+    },
+    {
+      "action_profile": {
+        "active_trigger": false,
+        "authority_impact": "advisory",
+        "existing_state_policy": "not_applicable",
+        "reads": [
+          "docs/operations/SYSTEM_STATE.md",
+          "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_ENVELOPE_ORACLE.md"
+        ],
+        "reversibility": "high",
+        "runtime_impact": "none",
+        "writes": [
+          "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_MANIFEST_REPORT.md"
+        ],
+        "zone": "ZONE_2"
+      },
+      "action_readiness": "blocked",
+      "approval_status": "expired_by_source_set_change",
+      "authority": "non-authoritative; advisory decision envelope only",
+      "blockers": [
+        "approval_expired_by_source_set_change"
+      ],
+      "claim_summary": [
+        "claim-oracle-new: decision_envelope_oracle is_new_input_for manifest_report [slice1_oracle]",
+        "claim-system-current: system_snapshot is current [system]"
+      ],
+      "conflicts": [],
+      "guardrails": [
+        "registered_is_not_true",
+        "retrieved_is_not_relevant",
+        "remembered_is_not_trusted",
+        "silence_is_not_negative_evidence",
+        "permission_is_not_sufficient_evidence",
+        "advisory_is_not_authority",
+        "approval_presence_is_not_permission",
+        "state_change_none"
+      ],
+      "intent": "Reuse an old approval after the evidence read set gained the slice 1 oracle report.",
+      "missing_evidence": [],
+      "prewrite_guard_status": "passed",
+      "read_set": [
+        "docs/operations/CEREBRO_SELF_EPISTEMIC_GUARD_DECISION_ENVELOPE_ORACLE.md",
+        "docs/operations/SYSTEM_STATE.md"
+      ],
+      "recommended_human_decision": "review_blockers",
+      "scenario_id": "approval_expired_for_manifest_report",
+      "stale_claims": [],
+      "state_change": "none",
+      "sufficiency": "blocked",
+      "warnings": []
+    }
+  ],
+  "state_change": "none"
+}

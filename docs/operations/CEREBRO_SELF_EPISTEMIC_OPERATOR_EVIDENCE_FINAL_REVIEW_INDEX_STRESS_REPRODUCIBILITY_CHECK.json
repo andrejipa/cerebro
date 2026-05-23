@@ -1,0 +1,90 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "final_review_index_stress_json",
+      "blocked": false,
+      "blockers": [],
+      "check_status": "matched",
+      "checked_digest": "93e2dcd193ccd993a2fc7e699581244de5f0ae646d33c145aad44634e3c17732",
+      "digest_match": true,
+      "exists": true,
+      "mismatches": [],
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_FINAL_REVIEW_INDEX_STRESS_MATRIX.json",
+      "regenerated_digest": "93e2dcd193ccd993a2fc7e699581244de5f0ae646d33c145aad44634e3c17732"
+    },
+    {
+      "artifact_id": "final_review_index_stress_markdown",
+      "blocked": false,
+      "blockers": [],
+      "check_status": "matched",
+      "checked_digest": "62a0420907218605945cf5279300f73a0276a083e619c7ea66114a0c2a773030",
+      "digest_match": true,
+      "exists": true,
+      "mismatches": [],
+      "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_OPERATOR_EVIDENCE_FINAL_REVIEW_INDEX_STRESS_MATRIX.md",
+      "regenerated_digest": "62a0420907218605945cf5279300f73a0276a083e619c7ea66114a0c2a773030"
+    }
+  ],
+  "authority": "non-authoritative; advisory operator evidence final review index stress reproducibility check only",
+  "blockers": [],
+  "boundary": {
+    "may_suggest": [
+      "compare checked final review index stress JSON with regenerated advisory output",
+      "compare checked final review index stress Markdown with regenerated advisory output",
+      "show stale checked artifacts as blockers",
+      "show missing checked artifacts as blockers",
+      "show malformed checked artifacts as blockers",
+      "show mutating checked artifacts as blockers",
+      "recommend future hardening slices"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "refresh checked artifacts automatically",
+      "update replay baseline",
+      "write memory automatically",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "create canonical evidence graph",
+      "promote or demote authority",
+      "treat reproducibility as permission",
+      "treat digest equality as truth",
+      "hide blockers",
+      "hide mismatches",
+      "hide stale checked artifacts",
+      "infer negative evidence from silence"
+    ]
+  },
+  "check_role": "advisory checked final-review-index stress artifact reproducibility evidence only",
+  "guardrails": {
+    "artifact_reproducible_is_not_permission": true,
+    "checked_artifact_is_not_memory": true,
+    "digest_equality_is_not_truth": true,
+    "final_review_index_stress_reproducibility_is_not_authority": true,
+    "final_review_index_stress_reproducibility_is_not_claim_graph": true,
+    "final_review_index_stress_reproducibility_is_not_memory": true,
+    "final_review_index_stress_reproducibility_is_not_permission": true,
+    "final_review_index_stress_reproducibility_is_not_runtime_gate": true,
+    "final_review_index_stress_reproducibility_is_not_source_registry": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "retrieved_is_not_relevant": true,
+    "silence_is_not_negative_evidence": true,
+    "stale_artifact_is_review_evidence_only": true
+  },
+  "mismatches": [],
+  "schema_version": "1",
+  "state_change": "none",
+  "summary": {
+    "action_readiness": "advisory_report_allowed",
+    "artifact_count": 2,
+    "blocked": false,
+    "blocker_count": 0,
+    "json_digest_match": true,
+    "markdown_digest_match": true,
+    "mismatch_count": 0,
+    "missing_artifact_count": 0,
+    "recommended_human_decision": "none",
+    "reproducibility_status": "reproducible"
+  }
+}

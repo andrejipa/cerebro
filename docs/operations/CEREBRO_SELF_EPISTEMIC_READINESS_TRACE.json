@@ -1,0 +1,1321 @@
+{
+  "authority": "non-authoritative; advisory trace evidence only",
+  "boundary": {
+    "may_suggest": [
+      "inspect evidence",
+      "compare traces",
+      "request human review",
+      "propose a future trigger"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "register sources",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "treat trace as permission"
+    ]
+  },
+  "candidates": [
+    {
+      "authority_hint": "source-local",
+      "claim_id": "eba21a48fca13f62",
+      "criticality_hint": "unknown",
+      "evidence_id": "e0a9926c54d94fb6",
+      "evidence_span": "L35",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-23",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "18145ce8de819395",
+      "source_path": "docs/operations/OPPORTUNITY_MAP.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CONTEXT_DISCOVERY_EXT_SLICE_1"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "47954660adbea13e",
+      "criticality_hint": "high",
+      "evidence_id": "15e1c20e036aff11",
+      "evidence_span": "L42",
+      "extraction_basis": "explicit",
+      "modality": "meta",
+      "object": "docs-only reconciliation before implementation",
+      "polarity": "required",
+      "predicate": "forces",
+      "semantic_id": "aa81938065d89d24",
+      "source_path": "docs/operations/OPPORTUNITY_MAP.md",
+      "source_role": "primary",
+      "subject": "divergence"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "11f42520d8ac1e73",
+      "criticality_hint": "unknown",
+      "evidence_id": "49bdeb719fcf0f1b",
+      "evidence_span": "L10",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "55c65a572ab2f020",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_LIFECYCLE_SLICE_8"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "e378a1c1e452acfa",
+      "criticality_hint": "unknown",
+      "evidence_id": "30b2a0db09d4d14d",
+      "evidence_span": "L11",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "cd9d9471864094f5",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_IDENTITY_STABILITY_SLICE_7"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "78e80a986bc35568",
+      "criticality_hint": "unknown",
+      "evidence_id": "61394887d9e3fc31",
+      "evidence_span": "L12",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "09ecb99365d49ff4",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_PROTOCOL_SELF_AUDIT_SLICE_6"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "038568cd5184fb89",
+      "criticality_hint": "unknown",
+      "evidence_id": "f052a52762474179",
+      "evidence_span": "L13",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "b1ec22b110e98d4e",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_TRACE_DIFF_SLICE_5"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "fa5c06c4fa20e32d",
+      "criticality_hint": "unknown",
+      "evidence_id": "17e3444c912dcb99",
+      "evidence_span": "L14",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "f208a591ad7fd981",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_DECISION_TRACE_SLICE_4"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "d9309898e86333aa",
+      "criticality_hint": "unknown",
+      "evidence_id": "1f6fe96e4d3cb0fb",
+      "evidence_span": "L15",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "5f7f5ce3f28e058d",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_ACTION_MANIFEST_SLICE_3"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "b92c021ed2ba910c",
+      "criticality_hint": "unknown",
+      "evidence_id": "bd3d3fc454fc78f2",
+      "evidence_span": "L16",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "92e4c12780e3cd39",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_RISK_BUDGET_SLICE_2"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "bf2c133f7b5e6e95",
+      "criticality_hint": "unknown",
+      "evidence_id": "4e60b87aec5848e3",
+      "evidence_span": "L17",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "9fa28add4985cb7a",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_GATE_FLAKE_SESSION_REFRESH_TIMESTAMP"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "d94e473174e40141",
+      "criticality_hint": "unknown",
+      "evidence_id": "b0c4cb0f1bf3cdc6",
+      "evidence_span": "L18",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "3534cfbeaa250b3f",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_SELF_REPORT_RERUN"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "d33d874492a1c52c",
+      "criticality_hint": "unknown",
+      "evidence_id": "2cba12488fb06a90",
+      "evidence_span": "L19",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "153d52ab87a964ab",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_REPORT_GENERATOR_SLICE_1"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "f75da9a7010c1261",
+      "criticality_hint": "unknown",
+      "evidence_id": "573a4468532b31d2",
+      "evidence_span": "L20",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "c8db09265085a684",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_AUTHORITY_RUNTIME_SPEC_HARDENING"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "fe7c9a6e7de7c74f",
+      "criticality_hint": "unknown",
+      "evidence_id": "9d27e031f364292c",
+      "evidence_span": "L21",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "d3a64649518447ce",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_AUTHORITY_RUNTIME_SPEC"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "a3e80b9a621f4e97",
+      "criticality_hint": "unknown",
+      "evidence_id": "31c3199e27dfc3cb",
+      "evidence_span": "L22",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "888394ac5b121146",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CEREBRO_SELF_EPISTEMIC_READINESS_RERUN"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "9174a178967c0f4e",
+      "criticality_hint": "unknown",
+      "evidence_id": "236922fb47218a7e",
+      "evidence_span": "L23",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "bcc945bc83a1d8be",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CLAIM_EXTRACTION_TEMPORAL_NORMALIZATION"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "24a660dfbce1ea9f",
+      "criticality_hint": "unknown",
+      "evidence_id": "6c1e7b489de503c7",
+      "evidence_span": "L24",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "0ad6381aa8bf2422",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CEREBRO_SELF_EPISTEMIC_READINESS"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "bb219b9b9316f751",
+      "criticality_hint": "unknown",
+      "evidence_id": "f190607ba213ba6c",
+      "evidence_span": "L25",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "dd7eecc5bb424a60",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CLAIM_EVALUATION_SLICE_1"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "3b691e73c7743143",
+      "criticality_hint": "unknown",
+      "evidence_id": "e3c9f2061ecdc358",
+      "evidence_span": "L26",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "e3929509a5d139bf",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CLAIM_EXTRACTION_SLICE_1"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "543f6388f9c69ce1",
+      "criticality_hint": "unknown",
+      "evidence_id": "b6258e1b65981d6a",
+      "evidence_span": "L27",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "27caa769827ca5ce",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CONTEXT_ADVISOR_LLM_SLICE_1"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "2640a7a099792f1d",
+      "criticality_hint": "unknown",
+      "evidence_id": "bd79ae5085e2b99b",
+      "evidence_span": "L28",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "cb130de0cd37dde3",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CONTEXT_VECTORS_ORACLE_SYNTHESIS"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "4c68b5f4e47fe9f7",
+      "criticality_hint": "unknown",
+      "evidence_id": "ba5943c7d723dfe9",
+      "evidence_span": "L29",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "287ac000b45dd9bb",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CONTEXT_VECTORS_ESCRITORIO_EVAL"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "41c4763dc43a9754",
+      "criticality_hint": "unknown",
+      "evidence_id": "7bf2786fbd8770d4",
+      "evidence_span": "L30",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "12ef3e9d11b0691f",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CONTEXT_VECTORS_PORTAL_EVAL"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "66bb7fe125b3d249",
+      "criticality_hint": "unknown",
+      "evidence_id": "cf535d079baaf802",
+      "evidence_span": "L31",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "618a62bac5eede8c",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CONTEXT_VECTORS_SLICE_1"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "d9be0c7f765cba52",
+      "criticality_hint": "unknown",
+      "evidence_id": "cbb3a11540b563a1",
+      "evidence_span": "L32",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "ff05abdbc4e59785",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CONTEXT_VECTORS_ORACLE_EVAL"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "bdba6625740ff87c",
+      "criticality_hint": "unknown",
+      "evidence_id": "4241f2225b4d7cc4",
+      "evidence_span": "L33",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "260cee1eab5501ae",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CONTEXT_VECTORS_CEREBRO_SELF_EVAL"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "f4a09ed6964550b9",
+      "criticality_hint": "unknown",
+      "evidence_id": "422d2d4f04a3dc0b",
+      "evidence_span": "L35",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-23",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "4cec9466baeedab4",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_CONTEXT_DISCOVERY_EXT_SLICE_1"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "02cb9274a59a2eec",
+      "criticality_hint": "high",
+      "evidence_id": "22e7b505c6cb90d2",
+      "evidence_span": "L41",
+      "extraction_basis": "explicit",
+      "modality": "procedural",
+      "object": "deliberate freeze active",
+      "polarity": "positive",
+      "predicate": "remains",
+      "semantic_id": "e47b5de7127910d8",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "canonical-runtime growth"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "93841e4641852f08",
+      "criticality_hint": "high",
+      "evidence_id": "d3e86920f62e988c",
+      "evidence_span": "L42",
+      "extraction_basis": "explicit",
+      "modality": "procedural",
+      "object": "not open",
+      "polarity": "negative",
+      "predicate": "is",
+      "semantic_id": "1f66bab3e11b9e6e",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "Cerebro runtime boundary"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "5449241e2b4f7768",
+      "criticality_hint": "high",
+      "evidence_id": "34dd9abf3f992bb4",
+      "evidence_span": "L45",
+      "extraction_basis": "explicit",
+      "modality": "meta",
+      "object": "docs-only reconciliation before implementation",
+      "polarity": "required",
+      "predicate": "forces",
+      "semantic_id": "ec27b55a16f4b9fe",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "divergence"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "8f33ce0554af39c3",
+      "criticality_hint": "unknown",
+      "evidence_id": "45bffc5372983e12",
+      "evidence_span": "L5",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "a48706d4ec38298b",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_13"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "4b81453085533117",
+      "criticality_hint": "unknown",
+      "evidence_id": "6c15ad05dc0b7fab",
+      "evidence_span": "L6",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "c177db1cf682eafa",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_DRIFT_POLICY_SLICE_12"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "caeb56203a83e1a0",
+      "criticality_hint": "unknown",
+      "evidence_id": "055519c996a4c1ca",
+      "evidence_span": "L7",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "a3620991733bfec4",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_11"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "446cf361e800d644",
+      "criticality_hint": "unknown",
+      "evidence_id": "bea94186097f83d6",
+      "evidence_span": "L8",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "e9bb1e31fd11313c",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_REPLAY_ORCHESTRATOR_SLICE_10"
+    },
+    {
+      "authority_hint": "source-local",
+      "claim_id": "00a48a6f613c242e",
+      "criticality_hint": "unknown",
+      "evidence_id": "0d397f5cf079b960",
+      "evidence_span": "L9",
+      "extraction_basis": "explicit",
+      "modality": "temporal",
+      "object": "2026-04-24",
+      "polarity": "positive",
+      "predicate": "consumed_on",
+      "semantic_id": "762873f7f0362a66",
+      "source_path": "docs/operations/SYSTEM_STATE.md",
+      "source_role": "primary",
+      "subject": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_9"
+    }
+  ],
+  "findings": [
+    {
+      "authority": "source-local",
+      "claim_id": "eba21a48fca13f62",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "e0a9926c54d94fb6",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "18145ce8de819395",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "47954660adbea13e",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "15e1c20e036aff11",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "aa81938065d89d24",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "11f42520d8ac1e73",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "49bdeb719fcf0f1b",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "55c65a572ab2f020",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "e378a1c1e452acfa",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "30b2a0db09d4d14d",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "cd9d9471864094f5",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "78e80a986bc35568",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "61394887d9e3fc31",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "09ecb99365d49ff4",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "038568cd5184fb89",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "f052a52762474179",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "b1ec22b110e98d4e",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "fa5c06c4fa20e32d",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "17e3444c912dcb99",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "f208a591ad7fd981",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "d9309898e86333aa",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "1f6fe96e4d3cb0fb",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "5f7f5ce3f28e058d",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "b92c021ed2ba910c",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "bd3d3fc454fc78f2",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "92e4c12780e3cd39",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "bf2c133f7b5e6e95",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "4e60b87aec5848e3",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "9fa28add4985cb7a",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "d94e473174e40141",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "b0c4cb0f1bf3cdc6",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "3534cfbeaa250b3f",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "d33d874492a1c52c",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "2cba12488fb06a90",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "153d52ab87a964ab",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "f75da9a7010c1261",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "573a4468532b31d2",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "c8db09265085a684",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "fe7c9a6e7de7c74f",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "9d27e031f364292c",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "d3a64649518447ce",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "a3e80b9a621f4e97",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "31c3199e27dfc3cb",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "888394ac5b121146",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "9174a178967c0f4e",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "236922fb47218a7e",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "bcc945bc83a1d8be",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "24a660dfbce1ea9f",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "6c1e7b489de503c7",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "0ad6381aa8bf2422",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "bb219b9b9316f751",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "f190607ba213ba6c",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "dd7eecc5bb424a60",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "3b691e73c7743143",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "e3c9f2061ecdc358",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "e3929509a5d139bf",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "543f6388f9c69ce1",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "b6258e1b65981d6a",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "27caa769827ca5ce",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "2640a7a099792f1d",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "bd79ae5085e2b99b",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "cb130de0cd37dde3",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "4c68b5f4e47fe9f7",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "ba5943c7d723dfe9",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "287ac000b45dd9bb",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "41c4763dc43a9754",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "7bf2786fbd8770d4",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "12ef3e9d11b0691f",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "66bb7fe125b3d249",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "cf535d079baaf802",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "618a62bac5eede8c",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "d9be0c7f765cba52",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "cbb3a11540b563a1",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "ff05abdbc4e59785",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "bdba6625740ff87c",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "4241f2225b4d7cc4",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "260cee1eab5501ae",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "f4a09ed6964550b9",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "422d2d4f04a3dc0b",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "4cec9466baeedab4",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "02cb9274a59a2eec",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "22e7b505c6cb90d2",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "e47b5de7127910d8",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "93841e4641852f08",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "d3e86920f62e988c",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "1f66bab3e11b9e6e",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "5449241e2b4f7768",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "34dd9abf3f992bb4",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "ec27b55a16f4b9fe",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "8f33ce0554af39c3",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "45bffc5372983e12",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "a48706d4ec38298b",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "4b81453085533117",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "6c15ad05dc0b7fab",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "c177db1cf682eafa",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "caeb56203a83e1a0",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "055519c996a4c1ca",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "a3620991733bfec4",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "446cf361e800d644",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "bea94186097f83d6",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "e9bb1e31fd11313c",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    },
+    {
+      "authority": "source-local",
+      "claim_id": "00a48a6f613c242e",
+      "confidence": "bounded",
+      "conflict": "none",
+      "evidence_id": "0d397f5cf079b960",
+      "operational_readiness": "ready",
+      "reasons": [
+        "primary explicit source"
+      ],
+      "semantic_id": "762873f7f0362a66",
+      "staleness": "not_detected",
+      "sufficiency": "sufficient",
+      "supersession": "none"
+    }
+  ],
+  "guardrails": {
+    "manifest_presence_is_not_permission": true,
+    "registered_is_not_true": true,
+    "remembered_is_not_trusted": true,
+    "report_readiness_is_not_permission": true,
+    "retrieved_is_not_relevant": true,
+    "risk_readiness_is_not_permission": true,
+    "silence_is_not_negative_evidence": true,
+    "trace_presence_is_not_permission": true
+  },
+  "manifest": {
+    "action_id": "cerebro-self-readiness-baseline-refresh-slice-13-rerun",
+    "generated_report": "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_REPORT.md",
+    "generated_trace": "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_TRACE.json",
+    "generator": "experiments.epistemic_readiness.generate_readiness_report_from_manifest",
+    "path": "docs/operations/CEREBRO_SELF_EPISTEMIC_READINESS_MANIFEST.toml",
+    "renderer": "experiments.epistemic_readiness.render_readiness_markdown",
+    "schema_version": "1",
+    "source_count": 18,
+    "trigger": "FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_13"
+  },
+  "risk_assessment": {
+    "action_id": "cerebro-self-readiness-baseline-refresh-slice-13-rerun",
+    "action_readiness": "derived_experiment_allowed",
+    "authority": "non-authoritative; advisory risk evidence only",
+    "budget_status": "within_budget",
+    "budget_violations": [],
+    "declared_gate_level": "G2",
+    "human_approval_required": false,
+    "purpose": "regenerate the Cerebro self-readiness report, structured decision trace, advisory trace diff, protocol self-audit candidates, advisory baseline lifecycle evidence, and advisory drift-policy disposition after the human-approved slice 12 material refresh candidate is applied to the derived replay baseline",
+    "required_gate_level": "G2",
+    "risk_score": 1,
+    "state_change": "none",
+    "stop_conditions": [
+      "report readiness is treated as permission",
+      "risk readiness is treated as authority",
+      "trace presence is treated as permission",
+      "trace diff presence is treated as permission",
+      "trace diff is used for automatic promotion or demotion",
+      "self-audit candidates are written as memory automatically",
+      "self-audit candidates are used for automatic protocol demotion or promotion",
+      "stable identity hides evidence-span drift instead of separating traceability drift",
+      "stable identity is treated as permission, truth, or authority",
+      "baseline refresh is applied automatically",
+      "baseline refresh is applied without explicit human approval",
+      "baseline freshness is treated as permission, truth, memory, or authority",
+      "baseline lifecycle hides source, semantic, risk, guardrail, or traceability drift",
+      "replay bundle helper writes the checked-in baseline automatically",
+      "replay bundle success is treated as authority or permission",
+      "drift policy is treated as permission, truth, memory, authority, or a runtime gate",
+      "drift policy auto-refreshes the replay baseline",
+      "generated output is used as a runtime gate",
+      "canonical state mutation becomes necessary"
+    ],
+    "zone": "zone_1"
+  },
+  "schema_version": "1",
+  "source_reads": [
+    {
+      "bytes_read": 31389,
+      "lines_read": 80,
+      "path": "docs/operations/SYSTEM_STATE.md",
+      "requested_max_lines": 80,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 32364,
+      "lines_read": 80,
+      "path": "docs/operations/OPPORTUNITY_MAP.md",
+      "requested_max_lines": 80,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 6874,
+      "lines_read": 120,
+      "path": "docs/operations/FREEZE_POLICY.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 4312,
+      "lines_read": 160,
+      "path": "docs/operations/EPISTEMIC_AUTHORITY_RUNTIME_SPEC.md",
+      "requested_max_lines": 160,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 3697,
+      "lines_read": 120,
+      "path": "docs/operations/CLAIM_EXTRACTION_CONTRACT.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 3044,
+      "lines_read": 120,
+      "path": "docs/operations/CLAIM_EXTRACTION_IMPLEMENTATION_READINESS.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 3515,
+      "lines_read": 92,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_CLAIM_EXTRACTION_SLICE_1.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": false
+    },
+    {
+      "bytes_read": 2298,
+      "lines_read": 76,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_CLAIM_EVALUATION_SLICE_1.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": false
+    },
+    {
+      "bytes_read": 2317,
+      "lines_read": 65,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_CLAIM_EXTRACTION_TEMPORAL_NORMALIZATION.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": false
+    },
+    {
+      "bytes_read": 3854,
+      "lines_read": 103,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_ACTION_MANIFEST_SLICE_3.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": false
+    },
+    {
+      "bytes_read": 4225,
+      "lines_read": 120,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_DECISION_TRACE_SLICE_4.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 4656,
+      "lines_read": 120,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_TRACE_DIFF_SLICE_5.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 4650,
+      "lines_read": 120,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_PROTOCOL_SELF_AUDIT_SLICE_6.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 5023,
+      "lines_read": 120,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_IDENTITY_STABILITY_SLICE_7.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 4869,
+      "lines_read": 120,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_LIFECYCLE_SLICE_8.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 4865,
+      "lines_read": 120,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_9.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 4784,
+      "lines_read": 120,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_REPLAY_ORCHESTRATOR_SLICE_10.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    },
+    {
+      "bytes_read": 4834,
+      "lines_read": 120,
+      "path": "docs/operations/FORMAL_RESUME_TRIGGER_EPISTEMIC_READINESS_BASELINE_REFRESH_SLICE_11.md",
+      "requested_max_lines": 120,
+      "role": "primary",
+      "truncated": true
+    }
+  ],
+  "state_change": "none",
+  "summary": {
+    "action_readiness": "derived_experiment_allowed",
+    "blocked_count": 0,
+    "candidates_extracted": 35,
+    "findings_evaluated": 35,
+    "insufficient_count": 0,
+    "ready_count": 35,
+    "source_count": 18
+  },
+  "trace_role": "advisory replay evidence only"
+}

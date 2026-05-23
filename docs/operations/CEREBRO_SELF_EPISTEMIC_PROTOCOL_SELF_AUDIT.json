@@ -1,0 +1,36 @@
+{
+  "action_readiness": "observe_only",
+  "authority": "non-authoritative; advisory protocol self-audit evidence only",
+  "boundary": {
+    "may_suggest": [
+      "inspect protocol drift",
+      "request human review",
+      "propose a future trigger",
+      "write a candidate learning item for review"
+    ],
+    "must_not_apply": [
+      "mutate state",
+      "write memory automatically",
+      "register sources",
+      "act as runtime gate",
+      "create canonical claim graph",
+      "promote or demote authority",
+      "treat self-audit as permission"
+    ]
+  },
+  "candidate_count": 0,
+  "candidates": [],
+  "guardrails": {
+    "anti_noise_no_auto_learning": true,
+    "self_audit_candidates_require_review": true,
+    "self_audit_is_not_authority": true,
+    "self_audit_is_not_memory": true,
+    "self_audit_is_not_permission": true,
+    "silence_is_not_negative_evidence": true
+  },
+  "high_or_blocking_count": 0,
+  "report_role": "advisory protocol self-audit candidates only",
+  "schema_version": "1",
+  "source_label": "epistemic-readiness-baseline-refresh-slice-13",
+  "state_change": "none"
+}

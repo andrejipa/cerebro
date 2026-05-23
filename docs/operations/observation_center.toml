@@ -1,6 +1,6 @@
 [center]
 version = 1
-updated_at = "2026-04-27T12:00:00-04:00"
+updated_at = "2026-05-09T18:00:00-03:00"
 queue_authority = "machine-primary"
 projection_role = "SYSTEM_STATE.md and OPPORTUNITY_MAP.md summarize the live queue, but observation_center.toml is the front-door source of truth for unresolved work."
 authority_order = "AGENTS.md -> active triggers -> observation_center.toml -> SYSTEM_STATE.md -> OPPORTUNITY_MAP.md -> active plans -> code/tests"
@@ -31,29 +31,6 @@ system_state = "Mirror the live queue mode, queue head, and gate summary after e
 opportunity_map = "Mirror the live next action and minimal human-facing rationale after each real round."
 trigger_docs = "Keep any active trigger aligned with the current open slice and mandatory stop conditions."
 
-[[observations]]
-id = "third-party-pilot-cycle-1"
-title = "Third-party project pilot cycle 1"
-status = "waiting"
-kind = "checkpoint"
-priority = "high"
-boundary = "docs/operations/FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md + docs/operations/RUNBOOK_THIRD_PARTY_PILOT.md + selected third-party .cerebro/ only after human go"
-trigger = "FORMAL_RESUME_TRIGGER_THIRD_PARTY_PILOT.md"
-source_plan = "RUNBOOK_THIRD_PARTY_PILOT.md"
-source_snapshot = "SYSTEM_STATE.md + OPPORTUNITY_MAP.md"
-auto_continuation = false
-dependencies = ["claude-third-party-recon", "human-target-selection"]
-dependencies_satisfied = false
-recommended_target = 'D:\projetos_cli\pessoais\rpg_caminhada'
-candidate_targets = [
-  'D:\projetos_cli\Portal\Resolução Humaita Codex',
-  'D:\projetos_cli\pessoais\rpg_caminhada',
-  'D:\projetos_cli\escritorio',
-]
-boundary_decision = "human-approved 2026-04-27: go with correct boundary — all rpg_caminhada triggers and docs live in rpg_caminhada/.cerebro/, never in Cerebro repo"
-next_action = "Open formal intake session in rpg_caminhada/.cerebro/ with boundary enforced. Legacy .cerebro/state.json decision and exact source set still required before any mutating command."
-done_when = "rpg_caminhada has its own .cerebro/ with human-approved intake gate, legacy-state decision, and sources registered through canonical CLI; validate/analyze pass; context_discovery advisory-only; Cerebro repo gate green."
-halt_if = "Any rpg_caminhada trigger or doc is written to Cerebro repo instead of rpg_caminhada/.cerebro/; legacy .cerebro/state.json decision not yet made; sensitive material in initial sources; validate/analyze fails; Cerebro gate turns red."
 
 [[observations]]
 id = "observation-center-sqlite-ledger"
